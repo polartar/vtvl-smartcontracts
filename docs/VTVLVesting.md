@@ -27,6 +27,23 @@ Return all the addresses that have vesting schedules attached.
 |---|---|---|
 | _0 | address[] | undefined |
 
+### amountAvailableToWithdrawByAdmin
+
+```solidity
+function amountAvailableToWithdrawByAdmin() external view returns (uint256)
+```
+
+Get amount that is not vested in contract
+
+*Whenever vesting is revoked, this amount will be increased.*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### claimableAmount
 
 ```solidity

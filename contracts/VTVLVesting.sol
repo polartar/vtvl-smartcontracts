@@ -454,7 +454,7 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
         nonReentrant
     {
         // Allow the owner to withdraw any balance not currently tied up in contracts.
-        uint256 amountRemaining = unlockedAmount();
+        uint256 amountRemaining = amountAvailableToWithdrawByAdmin();
 
         require(amountRemaining >= _amountRequested, "INSUFFICIENT_BALANCE");
 
