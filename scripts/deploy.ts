@@ -3,7 +3,9 @@
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
+import { parseEther } from "ethers/lib/utils";
 import { ethers } from "hardhat";
+const hre = require("hardhat");
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -21,7 +23,11 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   const TestTokenFactory = await ethers.getContractFactory("TestERC20Token");
-  const tokenContract = await TestTokenFactory.deploy();
+  const tokenContract = await TestTokenFactory.deploy(
+    "Test Token",
+    "TT",
+    parseEther("111111111111")
+  );
 
   console.log("Deployed an ERC Token for testing.");
   console.log("Address:", tokenContract.address);

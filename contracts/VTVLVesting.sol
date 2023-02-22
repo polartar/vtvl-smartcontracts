@@ -149,11 +149,10 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
     @param _claim The claim in question
     @param _referenceTs Timestamp for which we're calculating
      */
-    function _baseVestedAmount(Claim memory _claim, uint40 _referenceTs)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _baseVestedAmount(
+        Claim memory _claim,
+        uint40 _referenceTs
+    ) internal pure returns (uint256) {
         uint256 vestAmt = 0;
 
         // the condition to have anything vested is to be active
@@ -210,11 +209,10 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
     @param _referenceTs - The timestamp at which we want to calculate the vested amount.
     @dev Simply call the _baseVestedAmount for the claim in question
     */
-    function vestedAmount(address _recipient, uint40 _referenceTs)
-        public
-        view
-        returns (uint256)
-    {
+    function vestedAmount(
+        address _recipient,
+        uint40 _referenceTs
+    ) public view returns (uint256) {
         Claim memory _claim = claims[_recipient];
         return _baseVestedAmount(_claim, _referenceTs);
     }
@@ -224,11 +222,9 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
     @dev This fn is somewhat superfluous, should probably be removed.
     @param _recipient - The address for whom we're calculating
      */
-    function finalVestedAmount(address _recipient)
-        public
-        view
-        returns (uint256)
-    {
+    function finalVestedAmount(
+        address _recipient
+    ) public view returns (uint256) {
         Claim memory _claim = claims[_recipient];
         return _baseVestedAmount(_claim, _claim.endTimestamp);
     }
@@ -237,11 +233,9 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
     @notice Calculates how much can we claim, by subtracting the already withdrawn amount from the vestedAmount at this moment.
     @param _recipient - The address for whom we're calculating
     */
-    function claimableAmount(address _recipient)
-        external
-        view
-        returns (uint256)
-    {
+    function claimableAmount(
+        address _recipient
+    ) external view returns (uint256) {
         Claim memory _claim = claims[_recipient];
         return
             _baseVestedAmount(_claim, uint40(block.timestamp)) -
@@ -448,11 +442,9 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
     @notice Admin withdrawal of the unallocated tokens.
     @param _amountRequested - the amount that we want to withdraw
      */
-    function withdrawAdmin(uint256 _amountRequested)
-        public
-        onlyAdmin
-        nonReentrant
-    {
+    function withdrawAdmin(
+        uint256 _amountRequested
+    ) public onlyAdmin nonReentrant {
         // Allow the owner to withdraw any balance not currently tied up in contracts.
         uint256 amountRemaining = amountAvailableToWithdrawByAdmin();
 
@@ -471,11 +463,9 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
     @notice Allow an Owner to revoke a claim that is already active.
     @dev The requirement is that a claim exists and that it's active.
     */
-    function revokeClaim(address _recipient)
-        external
-        onlyAdmin
-        hasActiveClaim(_recipient)
-    {
+    function revokeClaim(
+        address _recipient
+    ) external onlyAdmin hasActiveClaim(_recipient) {
         // Fetch the claim
         Claim storage _claim = claims[_recipient];
         // Calculate what the claim should finally vest to
@@ -508,11 +498,9 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
     Note that the token to be withdrawn can't be the one at "tokenAddress".
     @param _otherTokenAddress - the token which we want to withdraw
      */
-    function withdrawOtherToken(IERC20 _otherTokenAddress)
-        external
-        onlyAdmin
-        nonReentrant
-    {
+    function withdrawOtherToken(
+        IERC20 _otherTokenAddress
+    ) external onlyAdmin nonReentrant {
         require(_otherTokenAddress != tokenAddress, "INVALID_TOKEN"); // tokenAddress address is already sure to be nonzero due to constructor
         uint256 bal = _otherTokenAddress.balanceOf(address(this));
         require(bal > 0, "INSUFFICIENT_BALANCE");

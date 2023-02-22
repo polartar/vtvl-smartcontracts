@@ -14,8 +14,8 @@ abstract contract AccessProtected is Context {
     event AdminAccessSet(address indexed _admin, bool _enabled);
 
     constructor() {
-        _admins[_msgSender()] = true;
-        emit AdminAccessSet(_msgSender(), true);
+        _admins[tx.origin] = true;
+        emit AdminAccessSet(tx.origin, true);
     }
 
     /**
