@@ -51,7 +51,7 @@ const deployVestingContract = async (tokenAddress?: string) => {
 
   const vestingContractAddress = getParamFromEvent(
     await transaction.wait(),
-    "CreateVault(address,address)",
+    "CreateVestingContract(address,address)",
     0
   );
 
