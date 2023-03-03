@@ -1,4 +1,5 @@
 import { ethers } from "hardhat";
+const hre = require("hardhat");
 
 async function main() {
   // We get the contract to deploy
@@ -9,11 +10,19 @@ async function main() {
   console.log(
     `vestingFactoryContract initialized on ${vestingFactoryContract.address}, waiting to be deployed...`
   );
-  await vestingFactoryContract.deployed();
+  const tx = await vestingFactoryContract.deployed();
   console.log(
     "Deployed a vesting contract to:",
     vestingFactoryContract.address
   );
+
+  await tx.deployTransaction.wait();
+
+  await hre.run("verify:verify", {
+    address: vestingFactoryContract.address,
+    contract: "contracts/VTVLVestingFactory.sol:VTVLVestingFactory",
+    constructorArguments: [],
+  });
 }
 
 // We recommend this pattern to be able to use async/await everywhere
