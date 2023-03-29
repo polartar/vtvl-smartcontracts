@@ -190,10 +190,10 @@ const tokenSymbol = chance.string({ length: 3 }).toUpperCase();
 // Some default values
 // These variables represent some reasonable values that our contract calls might actually have
 // Those can be used as sensible defaults, and then, they can individually be replaced by other values in individualized tests
-const startTimestamp = dateToTs("2023-02-01");
+const startTimestamp = dateToTs(new Date());
 const releaseIntervalSecs = BigNumber.from(60 * 60); // 1 hour
 const endTimestamp = startTimestamp.add(releaseIntervalSecs.mul(100)); // 100 releases of releaseIntervalSecs, because endTimestamp must startimestamp + X * releaseIntervalSecs
-const cliffReleaseTimestamp = dateToTs(new Date("2023-02-01"));
+const cliffReleaseTimestamp = dateToTs(new Date());
 const linearVestAmount = ethers.utils.parseUnits("100", 18);
 const cliffAmount = ethers.utils.parseUnits("10", 18);
 
