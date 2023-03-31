@@ -7,16 +7,19 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 // VariableSupplyERC20Token could be used instead, but it needs to track available to mint supply (extra slot)
 contract FullPremintERC20Token is ERC20 {
     // uint constant _initialSupply = 100 * (10**18);
-    address owner;
+    address public owner;
+    bool public burnable;
 
     constructor(
         string memory name_,
         string memory symbol_,
-        uint256 supply_
+        uint256 supply_,
+        bool burnable_
     ) ERC20(name_, symbol_) {
         require(supply_ > 0, "NO_ZERO_MINT");
         _mint(_msgSender(), supply_);
         owner = msg.sender;
+        burnable = burnable_;
     }
 
     /**
@@ -27,7 +30,15 @@ contract FullPremintERC20Token is ERC20 {
         _;
     }
 
-    function burn(uint256 amount) public virtual onlyOwner {
+    /**
+     * @dev Throws if burnable is false.
+     */
+    modifier onlyBurnable() {
+        require(burnable, "Not available to burn");
+        _;
+    }
+
+    function burn(uint256 amount) public virtual onlyOwner onlyBurnable {
         _burn(_msgSender(), amount);
     }
 }

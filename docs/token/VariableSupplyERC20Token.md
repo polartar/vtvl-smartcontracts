@@ -94,6 +94,23 @@ function burn(uint256 amount) external nonpayable
 |---|---|---|
 | amount | uint256 | undefined |
 
+### burnable
+
+```solidity
+function burnable() external view returns (bool)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bool | undefined |
+
 ### decimals
 
 ```solidity

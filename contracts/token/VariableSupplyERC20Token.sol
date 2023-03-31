@@ -9,6 +9,7 @@ import "../AccessProtected.sol";
  */
 contract VariableSupplyERC20Token is ERC20, AccessProtected {
     uint256 public mintableSupply;
+    bool public burnable;
 
     /**
     @notice A ERC20 token contract that allows minting at will, with limited or unlimited supply. No burning possible
@@ -22,7 +23,8 @@ contract VariableSupplyERC20Token is ERC20, AccessProtected {
         string memory name_,
         string memory symbol_,
         uint256 initialSupply_,
-        uint256 maxSupply_
+        uint256 maxSupply_,
+        bool burnable_
     ) ERC20(name_, symbol_) {
         // max supply == 0 means mint at will.
         // initialSupply_ == 0 means nothing preminted
@@ -36,6 +38,15 @@ contract VariableSupplyERC20Token is ERC20, AccessProtected {
         if (initialSupply_ > 0) {
             mint(_msgSender(), initialSupply_);
         }
+        burnable = burnable_;
+    }
+
+    /**
+     * @dev Throws if burnable is false.
+     */
+    modifier onlyBurnable() {
+        require(burnable, "Not available to burn");
+        _;
     }
 
     function mint(address account, uint256 amount) public onlyAdmin {
@@ -50,7 +61,7 @@ contract VariableSupplyERC20Token is ERC20, AccessProtected {
         _mint(account, amount);
     }
 
-    function burn(uint256 amount) public virtual onlyAdmin {
+    function burn(uint256 amount) public virtual onlyAdmin onlyBurnable {
         _burn(_msgSender(), amount);
     }
 
