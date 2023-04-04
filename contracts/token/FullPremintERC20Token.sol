@@ -26,7 +26,7 @@ contract FullPremintERC20Token is ERC20 {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyDeployer() {
-        require(owner == _msgSender(), "Only deployer can burn");
+        require(deployer == _msgSender(), "Only deployer can burn");
         _;
     }
 
