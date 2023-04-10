@@ -98,7 +98,7 @@ describe("Contract creation", async function () {
   it("fails if initialized without a valid ERC20 token address", async function () {
     // TODO: check if we need any checks that the token be valid, etc
     const zeroAddressStr = "0x" + "0".repeat(40);
-
+    const [owner] = await ethers.getSigners();
     const invalidParamsSets = [
       undefined,
       null,
@@ -113,7 +113,10 @@ describe("Contract creation", async function () {
         const factory = await createContractFactory();
 
         // @ts-ignore - Need to ignore invalid type because initializing with an invalid type is the whole point of this test
-        const contractDeploymentPromise = factory.deploy(invalidParam);
+        const contractDeploymentPromise = factory.deploy(
+          invalidParam as string,
+          owner.address
+        );
 
         if (invalidParam === zeroAddressStr) {
           await expect(contractDeploymentPromise).to.be.revertedWith(
@@ -705,6 +708,7 @@ describe("Claim creation batch", async function () {
 describe("Withdraw", async () => {
   // const recipientAddress = await randomAddress();
   const [, owner2] = await ethers.getSigners();
+  const snapshot = await ethers.provider.send("evm_snapshot", []);
   it("allows withdrawal up to the allowance and fails after the allowance is spent", async () => {
     const { tokenContract, vestingContract: claimCreateContractInstance } =
       await createPrefundedVestingContract({
@@ -785,6 +789,7 @@ describe("Withdraw", async () => {
     );
   });
   it("disallows withdrawal for an user with consumed claim", async () => {
+    await ethers.provider.send("evm_revert", [snapshot]);
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
       tokenSymbol,

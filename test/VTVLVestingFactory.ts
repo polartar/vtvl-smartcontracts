@@ -45,6 +45,7 @@ const createContractFactory = async () =>
   await ethers.getContractFactory("VTVLVestingFactory");
 
 let factoryContract: VTVLVestingFactory;
+
 const deployVestingContract = async (tokenAddress?: string) => {
   const factory = await createContractFactory();
   factoryContract = await factory.deploy();
@@ -124,51 +125,54 @@ describe("Contract creation", async function () {
     expect(await contract.tokenAddress()).to.equal(tokenAddress);
   });
 
-  // it("fails if initialized without a valid ERC20 token address", async function () {
-  //   // TODO: check if we need any checks that the token be valid, etc
-  //   const zeroAddressStr = "0x" + "0".repeat(40);
+  it("fails if initialized without a valid ERC20 token address", async function () {
+    // TODO: check if we need any checks that the token be valid, etc
+    const zeroAddressStr = "0x" + "0".repeat(40);
+    const [owner] = await ethers.getSigners();
 
-  //   const invalidParamsSets = [
-  //     undefined,
-  //     null,
-  //     0,
-  //     "0x0",
-  //     "0x11",
-  //     zeroAddressStr,
-  //   ];
+    const invalidParamsSets = [
+      undefined,
+      null,
+      0,
+      "0x0",
+      "0x11",
+      zeroAddressStr,
+    ];
 
-  //   for (const invalidParam of invalidParamsSets) {
-  //     try {
-  //       const factory = await createContractFactory();
+    for (const invalidParam of invalidParamsSets) {
+      try {
+        const factory = await ethers.getContractFactory("VTVLVesting");
+        // @ts-ignore - Need to ignore invalid type because initializing with an invalid type is the whole point of this test
+        const contractDeploymentPromise = factory.deploy(
+          invalidParam as string,
+          owner.address
+        );
 
-  //       // @ts-ignore - Need to ignore invalid type because initializing with an invalid type is the whole point of this test
-  //       const contractDeploymentPromise = factory.deploy(invalidParam);
-
-  //       if (invalidParam === zeroAddressStr) {
-  //         await expect(contractDeploymentPromise).to.be.revertedWith(
-  //           "INVALID_ADDRESS"
-  //         );
-  //       } else {
-  //         try {
-  //           await contractDeploymentPromise;
-  //           expect(true).to.be.equal(
-  //             false,
-  //             `Invalid failure mode with argument ${invalidParam}.`
-  //           );
-  //         } catch (e) {
-  //           // Correct failure mode
-  //         }
-  //       }
-  //       // await (await contractDeploymentPromise).deployed();
-  //       // expect.fail(null, null, `Did not fail with argument ${invalidParams}.`)
-  //     } catch (e) {
-  //       expect(true).to.be.equal(
-  //         false,
-  //         `Invalid failure mode with argument ${invalidParam}.`
-  //       );
-  //     }
-  //   }
-  // });
+        if (invalidParam === zeroAddressStr) {
+          await expect(contractDeploymentPromise).to.be.revertedWith(
+            "INVALID_ADDRESS"
+          );
+        } else {
+          try {
+            await contractDeploymentPromise;
+            expect(true).to.be.equal(
+              false,
+              `Invalid failure mode with argument ${invalidParam}.`
+            );
+          } catch (e) {
+            // Correct failure mode
+          }
+        }
+        // await (await contractDeploymentPromise).deployed();
+        // expect.fail(null, null, `Did not fail with argument ${invalidParams}.`)
+      } catch (e) {
+        expect(true).to.be.equal(
+          false,
+          `Invalid failure mode with argument ${invalidParam}.`
+        );
+      }
+    }
+  });
 
   // it("fails if initialized with an EOA as token address", async function () {
 
