@@ -176,28 +176,6 @@ Basic getter for a claim.
 |---|---|---|
 | _0 | VTVLVesting.Claim | undefined |
 
-### isAdmin
-
-```solidity
-function isAdmin(address _addressToCheck) external view returns (bool)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _addressToCheck | address | undefined |
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | bool | undefined |
-
 ### numTokensReservedForVesting
 
 ```solidity
@@ -232,6 +210,34 @@ Get the total number of vesting recipients.
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### owner
+
+```solidity
+function owner() external view returns (address)
+```
+
+
+
+*Returns the address of the current owner.*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address | undefined |
+
+### renounceOwnership
+
+```solidity
+function renounceOwnership() external nonpayable
+```
+
+
+
+*Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.*
+
+
 ### revokeClaim
 
 ```solidity
@@ -247,23 +253,6 @@ Allow an Owner to revoke a claim that is already active.
 | Name | Type | Description |
 |---|---|---|
 | _recipient | address | undefined |
-
-### setAdmin
-
-```solidity
-function setAdmin(address admin, bool isEnabled) external nonpayable
-```
-
-Set/unset Admin Access for a given address.
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| admin | address | - Address of the new admin (or the one to be removed) |
-| isEnabled | bool | - Enable/Disable Admin Access |
 
 ### tokenAddress
 
@@ -281,6 +270,22 @@ Address of the token that we&#39;re vesting
 | Name | Type | Description |
 |---|---|---|
 | _0 | contract IERC20 | undefined |
+
+### transferOwnership
+
+```solidity
+function transferOwnership(address newOwner) external nonpayable
+```
+
+
+
+*Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| newOwner | address | undefined |
 
 ### vestedAmount
 
@@ -352,23 +357,6 @@ Withdraw a token which isn&#39;t controlled by the vesting contract.
 
 ## Events
 
-### AdminAccessSet
-
-```solidity
-event AdminAccessSet(address indexed _admin, bool _enabled)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| _admin `indexed` | address | undefined |
-| _enabled  | bool | undefined |
-
 ### AdminWithdrawn
 
 ```solidity
@@ -438,6 +426,23 @@ Emitted when someone withdraws a vested amount
 |---|---|---|
 | _recipient `indexed` | address | undefined |
 | _withdrawalAmount  | uint256 | undefined |
+
+### OwnershipTransferred
+
+```solidity
+event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| previousOwner `indexed` | address | undefined |
+| newOwner `indexed` | address | undefined |
 
 
 

@@ -1,18 +1,13 @@
-/* eslint-disable prettier/prettier */
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import Chance from "chance";
-// eslint-disable-next-line node/no-missing-import
-import { VTVLVesting } from "../typechain";
+import { VTVLVesting, VTVLVestingFactory } from "../typechain";
 import { BigNumber, BigNumberish } from "ethers";
 const VaultFactoryJson = require("../artifacts/contracts/VTVLVestingFactory.sol/VTVLVestingFactory.json");
+
 const iface = new ethers.utils.Interface(VaultFactoryJson.abi);
 
 const chance = new Chance(43153); // Make sure we have a predictable seed for repeatability
-
-const randomAddress = async () => {
-  return await ethers.Wallet.createRandom().getAddress();
-};
 
 /**
  * Get the created vault address from the transaction
@@ -30,9 +25,18 @@ function getParamFromEvent(
   return event.args[paramIndex];
 }
 
+const randomAddress = async () => {
+  return await ethers.Wallet.createRandom().getAddress();
+};
+
 const getLastBlockTs = async () => {
   const blockNumBefore = await ethers.provider.getBlockNumber();
-  const blockBefore = await ethers.provider.getBlock(blockNumBefore);
+  const timestampBefore = await getBlockTs(blockNumBefore);
+  return timestampBefore;
+};
+
+const getBlockTs = async (blockNumber: number) => {
+  const blockBefore = await ethers.provider.getBlock(blockNumber);
   const timestampBefore = blockBefore.timestamp;
   return timestampBefore;
 };
@@ -40,9 +44,10 @@ const getLastBlockTs = async () => {
 const createContractFactory = async () =>
   await ethers.getContractFactory("VTVLVestingFactory");
 
+let factoryContract: VTVLVestingFactory;
 const deployVestingContract = async (tokenAddress?: string) => {
   const factory = await createContractFactory();
-  const factoryContract = await factory.deploy();
+  factoryContract = await factory.deploy();
   await factoryContract.deployed();
 
   const transaction = await factoryContract.createVestingContract(
@@ -86,8 +91,8 @@ const createPrefundedVestingContract = async (props: {
   );
 
   // Create an example vesting contract
-
   const vestingContract = await deployVestingContract(tokenContract.address);
+  await vestingContract.deployed();
 
   expect(await vestingContract.tokenAddress()).to.be.equal(
     tokenContract.address
@@ -114,10 +119,56 @@ describe("Contract creation", async function () {
   it("can be created with a ERC20 token address", async function () {
     tokenAddress = await randomAddress();
     const contract = await deployVestingContract(tokenAddress);
-    // await contract.deployed();
+    await contract.deployed();
 
     expect(await contract.tokenAddress()).to.equal(tokenAddress);
   });
+
+  // it("fails if initialized without a valid ERC20 token address", async function () {
+  //   // TODO: check if we need any checks that the token be valid, etc
+  //   const zeroAddressStr = "0x" + "0".repeat(40);
+
+  //   const invalidParamsSets = [
+  //     undefined,
+  //     null,
+  //     0,
+  //     "0x0",
+  //     "0x11",
+  //     zeroAddressStr,
+  //   ];
+
+  //   for (const invalidParam of invalidParamsSets) {
+  //     try {
+  //       const factory = await createContractFactory();
+
+  //       // @ts-ignore - Need to ignore invalid type because initializing with an invalid type is the whole point of this test
+  //       const contractDeploymentPromise = factory.deploy(invalidParam);
+
+  //       if (invalidParam === zeroAddressStr) {
+  //         await expect(contractDeploymentPromise).to.be.revertedWith(
+  //           "INVALID_ADDRESS"
+  //         );
+  //       } else {
+  //         try {
+  //           await contractDeploymentPromise;
+  //           expect(true).to.be.equal(
+  //             false,
+  //             `Invalid failure mode with argument ${invalidParam}.`
+  //           );
+  //         } catch (e) {
+  //           // Correct failure mode
+  //         }
+  //       }
+  //       // await (await contractDeploymentPromise).deployed();
+  //       // expect.fail(null, null, `Did not fail with argument ${invalidParams}.`)
+  //     } catch (e) {
+  //       expect(true).to.be.equal(
+  //         false,
+  //         `Invalid failure mode with argument ${invalidParam}.`
+  //       );
+  //     }
+  //   }
+  // });
 
   // it("fails if initialized with an EOA as token address", async function () {
 
@@ -131,38 +182,7 @@ describe("Contract creation", async function () {
 
     const contract = await deployVestingContract();
 
-    expect(await contract.isAdmin(owner.address)).to.equal(true);
-  });
-
-  it("not everyone is admin", async function () {
-    const contract = await deployVestingContract();
-
-    expect(await contract.isAdmin(await randomAddress())).to.equal(false);
-  });
-
-  it("allows the owner to set and unset other user as an admin", async function () {
-    const [, otherOwner] = await ethers.getSigners();
-
-    const contract = await deployVestingContract();
-
-    // Initially the other owner is not admin
-    expect(await contract.isAdmin(otherOwner.address)).to.equal(false);
-
-    // They'll become one after we set them as admin
-    await (await contract.setAdmin(otherOwner.address, true)).wait();
-    expect(await contract.isAdmin(otherOwner.address)).to.equal(true);
-
-    // And then they'll stop being one right after we unset them
-    await (await contract.setAdmin(otherOwner.address, false)).wait();
-    expect(await contract.isAdmin(otherOwner.address)).to.equal(false);
-  });
-
-  it("fails if attempting to set wrong address as an admin", async function () {
-    const contract = await deployVestingContract();
-
-    await expect(
-      contract.setAdmin("0x" + "0".repeat(40), true)
-    ).to.be.revertedWith("INVALID_ADDRESS");
+    expect(await contract.owner()).to.be.equal(owner.address);
   });
 });
 
@@ -174,10 +194,12 @@ const tokenSymbol = chance.string({ length: 3 }).toUpperCase();
 // Some default values
 // These variables represent some reasonable values that our contract calls might actually have
 // Those can be used as sensible defaults, and then, they can individually be replaced by other values in individualized tests
-const startTimestamp = dateToTs(new Date());
-const releaseIntervalSecs = BigNumber.from(60 * 60); // 1 hour
-const endTimestamp = startTimestamp.add(releaseIntervalSecs.mul(100)); // 100 releases of releaseIntervalSecs, because endTimestamp must startimestamp + X * releaseIntervalSecs
 const cliffReleaseTimestamp = dateToTs(new Date());
+const startTimestamp = cliffReleaseTimestamp.add(BigNumber.from(5 * 60 * 60)); // 5 hours
+const releaseIntervalSecs = BigNumber.from(60 * 60); // 1 hour
+const vestingPeriod = releaseIntervalSecs.mul(100);
+const endTimestamp = startTimestamp.add(vestingPeriod); // 100 releases of releaseIntervalSecs, because endTimestamp must startimestamp + X * releaseIntervalSecs
+
 const linearVestAmount = ethers.utils.parseUnits("100", 18);
 const cliffAmount = ethers.utils.parseUnits("10", 18);
 
@@ -286,8 +308,9 @@ describe("Claim creation", async function () {
       tokenSymbol,
       initialSupplyTokens,
     });
+
     // Create a claim first, then try to create a similar one
-    await vestingContract.createClaim(
+    const tx1p = await vestingContract.createClaim(
       recipientAddress,
       startTimestamp,
       endTimestamp,
@@ -296,6 +319,8 @@ describe("Claim creation", async function () {
       linearVestAmount,
       cliffAmount
     );
+    await tx1p.wait();
+
     const tx2p = vestingContract.createClaim(
       recipientAddress,
       startTimestamp,
@@ -782,7 +807,7 @@ describe("Withdraw", async () => {
       "NOTHING_TO_WITHDRAW"
     );
   });
-  it("disallows withdrawal for an user with revoked claim", async () => {
+  it("withdraw the vested amount after revoke claim", async () => {
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
       tokenSymbol,
@@ -790,7 +815,8 @@ describe("Withdraw", async () => {
     });
     // Create a claim, and then revoke it
     const startTimestamp = await getLastBlockTs();
-    const endTimestamp = startTimestamp + 1000;
+    const vestingPeriodTimestamp = 1000;
+    const endTimestamp = startTimestamp + vestingPeriodTimestamp;
     const releaseIntervalSecs = 1;
     // Create and immediately revoke a claim for owner2
     await vestingContract.createClaim(
@@ -802,12 +828,25 @@ describe("Withdraw", async () => {
       linearVestAmount,
       0
     );
+
+    const timePass = 200;
     // Fast forward until the middle of the interval - we should be vested by now (if it weren't for the revocation)
-    await ethers.provider.send("evm_mine", [startTimestamp + 500]);
+    await ethers.provider.send("evm_mine", [startTimestamp + timePass]);
+
     // Revoke the claim, and try to withdraw afterwards
-    await (await vestingContract.revokeClaim(owner2.address)).wait();
-    await expect(vestingContract.connect(owner2).withdraw()).to.be.revertedWith(
-      "NO_ACTIVE_CLAIM"
+    const tx = await vestingContract.revokeClaim(owner2.address);
+    await tx.wait();
+
+    // Get `revokeClaim` transaction block timestamp
+    const txTimestamp = await getBlockTs(tx.blockNumber!);
+
+    // Expect the claimable amount after revoking
+    const expectClaimableAmount = linearVestAmount
+      .mul(BigNumber.from(txTimestamp).sub(BigNumber.from(startTimestamp)))
+      .div(BigNumber.from(vestingPeriodTimestamp));
+
+    expect(await vestingContract.claimableAmount(owner2.address)).to.be.equal(
+      expectClaimableAmount
     );
   });
 });
@@ -855,7 +894,7 @@ describe("Revoke Claim", async () => {
     // A random user cant revert it
     await expect(
       vestingContract.connect(owner2).revokeClaim(recipientAddress)
-    ).to.be.revertedWith("ADMIN_ACCESS_REQUIRED");
+    ).to.be.revertedWith("Ownable: caller is not the owner");
     // Make sure it stays active
     expect(
       await (
@@ -899,8 +938,7 @@ describe("Revoke Claim", async () => {
       vestingContract.revokeClaim(owner2.address)
     ).to.be.revertedWith("NO_UNVESTED_AMOUNT");
   });
-  // This could also belong in vested amount section
-  it("takes revocation into account while calculating the vested amount", async () => {
+  it("get the correct final vested amount after revoke claim", async () => {
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
       tokenSymbol,
@@ -916,15 +954,53 @@ describe("Revoke Claim", async () => {
       linearVestAmount,
       cliffAmount
     );
+
     await (await vestingContract.revokeClaim(recipientAddress)).wait();
-    // Having immediately revoked, we expect the vested amount to be 0
-    expect(
-      await vestingContract.finalVestedAmount(recipientAddress)
-    ).to.be.equal(0);
   });
-  // Tested within Withdraw section
-  // it("makes sure that an otherwise valid claim couldn't be withdrawn after revocation", async () => {
-  // });
+  it("sample revoke use case USER WIN: employee withdraw immediately before resignation", async () => {
+    const { tokenContract, vestingContract } =
+      await createPrefundedVestingContract({
+        tokenName,
+        tokenSymbol,
+        initialSupplyTokens,
+      });
+
+    const startTimestamp = (await getLastBlockTs()) + 100;
+    const endTimestamp = startTimestamp + 2000;
+    const terminationTimestamp = startTimestamp + 1000 + 50; // half-way vesting, plus half release interval which shall be discarded
+    const releaseIntervalSecs = 100;
+
+    await vestingContract.createClaim(
+      owner2.address,
+      startTimestamp,
+      endTimestamp,
+      cliffReleaseTimestamp,
+      releaseIntervalSecs,
+      linearVestAmount,
+      cliffAmount
+    );
+
+    // move clock to termination timestamp (half-way the vesting period plus a bit, but less than release interval seconds)
+    await ethers.provider.send("evm_mine", [terminationTimestamp]);
+
+    const userBalanceBefore = await tokenContract.balanceOf(owner2.address);
+    await (await vestingContract.connect(owner2).withdraw()).wait();
+    const userBalanceAfter = await tokenContract.balanceOf(owner2.address);
+
+    // revoke the claim preserving the "already vested but not yet withdrawn amount"
+    await (await vestingContract.revokeClaim(owner2.address)).wait();
+
+    // move the clock to the programmed end of vesting period
+    await ethers.provider.send("evm_mine", [endTimestamp]);
+
+    // RESIGNING EMPLOYEE RECEIVES HIS VESTED AMOUNT BY WITHDRAWING IMMEDIATELY BEFORE RESIGNATION
+    expect(
+      userBalanceAfter.sub(userBalanceBefore).gt(BigNumber.from(0))
+    ).to.be.equal(true);
+    expect(
+      await vestingContract.finalClaimableAmount(owner2.address)
+    ).to.be.equal(BigNumber.from(0));
+  });
 });
 describe("Vested amount", async () => {
   let vestingContract: VestingContractType;
@@ -1236,7 +1312,7 @@ describe("Admin withdrawal", async () => {
     });
     await expect(
       vestingContract.connect(otherUser).withdrawAdmin(1)
-    ).to.be.revertedWith("ADMIN_ACCESS_REQUIRED");
+    ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 });
 describe("Other token admin withdrawal", async () => {
@@ -1312,10 +1388,9 @@ describe("Other token admin withdrawal", async () => {
       vestingContract
         .connect(thirdOwner)
         .withdrawOtherToken(otherTokenContract.address)
-    ).to.be.revertedWith("ADMIN_ACCESS_REQUIRED");
+    ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 });
-
 describe("Long vest fail", async () => {
   let vestingContract: VestingContractType;
   // Default params

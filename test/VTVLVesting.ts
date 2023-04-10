@@ -1,8 +1,8 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
 import Chance from "chance";
 import { VTVLVesting } from "../typechain";
 import { BigNumber, BigNumberish } from "ethers";
+import { ethers } from "hardhat";
 
 const chance = new Chance(43153); // Make sure we have a predictable seed for repeatability
 
@@ -26,10 +26,13 @@ const createContractFactory = async () =>
   await ethers.getContractFactory("VTVLVesting");
 
 const deployVestingContract = async (tokenAddress?: string) => {
+  const [owner] = await ethers.getSigners();
+
   const factory = await createContractFactory();
   // TODO: check if we need any checks that the token be valid, etc
   const contract = await factory.deploy(
-    tokenAddress ?? (await randomAddress())
+    tokenAddress ?? (await randomAddress()),
+    owner.address
   );
   return contract;
 };
@@ -150,39 +153,39 @@ describe("Contract creation", async function () {
 
     const contract = await deployVestingContract();
 
-    expect(await contract.isAdmin(owner.address)).to.equal(true);
+    expect(await contract.owner()).to.equal(owner.address);
   });
 
-  it("not everyone is admin", async function () {
-    const contract = await deployVestingContract();
+  // it("not everyone is admin", async function () {
+  //   const contract = await deployVestingContract();
 
-    expect(await contract.isAdmin(await randomAddress())).to.equal(false);
-  });
+  //   expect(await contract.isAdmin(await randomAddress())).to.equal(false);
+  // });
 
-  it("allows the owner to set and unset other user as an admin", async function () {
-    const [, otherOwner] = await ethers.getSigners();
+  // it("allows the owner to set and unset other user as an admin", async function () {
+  //   const [, otherOwner] = await ethers.getSigners();
 
-    const contract = await deployVestingContract();
+  //   const contract = await deployVestingContract();
 
-    // Initially the other owner is not admin
-    expect(await contract.isAdmin(otherOwner.address)).to.equal(false);
+  //   // Initially the other owner is not admin
+  //   expect(await contract.isAdmin(otherOwner.address)).to.equal(false);
 
-    // They'll become one after we set them as admin
-    await (await contract.setAdmin(otherOwner.address, true)).wait();
-    expect(await contract.isAdmin(otherOwner.address)).to.equal(true);
+  //   // They'll become one after we set them as admin
+  //   await (await contract.setAdmin(otherOwner.address, true)).wait();
+  //   expect(await contract.isAdmin(otherOwner.address)).to.equal(true);
 
-    // And then they'll stop being one right after we unset them
-    await (await contract.setAdmin(otherOwner.address, false)).wait();
-    expect(await contract.isAdmin(otherOwner.address)).to.equal(false);
-  });
+  //   // And then they'll stop being one right after we unset them
+  //   await (await contract.setAdmin(otherOwner.address, false)).wait();
+  //   expect(await contract.isAdmin(otherOwner.address)).to.equal(false);
+  // });
 
-  it("fails if attempting to set wrong address as an admin", async function () {
-    const contract = await deployVestingContract();
+  // it("fails if attempting to set wrong address as an admin", async function () {
+  //   const contract = await deployVestingContract();
 
-    await expect(
-      contract.setAdmin("0x" + "0".repeat(40), true)
-    ).to.be.revertedWith("INVALID_ADDRESS");
-  });
+  //   await expect(
+  //     contract.setAdmin("0x" + "0".repeat(40), true)
+  //   ).to.be.revertedWith("INVALID_ADDRESS");
+  // });
 });
 
 const initialSupplyTokens = 1000;
@@ -893,7 +896,7 @@ describe("Revoke Claim", async () => {
     // A random user cant revert it
     await expect(
       vestingContract.connect(owner2).revokeClaim(recipientAddress)
-    ).to.be.revertedWith("ADMIN_ACCESS_REQUIRED");
+    ).to.be.revertedWith("Ownable: caller is not the owner");
     // Make sure it stays active
     expect(
       await (
@@ -1311,7 +1314,7 @@ describe("Admin withdrawal", async () => {
     });
     await expect(
       vestingContract.connect(otherUser).withdrawAdmin(1)
-    ).to.be.revertedWith("ADMIN_ACCESS_REQUIRED");
+    ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 });
 describe("Other token admin withdrawal", async () => {
@@ -1387,7 +1390,7 @@ describe("Other token admin withdrawal", async () => {
       vestingContract
         .connect(thirdOwner)
         .withdrawOtherToken(otherTokenContract.address)
-    ).to.be.revertedWith("ADMIN_ACCESS_REQUIRED");
+    ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 });
 describe("Long vest fail", async () => {

@@ -1,14 +1,12 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.14;
 
-import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./AccessProtected.sol";
 
-contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
+contract VTVLVesting is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /**
@@ -278,7 +276,7 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
     }
 
     /** 
-    @notice Permission-unchecked version of claim creation (no onlyAdmin). Actual logic for create claim, to be run within either createClaim or createClaimBatch.
+    @notice Permission-unchecked version of claim creation (no onlyOwner). Actual logic for create claim, to be run within either createClaim or createClaimBatch.
     @dev This'll simply check the input parameters, and create the structure verbatim based on passed in parameters.
     @param _recipient - The address of the recipient of the schedule
     @param _startTimestamp - The timestamp when the linear vesting starts
@@ -372,7 +370,7 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
         uint40 _releaseIntervalSecs,
         uint112 _linearVestAmount,
         uint112 _cliffAmount
-    ) external onlyAdmin {
+    ) external onlyOwner {
         _createClaimUnchecked(
             _recipient,
             _startTimestamp,
@@ -396,7 +394,7 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
         uint40[] memory _releaseIntervalsSecs,
         uint112[] memory _linearVestAmounts,
         uint112[] memory _cliffAmounts
-    ) external onlyAdmin {
+    ) external onlyOwner {
         uint256 length = _recipients.length;
         require(
             _startTimestamps.length == length &&
@@ -467,7 +465,7 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
      */
     function withdrawAdmin(uint256 _amountRequested)
         public
-        onlyAdmin
+        onlyOwner
         nonReentrant
     {
         // Allow the owner to withdraw any balance not currently tied up in contracts.
@@ -490,7 +488,7 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
     */
     function revokeClaim(address _recipient)
         external
-        onlyAdmin
+        onlyOwner
         hasActiveClaim(_recipient)
     {
         // Fetch the claim
@@ -533,7 +531,7 @@ contract VTVLVesting is Context, AccessProtected, ReentrancyGuard {
      */
     function withdrawOtherToken(IERC20 _otherTokenAddress)
         external
-        onlyAdmin
+        onlyOwner
         nonReentrant
     {
         require(_otherTokenAddress != tokenAddress, "INVALID_TOKEN"); // tokenAddress address is already sure to be nonzero due to constructor
