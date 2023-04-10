@@ -20,7 +20,10 @@ contract VTVLVestingFactory is Ownable {
      * @param _tokenAddress Vesting Fund token address
      */
     function createVestingContract(IERC20 _tokenAddress) public {
-        VTVLVesting vestingContract = new VTVLVesting(_tokenAddress);
+        VTVLVesting vestingContract = new VTVLVesting(
+            _tokenAddress,
+            msg.sender
+        );
 
         emit CreateVestingContract(address(vestingContract), msg.sender);
     }

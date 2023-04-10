@@ -91,7 +91,6 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
-    // only: [':ERC20$'],
   },
 };
 
