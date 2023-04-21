@@ -10,6 +10,7 @@ import "../AccessProtected.sol";
 contract VariableSupplyERC20Token is ERC20, AccessProtected {
     uint256 public mintableSupply;
     bool public burnable;
+    uint256 public bunedAmount;
 
     /**
     @notice A ERC20 token contract that allows minting at will, with limited or unlimited supply. No burning possible
@@ -63,6 +64,7 @@ contract VariableSupplyERC20Token is ERC20, AccessProtected {
 
     function burn(uint256 amount) public virtual onlyAdmin onlyBurnable {
         _burn(_msgSender(), amount);
+        bunedAmount += amount;
     }
 
     // We can't really have burn, because that could make our vesting contract not work.

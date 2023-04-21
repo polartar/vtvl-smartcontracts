@@ -10,6 +10,8 @@ contract FullPremintERC20Token is ERC20 {
     address public deployer;
     bool public burnable;
 
+    uint256 public burnedAmount;
+
     constructor(
         string memory name_,
         string memory symbol_,
@@ -20,6 +22,7 @@ contract FullPremintERC20Token is ERC20 {
         _mint(_msgSender(), supply_);
         deployer = msg.sender;
         burnable = burnable_;
+        originalSupply = supply_;
     }
 
     /**
@@ -40,5 +43,6 @@ contract FullPremintERC20Token is ERC20 {
 
     function burn(uint256 amount) public virtual onlyDeployer onlyBurnable {
         _burn(_msgSender(), amount);
+        burnedAmount += amount;
     }
 }
