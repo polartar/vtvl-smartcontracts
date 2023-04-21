@@ -111,6 +111,23 @@ function burnable() external view returns (bool)
 |---|---|---|
 | _0 | bool | undefined |
 
+### burnedAmount
+
+```solidity
+function burnedAmount() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### decimals
 
 ```solidity
@@ -151,6 +168,23 @@ function decreaseAllowance(address spender, uint256 subtractedValue) external no
 |---|---|---|
 | _0 | bool | undefined |
 
+### deployer
+
+```solidity
+function deployer() external view returns (address)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address | undefined |
+
 ### increaseAllowance
 
 ```solidity
@@ -190,23 +224,6 @@ function name() external view returns (string)
 | Name | Type | Description |
 |---|---|---|
 | _0 | string | undefined |
-
-### owner
-
-```solidity
-function owner() external view returns (address)
-```
-
-
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | address | undefined |
 
 ### symbol
 

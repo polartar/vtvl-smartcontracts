@@ -22,7 +22,6 @@ contract FullPremintERC20Token is ERC20 {
         _mint(_msgSender(), supply_);
         deployer = msg.sender;
         burnable = burnable_;
-        originalSupply = supply_;
     }
 
     /**
