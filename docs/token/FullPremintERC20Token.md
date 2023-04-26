@@ -111,10 +111,10 @@ function burnable() external view returns (bool)
 |---|---|---|
 | _0 | bool | undefined |
 
-### burnedAmount
+### burntSupply
 
 ```solidity
-function burnedAmount() external view returns (uint256)
+function burntSupply() external view returns (uint256)
 ```
 
 
