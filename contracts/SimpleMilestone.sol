@@ -2,14 +2,23 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SimpleMilestone is Ownable {
+    using SafeERC20 for IERC20;
+
     bool public isCompleted;
+    bool public isWithdrawn;
     address public recipient;
     IERC20 public tokenAddress;
     bool public isDeposited;
     uint256 public allocation;
+
+    /** 
+    @notice Emitted when admin withdraws.
+    */
+    event AdminWithdrawn(address indexed _recipient, uint256 _amountRequested);
 
     /**
     @notice Construct the contract.
@@ -56,6 +65,17 @@ contract SimpleMilestone is Ownable {
     }
 
     /**
+    @notice Calculates how much can we claim, by subtracting the already withdrawn amount from the vestedAmount at this moment.
+    */
+    function claimableAmount() public view returns (uint256) {
+        if (isWithdrawn) {
+            return 0;
+        } else {
+            return allocation;
+        }
+    }
+
+    /**
     @notice Only recipient can withdraw when it's completed.
     @dev Only onwer can mark as completed.
      */
@@ -67,22 +87,39 @@ contract SimpleMilestone is Ownable {
     @notice Only recipient can claim when it's completed.
     @dev Withdraw all tokens.
      */
-    function claim() public onlyRecipient onlyCompleted {
+    function widthdraw() public onlyRecipient onlyCompleted {
         IERC20(tokenAddress).transfer(recipient, allocation);
+        isWithdrawn = true;
     }
 
     /**
     @notice Only admin can withdraw the remaining balance.
     @dev Withdraw the token amount that excludes allocation.
      */
-    function withdraw() public onlyOwner {
+    function withdrawAdmin() public onlyOwner {
         uint256 balance = tokenAddress.balanceOf(address(this));
-        if (balance > allocation) {
-            IERC20(tokenAddress).transfer(msg.sender, balance - allocation);
+        uint256 withdrawableAmount;
+
+        if (isCompleted) {
+            withdrawableAmount = balance - allocation;
+        } else {
+            withdrawableAmount = balance;
         }
+
+        IERC20(tokenAddress).safeTransfer(msg.sender, withdrawableAmount);
+
+        emit AdminWithdrawn(_msgSender(), withdrawableAmount);
     }
 
     function deposit(uint256 amount) public {
         IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount);
+    }
+
+    function numTokensReservedForVesting() public view returns (uint256) {
+        if (isWithdrawn) {
+            return 0;
+        } else {
+            return allocation;
+        }
     }
 }

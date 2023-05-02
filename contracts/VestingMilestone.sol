@@ -166,23 +166,23 @@ contract VestingMilestone is Ownable, ReentrancyGuard {
 
     /**
     @notice Admin withdrawal of the unallocated tokens.
-    @param _amountRequested - the amount that we want to withdraw
      */
-    function withdrawAdmin(
-        uint256 _amountRequested
-    ) public onlyOwner nonReentrant {
-        // Allow the owner to withdraw any balance not currently tied up in contracts.
-        uint256 amountRemaining = amountAvailableToWithdrawByAdmin();
+    function withdrawAdmin() public onlyOwner nonReentrant {
+        uint256 withdrawableAmount;
 
-        require(amountRemaining >= _amountRequested, "INSUFFICIENT_BALANCE");
+        if (isCompleted) {
+            // Allow the owner to withdraw any balance not currently tied up in contracts.
+            withdrawableAmount = amountAvailableToWithdrawByAdmin();
+        } else {
+            withdrawableAmount = tokenAddress.balanceOf(address(this));
+        }
 
-        // Actually withdraw the tokens
-        // Reentrancy note - this operation doesn't touch any of the internal vars, simply transfers
-        // Also following Checks-effects-interactions pattern
-        tokenAddress.safeTransfer(_msgSender(), _amountRequested);
+        require(withdrawableAmount > 0, "INSUFFICIENT_BALANCE");
+
+        tokenAddress.safeTransfer(_msgSender(), withdrawableAmount);
 
         // Let the withdrawal known to everyone
-        emit AdminWithdrawn(_msgSender(), _amountRequested);
+        emit AdminWithdrawn(_msgSender(), withdrawableAmount);
     }
 
     /**
