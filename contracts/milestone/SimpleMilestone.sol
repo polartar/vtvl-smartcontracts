@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./BaseMilestone.sol";
 
 contract SimpleMilestone is BaseMilestone {
-     using SafeERC20 for IERC20;
-     
+    using SafeERC20 for IERC20;
+
     /**
     @notice Construct the contract.
     @param _tokenAddress - the address of the claim token.

@@ -6,7 +6,6 @@ import {
   TestERC20Token,
   VTVLMilestoneFactory,
 } from "../typechain";
-import { BigNumber, BigNumberish } from "ethers";
 import { parseEther } from "ethers/lib/utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 const MilestoneFactoryJson = require("../artifacts/contracts/VTVLMilestoneFactory.sol/VTVLMilestoneFactory.json");
@@ -31,26 +30,6 @@ function getParamFromEvent(
   return event.args[paramIndex];
 }
 
-const randomAddress = async () => {
-  return await ethers.Wallet.createRandom().getAddress();
-};
-
-const getLastBlockTs = async () => {
-  const blockNumBefore = await ethers.provider.getBlockNumber();
-  const timestampBefore = await getBlockTs(blockNumBefore);
-  return timestampBefore;
-};
-
-const getBlockTs = async (blockNumber: number) => {
-  const blockBefore = await ethers.provider.getBlock(blockNumber);
-  const timestampBefore = blockBefore.timestamp;
-  return timestampBefore;
-};
-const dateToTs = (date: Date | string) =>
-  ethers.BigNumber.from(
-    Math.floor((date instanceof Date ? date : new Date(date)).getTime() / 1000)
-  );
-
 const createContractFactory = async () =>
   await ethers.getContractFactory("VTVLMilestoneFactory");
 
@@ -59,8 +38,8 @@ const totalAllocation = parseEther("10000");
 const allocationPercents = [10, 40, 50];
 const tokenName = chance.string({ length: 10 });
 const tokenSymbol = chance.string({ length: 3 }).toUpperCase();
-const releaseIntervalSecs = BigNumber.from(60 * 60); // 1 hour
-const vestingPeriod = releaseIntervalSecs.mul(100);
+// const releaseIntervalSecs = BigNumber.from(60 * 60); // 1 hour
+// const vestingPeriod = releaseIntervalSecs.mul(100);
 
 const deployTestToken = async () => {
   // Create an example token
@@ -136,7 +115,7 @@ describe("Contract creation with fund", async function () {
       "Ownable: caller is not the owner"
     );
 
-    await contract.setComplete();
+    await contract.setComplete(0);
     expect(await contract.isCompleted(0)).to.be.equal(true);
   });
 
@@ -158,14 +137,14 @@ describe("Contract creation with fund", async function () {
   });
 
   it("should only recipient can withdraw", async function () {
-    await expect(contract.connect(other).withdraw(0)).to.be.revertedWith(
+    await expect(contract.connect(other).widthdraw(0)).to.be.revertedWith(
       "NO_RECIPIENT"
     );
   });
 
   it("should recipient withdraw", async function () {
     await expect(() =>
-      contract.connect(recipient).withdraw(0)
+      contract.connect(recipient).widthdraw(0)
     ).to.changeTokenBalance(
       tokenContract,
       recipient,
@@ -174,7 +153,7 @@ describe("Contract creation with fund", async function () {
   });
 
   it("should can withdraw when completed", async function () {
-    await expect(contract.connect(recipient).withdraw(1)).to.be.revertedWith(
+    await expect(contract.connect(recipient).widthdraw(1)).to.be.revertedWith(
       "NOT_COMPLETED"
     );
   });

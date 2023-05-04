@@ -1,22 +1,22 @@
-# VTVLVestingFactory
+# VTVLMilestoneFactory
 
 
 
-> Vesting Factory contract
+> Milestone Vesting Factory contract
 
-Create Vesting contract
+Create Milestone contracts
 
 
 
 ## Methods
 
-### createVestingContract
+### createSimpleMilestones
 
 ```solidity
-function createVestingContract(contract IERC20 _tokenAddress) external nonpayable
+function createSimpleMilestones(contract IERC20 _tokenAddress, uint256 _totalAllocation, uint256[] _allocationPercents, address _recipient) external nonpayable
 ```
 
-Create Vesting contract
+Create simple milestones
 
 
 
@@ -25,6 +25,30 @@ Create Vesting contract
 | Name | Type | Description |
 |---|---|---|
 | _tokenAddress | contract IERC20 | Vesting Fund token address |
+| _totalAllocation | uint256 | undefined |
+| _allocationPercents | uint256[] | undefined |
+| _recipient | address | undefined |
+
+### createVestingMilestone
+
+```solidity
+function createVestingMilestone(contract IERC20 _tokenAddress, uint256 _totalAllocation, uint256[] _allocationPercents, address _recipient, uint256 _intervalSecs, uint256 _period) external nonpayable
+```
+
+Create milestone based Vesting contract
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _tokenAddress | contract IERC20 | Vesting Fund token address |
+| _totalAllocation | uint256 | undefined |
+| _allocationPercents | uint256[] | undefined |
+| _recipient | address | undefined |
+| _intervalSecs | uint256 | undefined |
+| _period | uint256 | undefined |
 
 ### owner
 
@@ -74,10 +98,10 @@ function transferOwnership(address newOwner) external nonpayable
 
 ## Events
 
-### CreateVestingContract
+### CreateMilestoneContract
 
 ```solidity
-event CreateVestingContract(address indexed vestingAddress, address deployer)
+event CreateMilestoneContract(address indexed milestoneAddress, address creator)
 ```
 
 
@@ -88,8 +112,8 @@ event CreateVestingContract(address indexed vestingAddress, address deployer)
 
 | Name | Type | Description |
 |---|---|---|
-| vestingAddress `indexed` | address | undefined |
-| deployer  | address | undefined |
+| milestoneAddress `indexed` | address | undefined |
+| creator  | address | undefined |
 
 ### OwnershipTransferred
 
