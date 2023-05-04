@@ -36,12 +36,12 @@ contract VTVLMilestoneFactory is Ownable {
             }
         }
 
-        if (sum != 10000) {
+        if (sum != 100) {
             revert("INVALID_ALLOCATION_PERCENTS");
         }
     }
 
-    function deposit(
+    function _deposit(
         IERC20 _tokenAddress,
         uint256 _amount,
         address _contractAddress
@@ -81,7 +81,7 @@ contract VTVLMilestoneFactory is Ownable {
             msg.sender
         );
 
-        deposit(_tokenAddress, _totalAllocation, address(milestoneContract));
+        _deposit(_tokenAddress, _totalAllocation, address(milestoneContract));
 
         emit CreateMilestoneContract(address(milestoneContract), msg.sender);
     }
@@ -106,7 +106,7 @@ contract VTVLMilestoneFactory is Ownable {
             msg.sender
         );
 
-        deposit(_tokenAddress, _totalAllocation, address(milestoneContract));
+        _deposit(_tokenAddress, _totalAllocation, address(milestoneContract));
 
         emit CreateMilestoneContract(address(milestoneContract), msg.sender);
     }
