@@ -48,7 +48,8 @@ const createContractFactory = async () =>
   await ethers.getContractFactory("VTVLMilestoneFactory");
 
 let factoryContract: VTVLMilestoneFactory;
-const totalAllocation = parseEther("10000");
+const initialSupply = 10000;
+const totalAllocation = parseEther(initialSupply.toString());
 const allocationPercents = [10, 40, 50];
 const tokenName = chance.string({ length: 10 });
 const tokenSymbol = chance.string({ length: 3 }).toUpperCase();
@@ -63,7 +64,7 @@ const deployTestToken = async () => {
   const tokenContract = await tokenContractFactory.deploy(
     tokenName,
     tokenSymbol,
-    totalAllocation
+    initialSupply
   );
   await tokenContract.deployed();
   return tokenContract;
@@ -100,6 +101,10 @@ const createVestingMilestone = async (
   return contract;
 };
 
+const randomAddress = async () => {
+  return await ethers.Wallet.createRandom().getAddress();
+};
+
 describe("Milestone Based Vesting Contract creation with fund", async function () {
   let tokenContract: TestERC20Token;
   let owner: SignerWithAddress,
@@ -112,6 +117,20 @@ describe("Milestone Based Vesting Contract creation with fund", async function (
     tokenContract = await deployTestToken();
 
     contract = await createVestingMilestone(tokenContract, recipient.address);
+  });
+
+  it("should not create contract if invalid IERC20 token", async function () {
+    const tokenAddress = await randomAddress();
+    await expect(
+      factoryContract.createVestingMilestone(
+        tokenAddress,
+        totalAllocation,
+        allocationPercents,
+        recipient.address,
+        releaseIntervalSecs,
+        vestingPeriod
+      )
+    ).to.be.reverted;
   });
 
   it("check token address", async function () {
@@ -172,13 +191,11 @@ const amountPerInterval = (milestoneIndex: number) => {
 
 describe("Milestone Based Vesting Contract claim", async function () {
   let tokenContract: TestERC20Token;
-  let owner: SignerWithAddress,
-    other: SignerWithAddress,
-    recipient: SignerWithAddress;
+  let recipient: SignerWithAddress;
   let contract: VestingMilestone;
 
   beforeEach(async () => {
-    [owner, other, recipient] = await ethers.getSigners();
+    [, , recipient] = await ethers.getSigners();
     tokenContract = await deployTestToken();
 
     contract = await createVestingMilestone(tokenContract, recipient.address);
@@ -269,5 +286,51 @@ describe("Milestone Based Vesting Contract claim", async function () {
       recipient,
       totalAllocation.mul(allocationPercents[0]).div(100)
     );
+  });
+});
+
+describe("Milestone Based Contract creation without fund", async function () {
+  let tokenContract: TestERC20Token;
+  let owner: SignerWithAddress,
+    other: SignerWithAddress,
+    recipient: SignerWithAddress;
+  let contract: VestingMilestone;
+
+  before(async () => {
+    [owner, other, recipient] = await ethers.getSigners();
+    tokenContract = await deployTestToken();
+
+    // transfer all tokens to other
+    await tokenContract.transfer(other.address, totalAllocation);
+
+    contract = await createVestingMilestone(tokenContract, recipient.address);
+  });
+
+  it("should the balance of milestone contract is 0", async function () {
+    console.log(await tokenContract.balanceOf(owner.address));
+    expect(await tokenContract.balanceOf(contract.address)).to.be.equal(
+      BigNumber.from(0)
+    );
+  });
+
+  it("the deployer is the owner", async function () {
+    expect(await contract.owner()).to.be.equal(owner.address);
+  });
+
+  it("should not completed when deployed", async function () {
+    expect(await contract.isCompleted(0)).to.be.equal(false);
+  });
+
+  it("should not set the complete if not deposited", async function () {
+    await expect(contract.setComplete(0)).to.be.revertedWith("NOT_DEPOSITED");
+  });
+
+  it("should set the complete if deposited", async function () {
+    await tokenContract
+      .connect(other)
+      .transfer(contract.address, totalAllocation);
+
+    await contract.setComplete(0);
+    expect(await contract.isCompleted(0)).to.be.equal(true);
   });
 });

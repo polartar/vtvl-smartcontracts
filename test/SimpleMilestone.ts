@@ -8,6 +8,7 @@ import {
 } from "../typechain";
 import { parseEther } from "ethers/lib/utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { BigNumber } from "ethers";
 const MilestoneFactoryJson = require("../artifacts/contracts/VTVLMilestoneFactory.sol/VTVLMilestoneFactory.json");
 
 const iface = new ethers.utils.Interface(MilestoneFactoryJson.abi);
@@ -34,7 +35,8 @@ const createContractFactory = async () =>
   await ethers.getContractFactory("VTVLMilestoneFactory");
 
 let factoryContract: VTVLMilestoneFactory;
-const totalAllocation = parseEther("10000");
+const initialSupply = 10000;
+const totalAllocation = parseEther(initialSupply.toString());
 const allocationPercents = [10, 40, 50];
 const tokenName = chance.string({ length: 10 });
 const tokenSymbol = chance.string({ length: 3 }).toUpperCase();
@@ -49,24 +51,22 @@ const deployTestToken = async () => {
   const tokenContract = await tokenContractFactory.deploy(
     tokenName,
     tokenSymbol,
-    totalAllocation
+    initialSupply
   );
   await tokenContract.deployed();
   return tokenContract;
 };
 
+const randomAddress = async () => {
+  return await ethers.Wallet.createRandom().getAddress();
+};
+
 const createSimpleMilestone = async (
-  tokenContract: TestERC20Token,
+  tokenContractAddress: string,
   recipient: string
 ) => {
-  const factory = await createContractFactory();
-  factoryContract = await factory.deploy();
-  await factoryContract.deployed();
-
-  await tokenContract.approve(factoryContract.address, totalAllocation);
-
   const transaction = await factoryContract.createSimpleMilestones(
-    tokenContract.address,
+    tokenContractAddress,
     totalAllocation,
     allocationPercents,
     recipient
@@ -84,6 +84,19 @@ const createSimpleMilestone = async (
   return contract;
 };
 
+const createPreFundVestingContract = async (
+  tokenContract: TestERC20Token,
+  recipient: string
+) => {
+  const factory = await createContractFactory();
+  factoryContract = await factory.deploy();
+  await factoryContract.deployed();
+
+  await tokenContract.approve(factoryContract.address, totalAllocation);
+
+  return createSimpleMilestone(tokenContract.address, recipient);
+};
+
 describe("Simple Milestone Contract creation with fund", async function () {
   let tokenContract: TestERC20Token;
   let owner: SignerWithAddress,
@@ -95,7 +108,22 @@ describe("Simple Milestone Contract creation with fund", async function () {
     [owner, other, recipient] = await ethers.getSigners();
     tokenContract = await deployTestToken();
 
-    contract = await createSimpleMilestone(tokenContract, recipient.address);
+    contract = await createPreFundVestingContract(
+      tokenContract,
+      recipient.address
+    );
+  });
+
+  it("should not create contract if invalid IERC20 token", async function () {
+    const tokenAddress = await randomAddress();
+    await expect(
+      factoryContract.createSimpleMilestones(
+        tokenAddress,
+        totalAllocation,
+        allocationPercents,
+        recipient.address
+      )
+    ).to.be.reverted;
   });
 
   it("check token address", async function () {
@@ -164,5 +192,53 @@ describe("Simple Milestone Contract creation with fund", async function () {
       owner,
       totalAllocation.sub(totalAllocation.mul(allocationPercents[0]).div(100))
     );
+  });
+});
+
+describe("Simple Milestone Contract creation without fund", async function () {
+  let tokenContract: TestERC20Token;
+  let owner: SignerWithAddress,
+    other: SignerWithAddress,
+    recipient: SignerWithAddress;
+  let contract: SimpleMilestone;
+
+  before(async () => {
+    [owner, other, recipient] = await ethers.getSigners();
+    tokenContract = await deployTestToken();
+
+    // transfer all tokens to other
+    await tokenContract.transfer(other.address, totalAllocation);
+
+    contract = await createSimpleMilestone(
+      tokenContract.address,
+      recipient.address
+    );
+  });
+
+  it("should the balance of milestone contract is 0", async function () {
+    expect(await tokenContract.balanceOf(contract.address)).to.be.equal(
+      BigNumber.from(0)
+    );
+  });
+
+  it("the deployer is the owner", async function () {
+    expect(await contract.owner()).to.be.equal(owner.address);
+  });
+
+  it("should not completed when deployed", async function () {
+    expect(await contract.isCompleted(0)).to.be.equal(false);
+  });
+
+  it("should not set the complete if not deposited", async function () {
+    await expect(contract.setComplete(0)).to.be.revertedWith("NOT_DEPOSITED");
+  });
+
+  it("should set the complete if deposited", async function () {
+    await tokenContract
+      .connect(other)
+      .transfer(contract.address, totalAllocation);
+
+    await contract.setComplete(0);
+    expect(await contract.isCompleted(0)).to.be.equal(true);
   });
 });
