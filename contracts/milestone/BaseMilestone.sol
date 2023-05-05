@@ -32,7 +32,7 @@ contract BaseMilestone is Ownable {
     ) internal {
         uint256 length = _allocationPercents.length;
         for (uint256 i = 0; i < length; ) {
-            milestones[i + 1].allocation = uint248(
+            milestones[i].allocation = uint248(
                 (_allocationPercents[i] * totalAllocation) / 100
             );
             unchecked {
@@ -83,9 +83,9 @@ contract BaseMilestone is Ownable {
     @notice Only admin can withdraw the amount before it's completed.
      */
     function withdrawAdmin() public onlyOwner {
-        uint256 balance = tokenAddress.balanceOf(address(this));
-        require(balance > numTokensReservedForVesting, "NO_WITHDRAWAL_AMOUNT");
-        uint256 availableAmount = balance - numTokensReservedForVesting;
+        uint256 availableAmount = totalAllocation - numTokensReservedForVesting;
+
+        tokenAddress.safeTransfer(msg.sender, availableAmount);
 
         emit AdminWithdrawn(_msgSender(), availableAmount);
     }

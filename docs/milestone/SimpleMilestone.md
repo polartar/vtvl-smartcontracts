@@ -198,10 +198,10 @@ function transferOwnership(address newOwner) external nonpayable
 |---|---|---|
 | newOwner | address | undefined |
 
-### widthdraw
+### withdraw
 
 ```solidity
-function widthdraw(uint256 _milestoneIndex) external nonpayable
+function withdraw(uint256 _milestoneIndex) external nonpayable
 ```
 
 Only recipient can claim when it&#39;s completed.

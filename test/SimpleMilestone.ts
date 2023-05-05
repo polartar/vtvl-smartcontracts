@@ -56,15 +56,17 @@ const deployTestToken = async () => {
 };
 
 const createSimpleMilestone = async (
-  tokenAddress: string,
+  tokenContract: TestERC20Token,
   recipient: string
 ) => {
   const factory = await createContractFactory();
   factoryContract = await factory.deploy();
   await factoryContract.deployed();
 
+  await tokenContract.approve(factoryContract.address, totalAllocation);
+
   const transaction = await factoryContract.createSimpleMilestones(
-    tokenAddress,
+    tokenContract.address,
     totalAllocation,
     allocationPercents,
     recipient
@@ -92,10 +94,8 @@ describe("Contract creation with fund", async function () {
   before(async () => {
     [owner, other, recipient] = await ethers.getSigners();
     tokenContract = await deployTestToken();
-    contract = await createSimpleMilestone(
-      tokenContract.address,
-      recipient.address
-    );
+
+    contract = await createSimpleMilestone(tokenContract, recipient.address);
   });
 
   it("check token address", async function () {
@@ -126,25 +126,25 @@ describe("Contract creation with fund", async function () {
   });
 
   it("should claimable amount be same as allocation when completed", async function () {
-    await expect(contract.claimableAmount(0)).to.be.equal(
+    expect(await contract.claimableAmount(0)).to.be.equal(
       totalAllocation.mul(allocationPercents[0]).div(100)
     );
   });
 
   it("should claimable amount be 0 when not completed", async function () {
     expect(await contract.isCompleted(1)).to.be.equal(false);
-    await expect(contract.claimableAmount(1)).to.be.equal(0);
+    expect(await contract.claimableAmount(1)).to.be.equal(0);
   });
 
   it("should only recipient can withdraw", async function () {
-    await expect(contract.connect(other).widthdraw(0)).to.be.revertedWith(
+    await expect(contract.connect(other).withdraw(0)).to.be.revertedWith(
       "NO_RECIPIENT"
     );
   });
 
   it("should recipient withdraw", async function () {
     await expect(() =>
-      contract.connect(recipient).widthdraw(0)
+      contract.connect(recipient).withdraw(0)
     ).to.changeTokenBalance(
       tokenContract,
       recipient,
@@ -153,7 +153,7 @@ describe("Contract creation with fund", async function () {
   });
 
   it("should can withdraw when completed", async function () {
-    await expect(contract.connect(recipient).widthdraw(1)).to.be.revertedWith(
+    await expect(contract.connect(recipient).withdraw(1)).to.be.revertedWith(
       "NOT_COMPLETED"
     );
   });
@@ -161,7 +161,7 @@ describe("Contract creation with fund", async function () {
   it("should admin withdraw uncompleted allocations", async function () {
     await expect(() => contract.withdrawAdmin()).to.changeTokenBalance(
       tokenContract,
-      recipient,
+      owner,
       totalAllocation.sub(totalAllocation.mul(allocationPercents[0]).div(100))
     );
   });

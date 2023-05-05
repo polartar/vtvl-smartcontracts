@@ -41,10 +41,11 @@ contract SimpleMilestone is BaseMilestone {
     function claimableAmount(
         uint256 _milestoneIndex
     ) public view returns (uint256) {
-        if (milestones[_milestoneIndex].isWithdrawn) {
+        Milestone memory milestone = milestones[_milestoneIndex];
+        if (milestone.startTime == 0 || milestone.isWithdrawn) {
             return 0;
         } else {
-            return milestones[_milestoneIndex].allocation;
+            return milestone.allocation;
         }
     }
 
@@ -52,7 +53,7 @@ contract SimpleMilestone is BaseMilestone {
     @notice Only recipient can claim when it's completed.
     @dev Withdraw all tokens.
      */
-    function widthdraw(
+    function withdraw(
         uint256 _milestoneIndex
     ) public onlyRecipient onlyCompleted(_milestoneIndex) {
         Milestone storage milestone = milestones[_milestoneIndex];
