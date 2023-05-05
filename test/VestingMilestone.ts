@@ -164,7 +164,7 @@ describe("Milestone Based Vesting Contract creation with fund", async function (
 
 const amountPerInterval = (milestoneIndex: number) => {
   return totalAllocation
-    .mul(allocationPercents[0])
+    .mul(allocationPercents[milestoneIndex])
     .div(100)
     .mul(releaseIntervalSecs)
     .div(vestingPeriod);
@@ -195,21 +195,21 @@ describe("Milestone Based Vesting Contract claim", async function () {
     const endTimestamp = startTimestamp + 10 * 3600;
 
     // 10 hours passed after completed
-    await ethers.provider.send("evm_mine", [startTimestamp + endTimestamp]);
+    await ethers.provider.send("evm_mine", [endTimestamp]);
 
     const intervals = BigNumber.from(3600 * 10).div(releaseIntervalSecs);
-    expect(await contract.claimableAmount(0)).to.be.equal(
-      amountPerInterval(0).mul(intervals)
+    expect((await contract.claimableAmount(0)).toString()).to.be.equal(
+      amountPerInterval(0).mul(intervals).toString()
     );
   });
 
-  it("should recipient withdraw correct amount", async function () {
+  it("should recipient withdraw correct amount from milestone 0", async function () {
     await contract.setComplete(0);
     const startTimestamp = (await getLastBlockTs()) + 100;
     const endTimestamp = startTimestamp + 10 * 3600;
 
     // 10 hours passed after completed
-    await ethers.provider.send("evm_mine", [startTimestamp + endTimestamp]);
+    await ethers.provider.send("evm_mine", [endTimestamp]);
 
     const intervals = BigNumber.from(3600 * 10).div(releaseIntervalSecs);
     await expect(() =>
@@ -218,6 +218,56 @@ describe("Milestone Based Vesting Contract claim", async function () {
       tokenContract,
       recipient,
       amountPerInterval(0).mul(intervals)
+    );
+  });
+
+  it("should recipient withdraw correct amount from milestone 1", async function () {
+    await contract.setComplete(1);
+    const startTimestamp = (await getLastBlockTs()) + 100;
+    const endTimestamp = startTimestamp + 10 * 3600;
+
+    // 10 hours passed after completed
+    await ethers.provider.send("evm_mine", [endTimestamp]);
+
+    const intervals = BigNumber.from(3600 * 10).div(releaseIntervalSecs);
+    await expect(() =>
+      contract.connect(recipient).withdraw(1)
+    ).to.changeTokenBalance(
+      tokenContract,
+      recipient,
+      amountPerInterval(1).mul(intervals)
+    );
+  });
+
+  it("should not claim after claim", async function () {
+    await contract.setComplete(0);
+    const startTimestamp = (await getLastBlockTs()) + 100;
+    const endTimestamp = startTimestamp + 10 * 3600;
+
+    // 10 hours passed after completed
+    await ethers.provider.send("evm_mine", [endTimestamp]);
+
+    await contract.connect(recipient).withdraw(0);
+    await expect(contract.connect(recipient).withdraw(0)).to.be.revertedWith(
+      "NOTHING_TO_WITHDRAW"
+    );
+  });
+
+  it("should claim all allocation after period", async function () {
+    await contract.setComplete(0);
+    const startTimestamp = (await getLastBlockTs()) + 100;
+
+    // vesting period ended
+    await ethers.provider.send("evm_mine", [
+      startTimestamp + vestingPeriod.toNumber() + 10,
+    ]);
+
+    await expect(() =>
+      contract.connect(recipient).withdraw(0)
+    ).to.changeTokenBalance(
+      tokenContract,
+      recipient,
+      totalAllocation.mul(allocationPercents[0]).div(100)
     );
   });
 });
