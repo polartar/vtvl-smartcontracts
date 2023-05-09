@@ -256,6 +256,20 @@ describe("Milestone Based Vesting Contract claim", async function () {
     );
   });
 
+  it("should recipient withdraw same amount with claimable amount", async function () {
+    await contract.setComplete(1);
+    const startTimestamp = (await getLastBlockTs()) + 100;
+    const endTimestamp = startTimestamp + 10 * 3600;
+
+    // 10 hours passed after completed
+    await ethers.provider.send("evm_mine", [endTimestamp]);
+
+    const claimableAmount = await contract.claimableAmount(1);
+    await expect(() =>
+      contract.connect(recipient).withdraw(1)
+    ).to.changeTokenBalance(tokenContract, recipient, claimableAmount);
+  });
+
   it("should not claim after claim", async function () {
     await contract.setComplete(0);
     const startTimestamp = (await getLastBlockTs()) + 100;
@@ -267,6 +281,18 @@ describe("Milestone Based Vesting Contract claim", async function () {
     await contract.connect(recipient).withdraw(0);
     await expect(contract.connect(recipient).withdraw(0)).to.be.revertedWith(
       "NOTHING_TO_WITHDRAW"
+    );
+  });
+
+  it("should not claim unless completed", async function () {
+    const startTimestamp = (await getLastBlockTs()) + 100;
+    const endTimestamp = startTimestamp + 10 * 3600;
+
+    // 10 hours passed after completed
+    await ethers.provider.send("evm_mine", [endTimestamp]);
+
+    await expect(contract.connect(recipient).withdraw(1)).to.be.revertedWith(
+      "NOT_COMPLETED"
     );
   });
 

@@ -105,7 +105,9 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
     @param _milestoneIndex the index of milestones.
     @dev hasActiveClaim throws off anyone without a claim.
      */
-    function withdraw(uint256 _milestoneIndex) external onlyRecipient {
+    function withdraw(
+        uint256 _milestoneIndex
+    ) external onlyRecipient onlyCompleted(_milestoneIndex) {
         Milestone storage milestone = milestones[_milestoneIndex];
         // we can use block.timestamp directly here as reference TS, as the function itself will make sure to cap it to endTimestamp
         // Conversion of timestamp to uint40 should be safe since 48 bit allows for a lot of years.
