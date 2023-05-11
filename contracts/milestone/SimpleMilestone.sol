@@ -32,7 +32,7 @@ contract SimpleMilestone is BaseMilestone {
         _transferOwnership(_owner);
         totalAllocation = _totalAllocation;
 
-        super.initializeMilestones(_allcationPercents);
+        super.initializeAllocations(_allcationPercents);
     }
 
     /**

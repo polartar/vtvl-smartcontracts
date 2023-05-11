@@ -32,10 +32,10 @@ Create simple milestones
 ### createVestingMilestone
 
 ```solidity
-function createVestingMilestone(contract IERC20 _tokenAddress, uint256 _totalAllocation, uint256[] _allocationPercents, address _recipient, uint256 _intervalSecs, uint256 _period) external nonpayable
+function createVestingMilestone(contract IERC20 _tokenAddress, uint256 _totalAllocation, InputMilestone[] _milestones, address _recipient) external nonpayable
 ```
 
-Create milestone based Vesting contract
+
 
 
 
@@ -43,12 +43,10 @@ Create milestone based Vesting contract
 
 | Name | Type | Description |
 |---|---|---|
-| _tokenAddress | contract IERC20 | Vesting Fund token address |
+| _tokenAddress | contract IERC20 | undefined |
 | _totalAllocation | uint256 | undefined |
-| _allocationPercents | uint256[] | undefined |
+| _milestones | InputMilestone[] | undefined |
 | _recipient | address | undefined |
-| _intervalSecs | uint256 | undefined |
-| _period | uint256 | undefined |
 
 ### owner
 

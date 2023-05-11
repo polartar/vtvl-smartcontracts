@@ -21,6 +21,29 @@ contract VTVLMilestoneFactory is Ownable {
     /**
     Check if sum of allocation percents is 100%
      */
+    function milestoneValidate(
+        InputMilestone[] calldata _milestones
+    ) private pure {
+        uint256 sum;
+        uint256 length = _milestones.length;
+
+        require(length > 0, "INVALID_MILESTONE_LENGTH");
+
+        for (uint256 i = 0; i < length; ) {
+            unchecked {
+                sum += _milestones[i].percent;
+                ++i;
+            }
+        }
+
+        if (sum != 100) {
+            revert("INVALID_ALLOCATION_PERCENTS");
+        }
+    }
+
+    /**
+    Check if sum of allocation percents is 100%
+     */
     function allocationValidate(
         uint256[] calldata _allocationPercents
     ) private pure {
@@ -64,20 +87,16 @@ contract VTVLMilestoneFactory is Ownable {
     function createVestingMilestone(
         IERC20 _tokenAddress,
         uint256 _totalAllocation,
-        uint256[] calldata _allocationPercents,
-        address _recipient,
-        uint256 _intervalSecs,
-        uint256 _period
+        InputMilestone[] calldata _milestones,
+        address _recipient
     ) public {
-        allocationValidate(_allocationPercents);
+        milestoneValidate(_milestones);
 
         VestingMilestone milestoneContract = new VestingMilestone(
             _tokenAddress,
             _totalAllocation,
-            _allocationPercents,
+            _milestones,
             _recipient,
-            _intervalSecs,
-            _period,
             msg.sender
         );
 

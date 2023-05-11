@@ -10,9 +10,6 @@ import "./BaseMilestone.sol";
 contract VestingMilestone is BaseMilestone, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    uint256 public period;
-    uint256 public releaseIntervalSecs;
-
     /**
     @notice Emitted when someone withdraws a vested amount
     */
@@ -26,21 +23,17 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
     constructor(
         IERC20 _tokenAddress,
         uint256 _totalAllocation,
-        uint256[] memory _allocationPercents,
+        InputMilestone[] memory _milestones,
         address _recipient,
-        uint256 _intervalSecs,
-        uint256 _period,
         address _owner
     ) {
         require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
         tokenAddress = _tokenAddress;
         _transferOwnership(_owner);
-        period = _period;
-        releaseIntervalSecs = _intervalSecs;
         recipient = _recipient;
         totalAllocation = _totalAllocation;
 
-        super.initializeMilestones(_allocationPercents);
+        super.initializeMilestones(_milestones);
     }
 
     /**
@@ -59,8 +52,8 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
         }
 
         // Check if this time is over vesting end time
-        if (_referenceTs > milestone.startTime + period) {
-            _referenceTs = milestone.startTime + period;
+        if (_referenceTs > milestone.startTime + milestone.period) {
+            _referenceTs = milestone.startTime + milestone.period;
         }
 
         if (_referenceTs > milestone.startTime) {
@@ -68,9 +61,9 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
                 milestone.startTime; // How long since the start
 
             uint256 intervals = currentVestingDurationSecs /
-                releaseIntervalSecs;
-            uint256 amountPerInterval = (releaseIntervalSecs *
-                milestone.allocation) / period;
+                milestone.releaseIntervalSecs;
+            uint256 amountPerInterval = (milestone.releaseIntervalSecs *
+                milestone.allocation) / milestone.period;
 
             return amountPerInterval * intervals;
         }

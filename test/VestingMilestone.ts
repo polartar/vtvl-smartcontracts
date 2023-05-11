@@ -51,10 +51,29 @@ let factoryContract: VTVLMilestoneFactory;
 const initialSupply = 10000;
 const totalAllocation = parseEther(initialSupply.toString());
 const allocationPercents = [10, 40, 50];
-const tokenName = chance.string({ length: 10 });
-const tokenSymbol = chance.string({ length: 3 }).toUpperCase();
 const releaseIntervalSecs = BigNumber.from(60 * 60); // 1 hour
 const vestingPeriod = releaseIntervalSecs.mul(100);
+
+const milestones = [
+  {
+    percent: 10,
+    period: vestingPeriod,
+    releaseIntervalSecs,
+  },
+  {
+    percent: 40,
+    period: vestingPeriod.mul(3),
+    releaseIntervalSecs: releaseIntervalSecs.mul(2),
+  },
+  {
+    percent: 50,
+    period: vestingPeriod,
+    releaseIntervalSecs,
+  },
+];
+
+const tokenName = chance.string({ length: 10 });
+const tokenSymbol = chance.string({ length: 3 }).toUpperCase();
 
 const deployTestToken = async () => {
   // Create an example token
@@ -83,10 +102,8 @@ const createVestingMilestone = async (
   const transaction = await factoryContract.createVestingMilestone(
     tokenContract.address,
     totalAllocation,
-    allocationPercents,
-    recipient,
-    releaseIntervalSecs,
-    vestingPeriod
+    milestones,
+    recipient
   );
 
   const milestoneContractAddress = getParamFromEvent(
@@ -125,10 +142,8 @@ describe("Milestone Based Vesting Contract creation with fund", async function (
       factoryContract.createVestingMilestone(
         tokenAddress,
         totalAllocation,
-        allocationPercents,
-        recipient.address,
-        releaseIntervalSecs,
-        vestingPeriod
+        milestones,
+        recipient.address
       )
     ).to.be.reverted;
   });
@@ -183,10 +198,10 @@ describe("Milestone Based Vesting Contract creation with fund", async function (
 
 const amountPerInterval = (milestoneIndex: number) => {
   return totalAllocation
-    .mul(allocationPercents[milestoneIndex])
+    .mul(milestones[milestoneIndex].percent)
     .div(100)
-    .mul(releaseIntervalSecs)
-    .div(vestingPeriod);
+    .mul(milestones[milestoneIndex].releaseIntervalSecs)
+    .div(milestones[milestoneIndex].period);
 };
 
 describe("Milestone Based Vesting Contract claim", async function () {
@@ -214,7 +229,9 @@ describe("Milestone Based Vesting Contract claim", async function () {
     // 10 hours passed after completed
     await ethers.provider.send("evm_mine", [endTimestamp]);
 
-    const intervals = BigNumber.from(3600 * 10).div(releaseIntervalSecs);
+    const intervals = BigNumber.from(3600 * 10).div(
+      milestones[0].releaseIntervalSecs
+    );
     expect((await contract.claimableAmount(0)).toString()).to.be.equal(
       amountPerInterval(0).mul(intervals).toString()
     );
@@ -228,7 +245,9 @@ describe("Milestone Based Vesting Contract claim", async function () {
     // 10 hours passed after completed
     await ethers.provider.send("evm_mine", [endTimestamp]);
 
-    const intervals = BigNumber.from(3600 * 10).div(releaseIntervalSecs);
+    const intervals = BigNumber.from(3600 * 10).div(
+      milestones[0].releaseIntervalSecs
+    );
     await expect(() =>
       contract.connect(recipient).withdraw(0)
     ).to.changeTokenBalance(
@@ -246,7 +265,9 @@ describe("Milestone Based Vesting Contract claim", async function () {
     // 10 hours passed after completed
     await ethers.provider.send("evm_mine", [endTimestamp]);
 
-    const intervals = BigNumber.from(3600 * 10).div(releaseIntervalSecs);
+    const intervals = BigNumber.from(3600 * 10).div(
+      milestones[1].releaseIntervalSecs
+    );
     await expect(() =>
       contract.connect(recipient).withdraw(1)
     ).to.changeTokenBalance(
@@ -302,7 +323,7 @@ describe("Milestone Based Vesting Contract claim", async function () {
 
     // vesting period ended
     await ethers.provider.send("evm_mine", [
-      startTimestamp + vestingPeriod.toNumber() + 10,
+      startTimestamp + milestones[0].period.toNumber() + 10,
     ]);
 
     await expect(() =>
@@ -333,7 +354,6 @@ describe("Milestone Based Contract creation without fund", async function () {
   });
 
   it("should the balance of milestone contract is 0", async function () {
-    console.log(await tokenContract.balanceOf(owner.address));
     expect(await tokenContract.balanceOf(contract.address)).to.be.equal(
       BigNumber.from(0)
     );

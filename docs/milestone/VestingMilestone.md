@@ -126,23 +126,6 @@ function owner() external view returns (address)
 |---|---|---|
 | _0 | address | undefined |
 
-### period
-
-```solidity
-function period() external view returns (uint256)
-```
-
-
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | uint256 | undefined |
-
 ### recipient
 
 ```solidity
@@ -159,23 +142,6 @@ function recipient() external view returns (address)
 | Name | Type | Description |
 |---|---|---|
 | _0 | address | undefined |
-
-### releaseIntervalSecs
-
-```solidity
-function releaseIntervalSecs() external view returns (uint256)
-```
-
-
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | uint256 | undefined |
 
 ### renounceOwnership
 

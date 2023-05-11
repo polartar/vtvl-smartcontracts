@@ -5,15 +5,24 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+struct Milestone {
+    uint256 startTime;
+    uint256 withdrawnAmount;
+    uint128 period;
+    uint120 releaseIntervalSecs;
+    bool isWithdrawn;
+    uint248 allocation;
+    uint8 percent;
+}
+
+struct InputMilestone {
+    uint8 percent;
+    uint128 period;
+    uint120 releaseIntervalSecs;
+}
+
 contract BaseMilestone is Ownable {
     using SafeERC20 for IERC20;
-
-    struct Milestone {
-        bool isWithdrawn;
-        uint248 allocation;
-        uint256 startTime;
-        uint256 withdrawnAmount;
-    }
 
     address public recipient;
     IERC20 public tokenAddress;
@@ -28,6 +37,27 @@ contract BaseMilestone is Ownable {
     event AdminWithdrawn(address indexed _recipient, uint256 _amountRequested);
 
     function initializeMilestones(
+        InputMilestone[] memory _milestones
+    ) internal {
+        uint256 length = _milestones.length;
+
+        for (uint256 i = 0; i < length; ) {
+            Milestone memory milestone;
+
+            milestone.period = _milestones[i].period;
+            milestone.releaseIntervalSecs = _milestones[i].releaseIntervalSecs;
+            milestone.allocation = uint248(
+                (_milestones[i].percent * totalAllocation) / 100
+            );
+
+            milestones[i] = milestone;
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    function initializeAllocations(
         uint256[] memory _allocationPercents
     ) internal {
         uint256 length = _allocationPercents.length;
