@@ -16,7 +16,23 @@ Create Vesting contract
 function createVestingContract(contract IERC20 _tokenAddress) external nonpayable
 ```
 
-Create Vesting contract
+Create Vesting contract without funding.
+
+*This will only create the vesting contract.*
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _tokenAddress | contract IERC20 | Vesting Fund token address. |
+
+### createVestingContractWithShcedules
+
+```solidity
+function createVestingContractWithShcedules(contract IERC20 _tokenAddress, ClaimInput[] claimInputs) external nonpayable
+```
+
+
 
 
 
@@ -24,7 +40,8 @@ Create Vesting contract
 
 | Name | Type | Description |
 |---|---|---|
-| _tokenAddress | contract IERC20 | Vesting Fund token address |
+| _tokenAddress | contract IERC20 | undefined |
+| claimInputs | ClaimInput[] | undefined |
 
 ### owner
 

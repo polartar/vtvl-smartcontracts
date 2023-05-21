@@ -286,8 +286,8 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     @dev This'll simply check the input parameters, and create the structure verbatim based on passed in parameters.
      */
     function _createClaimUnchecked(
-        ClaimInput claimInput
-    ) private hasNoClaim(_recipient) {
+        ClaimInput memory claimInput
+    ) private hasNoClaim(claimInput.recipient) {
         require(claimInput.recipient != address(0), "INVALID_ADDRESS");
         require(
             claimInput.linearVestAmount + claimInput.cliffAmount > 0,
@@ -324,21 +324,22 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
             "INVALID_CLIFF"
         );
 
-        Claim storage _claim = claims[_recipient];
+        Claim storage _claim = claims[claimInput.recipient];
         _claim.startTimestamp = claimInput.startTimestamp;
         _claim.endTimestamp = claimInput.endTimestamp;
         _claim.deactivationTimestamp = 0;
         _claim.cliffReleaseTimestamp = claimInput.cliffReleaseTimestamp;
         _claim.releaseIntervalSecs = claimInput.releaseIntervalSecs;
         _claim.linearVestAmount = claimInput.linearVestAmount;
-        _claim.cliffAmount = claimInput.cliffAmount;
+        _claim.cliffAmount = uint112(claimInput.cliffAmount);
         _claim.amountWithdrawn = 0;
         _claim.isActive = true;
 
         // Our total allocation is simply the full sum of the two amounts, _cliffAmount + _linearVestAmount
         // Not necessary to use the more complex logic from _baseVestedAmount
-        uint256 allocatedAmount = claimInput.cliffAmount + linearVestAmount;
-        claimInput.require(
+        uint256 allocatedAmount = claimInput.cliffAmount +
+            claimInput.linearVestAmount;
+        require(
             // Still no effects up to this point (and tokenAddress is selected by contract deployer and is immutable), so no reentrancy risk
             tokenAddress.balanceOf(address(this)) >=
                 numTokensReservedForVesting + allocatedAmount,
@@ -357,7 +358,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     @notice Create a claim based on the input parameters.
     @dev This'll simply check the input parameters, and create the structure verbatim based on passed in parameters.
      */
-    function createClaim(ClaimInput claimInput) external onlyOwner {
+    function createClaim(ClaimInput memory claimInput) external onlyOwner {
         _createClaimUnchecked(claimInput);
     }
 

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.19;
+pragma solidity 0.8.14;
 
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./VTVLVesting.sol";
 
@@ -10,6 +11,8 @@ import "./VTVLVesting.sol";
 /// @notice Create Vesting contract
 
 contract VTVLVestingFactory is Ownable {
+    using SafeERC20 for IERC20;
+
     event CreateVestingContract(
         address indexed vestingAddress,
         address deployer
@@ -33,7 +36,7 @@ contract VTVLVestingFactory is Ownable {
 
     function _calculateAmount(
         ClaimInput[] calldata _cliamInputs
-    ) private returns (uint256) {
+    ) private pure returns (uint256) {
         uint256 len = _cliamInputs.length;
         uint256 amount;
         for (uint256 i = 0; i < len; ) {
@@ -69,16 +72,16 @@ contract VTVLVestingFactory is Ownable {
      */
     function createVestingContractWithShcedules(
         IERC20 _tokenAddress,
-        ClaimInput[] calldata cliamInputs
+        ClaimInput[] calldata claimInputs
     ) public {
-        require(cliamInputs.length != 0, "Invalid Claims");
+        require(claimInputs.length != 0, "Invalid Claims");
 
         VTVLVesting vestingContract = new VTVLVesting(
             _tokenAddress,
             msg.sender
         );
 
-        uint256 _depositAmount = _calculateAmount(_cliamInputs);
+        uint256 _depositAmount = _calculateAmount(claimInputs);
 
         _deposit(_tokenAddress, _depositAmount, address(vestingContract));
 

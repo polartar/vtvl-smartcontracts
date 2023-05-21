@@ -69,32 +69,26 @@ Calculates how much can we claim, by subtracting the already withdrawn amount fr
 ### createClaim
 
 ```solidity
-function createClaim(address _recipient, uint40 _startTimestamp, uint40 _endTimestamp, uint40 _cliffReleaseTimestamp, uint40 _releaseIntervalSecs, uint112 _linearVestAmount, uint112 _cliffAmount) external nonpayable
+function createClaim(ClaimInput claimInput) external nonpayable
 ```
 
-Create a claim based on the input parameters.
 
-*This&#39;ll simply check the input parameters, and create the structure verbatim based on passed in parameters.*
+
+
 
 #### Parameters
 
 | Name | Type | Description |
 |---|---|---|
-| _recipient | address | - The address of the recipient of the schedule |
-| _startTimestamp | uint40 | - The timestamp when the linear vesting starts |
-| _endTimestamp | uint40 | - The timestamp when the linear vesting ends |
-| _cliffReleaseTimestamp | uint40 | - The timestamp when the cliff is released (must be &lt;= _startTimestamp, or 0 if no vesting) |
-| _releaseIntervalSecs | uint40 | - The release interval for the linear vesting. If this is, for example, 60, that means that the linearly vested amount gets released every 60 seconds. |
-| _linearVestAmount | uint112 | - The total amount to be linearly vested between _startTimestamp and _endTimestamp |
-| _cliffAmount | uint112 | - The amount released at _cliffReleaseTimestamp. Can be 0 if _cliffReleaseTimestamp is also 0. |
+| claimInput | ClaimInput | undefined |
 
 ### createClaimsBatch
 
 ```solidity
-function createClaimsBatch(address[] _recipients, uint40[] _startTimestamps, uint40[] _endTimestamps, uint40[] _cliffReleaseTimestamps, uint40[] _releaseIntervalsSecs, uint112[] _linearVestAmounts, uint112[] _cliffAmounts) external nonpayable
+function createClaimsBatch(ClaimInput[] claimInputs) external nonpayable
 ```
 
-The batch version of the createClaim function. Each argument is an array, and this function simply repeatedly calls the createClaim.
+
 
 
 
@@ -102,13 +96,7 @@ The batch version of the createClaim function. Each argument is an array, and th
 
 | Name | Type | Description |
 |---|---|---|
-| _recipients | address[] | undefined |
-| _startTimestamps | uint40[] | undefined |
-| _endTimestamps | uint40[] | undefined |
-| _cliffReleaseTimestamps | uint40[] | undefined |
-| _releaseIntervalsSecs | uint40[] | undefined |
-| _linearVestAmounts | uint112[] | undefined |
-| _cliffAmounts | uint112[] | undefined |
+| claimInputs | ClaimInput[] | undefined |
 
 ### finalClaimableAmount
 

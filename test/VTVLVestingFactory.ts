@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import Chance from "chance";
 import { VTVLVesting, VTVLVestingFactory } from "../typechain";
-import { BigNumber, BigNumberish } from "ethers";
+import { BigNumber } from "ethers";
 const VaultFactoryJson = require("../artifacts/contracts/VTVLVestingFactory.sol/VTVLVestingFactory.json");
 
 const iface = new ethers.utils.Interface(VaultFactoryJson.abi);
@@ -235,15 +235,15 @@ describe("Claim creation", async function () {
       tokenSymbol,
       initialSupplyTokens,
     });
-    const result = vestingContract.createClaim(
+    const result = vestingContract.createClaim({
       recipient: recipientAddress,
       startTimestamp: "0",
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     await expect(result).to.be.revertedWith("INVALID_START_TIMESTAMP");
   });
 
@@ -256,15 +256,15 @@ describe("Claim creation", async function () {
     const startTs = dateToTs("2023-01-01");
     const endTsBeforeStartTs = startTs.sub(releaseIntervalSecs.mul(100));
     // Date in the past
-    const result = vestingContract.createClaim(
-      recipientAddress,
-      startTs,
-      endTsBeforeStartTs,
+    const result = vestingContract.createClaim({
+      recipient: recipientAddress,
+      startTimestamp: startTs,
+      endTimestamp: endTsBeforeStartTs,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     await expect(result).to.be.revertedWith("INVALID_END_TIMESTAMP");
   });
 
@@ -275,15 +275,15 @@ describe("Claim creation", async function () {
       initialSupplyTokens,
     });
     // just add some random amount not a multiple of releaseIntervalSecs and check it breaks
-    const result = vestingContract.createClaim(
-      recipientAddress,
+    const result = vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
-      "0",
+      releaseIntervalSecs: "0",
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     await expect(result).to.be.revertedWith("INVALID_RELEASE_INTERVAL");
   });
 
@@ -294,15 +294,15 @@ describe("Claim creation", async function () {
       initialSupplyTokens,
     });
     // just add some random amount not a multiple of releaseIntervalSecs and check it breaks
-    const result = vestingContract.createClaim(
-      recipientAddress,
+    const result = vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
-      startTimestamp.add(240197),
+      endTimestamp: startTimestamp.add(240197),
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     await expect(result).to.be.revertedWith("INVALID_INTERVAL_LENGTH");
   });
 
@@ -314,26 +314,26 @@ describe("Claim creation", async function () {
     });
 
     // Create a claim first, then try to create a similar one
-    const tx1p = await vestingContract.createClaim(
-      recipientAddress,
+    const tx1p = await vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     await tx1p.wait();
 
-    const tx2p = vestingContract.createClaim(
-      recipientAddress,
+    const tx2p = vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     await expect(tx2p).to.be.revertedWith("CLAIM_ALREADY_EXISTS");
   });
 
@@ -348,15 +348,15 @@ describe("Claim creation", async function () {
         tokenSymbol,
         initialSupplyTokens,
       });
-      const result = vestingContract.createClaim(
-        recipientAddress,
+      const result = vestingContract.createClaim({
+        recipient: recipientAddress,
         startTimestamp,
         endTimestamp,
         cliffReleaseTimestamp,
         releaseIntervalSecs,
         linearVestAmount,
-        cliffAmount
-      );
+        cliffAmount,
+      });
       await expect(result).to.be.revertedWith("INVALID_CLIFF");
     });
   });
@@ -368,15 +368,15 @@ describe("Claim creation", async function () {
       initialSupplyTokens,
     });
     // We also use 0 on cliff amount
-    const result = vestingContract.createClaim(
-      recipientAddress,
+    const result = vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
-      0,
+      cliffReleaseTimestamp: 0,
       releaseIntervalSecs,
-      0,
-      0
-    );
+      linearVestAmount: 0,
+      cliffAmount: 0,
+    });
     await expect(result).to.be.revertedWith("INVALID_VESTED_AMOUNT");
   });
 
@@ -390,36 +390,36 @@ describe("Claim creation", async function () {
     const balance = await tokenContract.balanceOf(vestingContract.address);
     const amountExceedingBalance = balance.add(1);
     // Linear vest 1 more than what's available, should fail
-    const resultLinVest = vestingContract.createClaim(
-      recipientAddress,
+    const resultLinVest = vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
-      0,
+      cliffReleaseTimestamp: 0,
       releaseIntervalSecs,
-      amountExceedingBalance,
-      0
-    );
+      linearVestAmount: amountExceedingBalance,
+      cliffAmount: 0,
+    });
     await expect(resultLinVest).to.be.revertedWith("INSUFFICIENT_BALANCE"); // `Not failing on insufficient balance when using 0 as cliffAmount and ${amountExceedingBalance} as linearVestAmount`);
     // Cliff vest 1 more than  what's available, should fail
-    const resultCliffVest = vestingContract.createClaim(
-      recipientAddress,
+    const resultCliffVest = vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
-      0,
-      amountExceedingBalance
-    );
+      linearVestAmount: 0,
+      cliffAmount: amountExceedingBalance,
+    });
     await expect(resultCliffVest).to.be.revertedWith("INSUFFICIENT_BALANCE"); //  `Not failing on insufficient balance when using ${amountExceedingBalance} as cliffAmount and 0 as linearVestAmount`);
-    const resultBothVest = vestingContract.createClaim(
-      recipientAddress,
+    const resultBothVest = vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
-      amountExceedingBalance,
-      amountExceedingBalance
-    );
+      linearVestAmount: amountExceedingBalance,
+      cliffAmount: amountExceedingBalance,
+    });
     await expect(resultBothVest).to.be.revertedWith("INSUFFICIENT_BALANCE"); // , `Not failing on insufficient balance when using ${amountExceedingBalance} as cliffAmount and ${amountExceedingBalance} as linearVestAmount`);
   });
 
@@ -433,33 +433,33 @@ describe("Claim creation", async function () {
     const balance = await tokenContract.balanceOf(vestingContract.address);
     // Try wiht an amount that should succeed twice, but not three times
     const amt = balance.mul(3).div(8);
-    await vestingContract.createClaim(
-      await randomAddress(),
+    await vestingContract.createClaim({
+      recipient: await randomAddress(),
       startTimestamp,
       endTimestamp,
-      0,
+      cliffReleaseTimestamp: 0,
       releaseIntervalSecs,
-      amt,
-      0
-    );
-    await vestingContract.createClaim(
-      await randomAddress(),
+      linearVestAmount: amt,
+      cliffAmount: 0,
+    });
+    await vestingContract.createClaim({
+      recipient: await randomAddress(),
       startTimestamp,
       endTimestamp,
-      0,
+      cliffReleaseTimestamp: 0,
       releaseIntervalSecs,
-      amt,
-      0
-    );
-    const result = vestingContract.createClaim(
-      recipientAddress,
+      linearVestAmount: amt,
+      cliffAmount: 0,
+    });
+    const result = vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
-      0,
+      cliffReleaseTimestamp: 0,
       releaseIntervalSecs,
-      amt,
-      0
-    );
+      linearVestAmount: amt,
+      cliffAmount: 0,
+    });
     await expect(result).to.be.revertedWith("INSUFFICIENT_BALANCE"); // `Not failing on insufficient balance after the third claim`);
   });
 
@@ -482,15 +482,15 @@ describe("Claim creation", async function () {
       expect(await vestingContract.numTokensReservedForVesting()).to.be.equal(
         0
       );
-      await vestingContract.createClaim(
-        recipientAddress,
+      await vestingContract.createClaim({
+        recipient: recipientAddress,
         startTimestamp,
         endTimestamp,
-        cliffAmount ? cliffReleaseTimestamp : 0,
+        cliffReleaseTimestamp: cliffAmount ? cliffReleaseTimestamp : 0,
         releaseIntervalSecs,
         linearVestAmount,
-        cliffAmount
-      );
+        cliffAmount,
+      });
 
       // Allocate it once, expect it to come up to expectedAllocation
       expect(await vestingContract.numTokensReservedForVesting()).to.be.equal(
@@ -498,15 +498,15 @@ describe("Claim creation", async function () {
         "Incorrect amount allocated after the first allocation"
       );
       // One more time, up to double allocation
-      vestingContract.createClaim(
-        await randomAddress(),
+      vestingContract.createClaim({
+        recipient: await randomAddress(),
         startTimestamp,
         endTimestamp,
-        cliffAmount ? cliffReleaseTimestamp : 0,
+        cliffReleaseTimestamp: cliffAmount ? cliffReleaseTimestamp : 0,
         releaseIntervalSecs,
         linearVestAmount,
-        cliffAmount
-      );
+        cliffAmount,
+      });
       expect(await vestingContract.numTokensReservedForVesting()).to.be.equal(
         expectedAllocation.mul(2)
       );
@@ -529,15 +529,15 @@ describe("Claim creation", async function () {
       0,
       "Claim nonzero even before setting it."
     );
-    await vestingContract.createClaim(
-      recipientAddress,
+    await vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     const returnedClaimInfo = await vestingContract.getClaim(recipientAddress);
     // Last two fields are amountWithdrawn and active
     Object.entries({
@@ -572,15 +572,15 @@ describe("Claim creation", async function () {
       0,
       "vestingRecipients initially nonempty"
     );
-    await vestingContract.createClaim(
-      recipientAddress,
+    await vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     expect(await vestingContract.numVestingRecipients()).to.be.equal(
       1,
       "numVestingRecipients not 1 after addition"
@@ -602,15 +602,15 @@ describe("Claim creation", async function () {
       tokenSymbol,
       initialSupplyTokens,
     });
-    const tx = await vestingContract.createClaim(
-      recipientAddress,
+    const tx = await vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     const returnedClaimInfo = await vestingContract.getClaim(recipientAddress);
     expect(tx)
       .to.emit(vestingContract, "ClaimCreated")
@@ -618,49 +618,41 @@ describe("Claim creation", async function () {
   });
 });
 describe("Claim creation batch", async function () {
-  const nonAddrParams = [
+  const paramset1 = {
+    recipient: await randomAddress(),
     startTimestamp,
     endTimestamp,
     cliffReleaseTimestamp,
     releaseIntervalSecs,
     linearVestAmount,
     cliffAmount,
-  ];
-  const paramset1 = [await randomAddress(), ...nonAddrParams];
+  };
   // Just add some random values
-  const paramset2 = [
-    await randomAddress(),
+  const paramset2 = {
+    recipient: await randomAddress(),
     startTimestamp,
-    endTimestamp.add(releaseIntervalSecs),
+    endTimestamp: endTimestamp.add(releaseIntervalSecs),
     cliffReleaseTimestamp,
     releaseIntervalSecs,
-    linearVestAmount.add(2000),
+    linearVestAmount: linearVestAmount.add(2000),
     cliffAmount,
-  ];
-  const paramset3 = [
-    await randomAddress(),
+  };
+  const paramset3 = {
+    recipient: await randomAddress(),
     startTimestamp,
-    endTimestamp.add(releaseIntervalSecs.mul(3)),
+    endTimestamp: endTimestamp.add(releaseIntervalSecs.mul(3)),
     cliffReleaseTimestamp,
     releaseIntervalSecs,
     linearVestAmount,
-    cliffAmount.add(2000),
-  ];
+    cliffAmount: cliffAmount.add(2000),
+  };
   const paramSets = [
     [paramset1],
     [paramset2, paramset1],
     [paramset1, paramset2, paramset3],
   ];
-  const paramSetToGroups = (paramSet: (string | BigNumber)[][]) => {
-    const paramGroups = paramSet[0].map((x) => [x]);
-    for (let i = 1; i < paramSet.length; i++) {
-      for (let j = 0; j < paramGroups.length; j++) {
-        paramGroups[j].push(paramSet[i][j]);
-      }
-    }
-    return paramGroups;
-  };
-  it("delegates the call to createClaim properly", async () => {
+
+  it("create Claims properly", async () => {
     await Promise.all(
       paramSets.map(async (paramSet) => {
         const { vestingContract } = await createPrefundedVestingContract({
@@ -668,40 +660,9 @@ describe("Claim creation batch", async function () {
           tokenSymbol,
           initialSupplyTokens,
         });
-        // @ts-ignore
-        return await vestingContract.createClaimsBatch.apply(
-          this,
-          paramSetToGroups(paramSet) as [
-            _recipients: string[],
-            _startTimestamps: BigNumberish[],
-            _endTimestamps: BigNumberish[],
-            _cliffReleaseTimestamps: BigNumberish[],
-            _releaseIntervalsSecs: BigNumberish[],
-            _linearVestAmounts: BigNumberish[],
-            _cliffAmounts: BigNumberish[]
-          ]
-        );
-        // Waffle's calledOnContractWith is not supported by Hardhat
-        // await Promise.all(paramSet.map(async params => {
-        //   return expect('createClaim').to.be.calledOnContractWith(vestingContract, params);
-        // }));
+        return await vestingContract.createClaimsBatch(paramSet);
       })
     );
-  });
-  it("fails when called with invalid param length", async () => {
-    const { vestingContract } = await createPrefundedVestingContract({
-      tokenName,
-      tokenSymbol,
-      initialSupplyTokens,
-    });
-    // Try with removing each of the arguments -- should fail every time
-    for (let j = 0; j < paramset3.length; j++) {
-      const paramGroups = paramSetToGroups(paramSets[2]);
-      paramGroups[j].pop();
-      // @ts-ignore
-      const result = vestingContract.createClaimsBatch.apply(this, paramGroups);
-      await expect(result).to.be.revertedWith("ARRAY_LENGTH_MISMATCH");
-    }
   });
 });
 describe("Withdraw", async () => {
@@ -723,15 +684,15 @@ describe("Withdraw", async () => {
     const cliffAmount = 100;
     const recipientAddress = owner2.address;
     const initialBalance = await tokenContract.balanceOf(recipientAddress);
-    await claimCreateContractInstance.createClaim(
-      recipientAddress,
+    await claimCreateContractInstance.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     await ethers.provider.send("evm_mine", [startTimestamp - 50]); // Make sure we're before the claim start
     // Now switch to owner2 as the withdrawer - to make sure admin properry of owner1 doesn't create problems
     const vestingContract = claimCreateContractInstance.connect(owner2);
@@ -773,15 +734,15 @@ describe("Withdraw", async () => {
     const releaseIntervalSecs = 1;
     // We've created a claim for a random address (not for our user)
     // But we'll try to withdraw from our address, whcih should fail as we have no claim
-    await vestingContract.createClaim(
-      await randomAddress(),
+    await vestingContract.createClaim({
+      recipient: await randomAddress(),
       startTimestamp,
       endTimestamp,
-      0,
+      cliffReleaseTimestamp: 0,
       releaseIntervalSecs,
       linearVestAmount,
-      0
-    );
+      cliffAmount: 0,
+    });
     await expect(vestingContract.connect(owner2).withdraw()).to.be.revertedWith(
       "NO_ACTIVE_CLAIM"
     );
@@ -794,15 +755,15 @@ describe("Withdraw", async () => {
     });
     const releaseIntervalSecs = 1;
     // 100 end tiestamp is way in the past
-    await vestingContract.createClaim(
-      owner2.address,
+    await vestingContract.createClaim({
+      recipient: owner2.address,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     // Fast forward until past the end of the interval
     await ethers.provider.send("evm_mine", [endTimestamp.toNumber() + 500]);
     // Withdraw once - ok, second time - we're out of balance
@@ -823,15 +784,15 @@ describe("Withdraw", async () => {
     const endTimestamp = startTimestamp + vestingPeriodTimestamp;
     const releaseIntervalSecs = 1;
     // Create and immediately revoke a claim for owner2
-    await vestingContract.createClaim(
-      owner2.address,
+    await vestingContract.createClaim({
+      recipient: owner2.address,
       startTimestamp,
       endTimestamp,
-      0,
+      cliffReleaseTimestamp: 0,
       releaseIntervalSecs,
       linearVestAmount,
-      0
-    );
+      cliffAmount: 0,
+    });
 
     const timePass = 200;
     // Fast forward until the middle of the interval - we should be vested by now (if it weren't for the revocation)
@@ -863,15 +824,15 @@ describe("Revoke Claim", async () => {
       tokenSymbol,
       initialSupplyTokens,
     });
-    await vestingContract.createClaim(
-      recipientAddress,
+    await vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     (await vestingContract.revokeClaim(recipientAddress)).wait();
     // Make sure it gets reverted
     expect(
@@ -886,15 +847,15 @@ describe("Revoke Claim", async () => {
       tokenSymbol,
       initialSupplyTokens,
     });
-    await vestingContract.createClaim(
-      recipientAddress,
+    await vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     // A random user cant revert it
     await expect(
       vestingContract.connect(owner2).revokeClaim(recipientAddress)
@@ -926,15 +887,15 @@ describe("Revoke Claim", async () => {
     const endTimestamp = startTimestamp + 2000;
     const releaseIntervalSecs = 100;
     // Create a claim for owner2, fast forward to the end, and withdraw
-    await vestingContract.createClaim(
-      owner2.address,
+    await vestingContract.createClaim({
+      recipient: owner2.address,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     await ethers.provider.send("evm_mine", [endTimestamp]);
     await (await vestingContract.connect(owner2).withdraw()).wait();
     // Later on, the claim should be unrevokable due to no unvested amount
@@ -949,15 +910,15 @@ describe("Revoke Claim", async () => {
       initialSupplyTokens,
     });
     // Create and immediately revoke the claim
-    await vestingContract.createClaim(
-      recipientAddress,
+    await vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
 
     await (await vestingContract.revokeClaim(recipientAddress)).wait();
   });
@@ -974,15 +935,15 @@ describe("Revoke Claim", async () => {
     const terminationTimestamp = startTimestamp + 1000 + 50; // half-way vesting, plus half release interval which shall be discarded
     const releaseIntervalSecs = 100;
 
-    await vestingContract.createClaim(
-      owner2.address,
+    await vestingContract.createClaim({
+      recipient: owner2.address,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
 
     // move clock to termination timestamp (half-way the vesting period plus a bit, but less than release interval seconds)
     await ethers.provider.send("evm_mine", [terminationTimestamp]);
@@ -1025,15 +986,15 @@ describe("Vested amount", async () => {
       initialSupplyTokens,
     });
     vestingContract = _vc;
-    await vestingContract.createClaim(
-      recipientAddress,
+    await vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
   });
   it("calculates the vested amount before the cliff time to be 0", async () => {
     expect(
@@ -1077,15 +1038,15 @@ describe("Vested amount", async () => {
     const endTimestamp = startTimestamp.add(1000);
     const linearVestAmount = 1000;
     const cliffAmount = 200;
-    await vestingContract.createClaim(
-      recipientAddress,
+    await vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     // at the start (shared start and cliff TS), we've vested exactly the cliff amount
     expect(
       await vestingContract.vestedAmount(recipientAddress, startTimestamp)
@@ -1152,15 +1113,15 @@ describe("Vested amount", async () => {
     });
     // with a release of 500, we should have cliff amount at start timestamp, cliffamount + 0.5 * linearvest at 1500, and full amonunt at 2000
     const releaseIntervalSecs = 500;
-    await vestingContract.createClaim(
-      recipientAddress,
+    await vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     const vestedAtStart = await vestingContract.vestedAmount(
       recipientAddress,
       startTimestamp
@@ -1203,15 +1164,15 @@ describe("Claimable amount", async () => {
       tokenSymbol,
       initialSupplyTokens,
     });
-    await vestingContract.createClaim(
-      owner2.address,
+    await vestingContract.createClaim({
+      recipient: owner2.address,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     // Try couple of different points, no matter where we are, it should be the same since we have no withdrawals
     for (let ts = startTimestamp; ts <= endTimestamp; ts += 100) {
       await ethers.provider.send("evm_mine", [ts]); // Make sure we're at the relevant ts
@@ -1230,15 +1191,15 @@ describe("Claimable amount", async () => {
       tokenSymbol,
       initialSupplyTokens,
     });
-    await vestingContract.createClaim(
-      owner2.address,
+    await vestingContract.createClaim({
+      recipient: owner2.address,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
     const ts = startTimestamp + 500;
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
     // const amtFirstWithdraw = vestingContract.vestedAmount(owner2.address, ts);
@@ -1416,15 +1377,15 @@ describe("Long vest fail", async () => {
       initialSupplyTokens: 1000000000,
     });
     vestingContract = _vc;
-    await vestingContract.createClaim(
-      recipientAddress,
+    await vestingContract.createClaim({
+      recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
       linearVestAmount,
-      cliffAmount
-    );
+      cliffAmount,
+    });
   });
 
   it("half term works", async () => {
