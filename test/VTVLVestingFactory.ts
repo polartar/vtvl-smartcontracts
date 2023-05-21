@@ -217,15 +217,15 @@ describe("Claim creation", async function () {
       initialSupplyTokens,
     });
     await expect(
-      vestingContract.createClaim(
-        ethers.constants.AddressZero,
+      vestingContract.createClaim({
+        recipient: ethers.constants.AddressZero,
         startTimestamp,
         endTimestamp,
         cliffReleaseTimestamp,
         releaseIntervalSecs,
         linearVestAmount,
-        cliffAmount
-      )
+        cliffAmount,
+      })
     ).to.be.revertedWith("INVALID_ADDRESS");
   });
 
@@ -236,8 +236,8 @@ describe("Claim creation", async function () {
       initialSupplyTokens,
     });
     const result = vestingContract.createClaim(
-      recipientAddress,
-      "0",
+      recipient: recipientAddress,
+      startTimestamp: "0",
       endTimestamp,
       cliffReleaseTimestamp,
       releaseIntervalSecs,
