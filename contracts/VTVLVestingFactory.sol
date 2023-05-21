@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.14;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -15,15 +15,74 @@ contract VTVLVestingFactory is Ownable {
         address deployer
     );
 
+    function _deposit(
+        IERC20 _tokenAddress,
+        uint256 _amount,
+        address _contractAddress
+    ) private {
+        uint256 userBalance = _tokenAddress.balanceOf(msg.sender);
+
+        if (userBalance >= _amount) {
+            _tokenAddress.safeTransferFrom(
+                msg.sender,
+                address(_contractAddress),
+                _amount
+            );
+        }
+    }
+
+    function _calculateAmount(
+        ClaimInput[] calldata _cliamInputs
+    ) private returns (uint256) {
+        uint256 len = _cliamInputs.length;
+        uint256 amount;
+        for (uint256 i = 0; i < len; ) {
+            unchecked {
+                amount +=
+                    _cliamInputs[i].linearVestAmount +
+                    _cliamInputs[i].cliffAmount;
+                ++i;
+            }
+        }
+
+        return amount;
+    }
+
     /**
-     * @notice Create Vesting contract
-     * @param _tokenAddress Vesting Fund token address
+     * @notice Create Vesting contract without funding.
+     * @dev This will only create the vesting contract.
+     * @param _tokenAddress Vesting Fund token address.
      */
     function createVestingContract(IERC20 _tokenAddress) public {
         VTVLVesting vestingContract = new VTVLVesting(
             _tokenAddress,
             msg.sender
         );
+
+        emit CreateVestingContract(address(vestingContract), msg.sender);
+    }
+
+    /**
+     * @notice Create Vesting contract with funding and schedules.
+     * @dev This will deposit funds and create the vesting schedules as well.
+     * @param _tokenAddress Vesting Fund token address.
+     */
+    function createVestingContractWithShcedules(
+        IERC20 _tokenAddress,
+        ClaimInput[] calldata cliamInputs
+    ) public {
+        require(cliamInputs.length != 0, "Invalid Claims");
+
+        VTVLVesting vestingContract = new VTVLVesting(
+            _tokenAddress,
+            msg.sender
+        );
+
+        uint256 _depositAmount = _calculateAmount(_cliamInputs);
+
+        _deposit(_tokenAddress, _depositAmount, address(vestingContract));
+
+        vestingContract.createClaimsBatch(claimInputs);
 
         emit CreateVestingContract(address(vestingContract), msg.sender);
     }
