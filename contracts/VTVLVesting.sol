@@ -63,6 +63,8 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     // Track the recipients of the vesting
     address[] internal vestingRecipients;
 
+    address private immutable factoryAddress;
+
     // Events:
     /**
     @notice Emitted when a founder adds a vesting schedule.
@@ -98,6 +100,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
         require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
         tokenAddress = _tokenAddress;
         _transferOwnership(_owner);
+        factoryAddress = msg.sender;
     }
 
     /**
@@ -130,6 +133,17 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
         // Save gas, omit further checks
         // require(_claim.linearVestAmount + _claim.cliffAmount > 0, "INVALID_VESTED_AMOUNT");
         // require(_claim.endTimestamp > 0, "NO_END_TIMESTAMP");
+        _;
+    }
+
+    /**
+    @notice This modifier requires that owner or factory contract.
+    */
+    modifier onlyOwnerOrFactory() {
+        if (msg.sender != factoryAddress) {
+            _checkOwner();
+        }
+
         _;
     }
 
@@ -358,7 +372,9 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     @notice Create a claim based on the input parameters.
     @dev This'll simply check the input parameters, and create the structure verbatim based on passed in parameters.
      */
-    function createClaim(ClaimInput memory claimInput) external onlyOwner {
+    function createClaim(
+        ClaimInput memory claimInput
+    ) external onlyOwnerOrFactory {
         _createClaimUnchecked(claimInput);
     }
 
@@ -368,7 +384,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
      */
     function createClaimsBatch(
         ClaimInput[] calldata claimInputs
-    ) external onlyOwner {
+    ) external onlyOwnerOrFactory {
         uint256 length = claimInputs.length;
 
         for (uint256 i = 0; i < length; ) {

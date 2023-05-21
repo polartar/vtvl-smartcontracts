@@ -1,8 +1,8 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import Chance from "chance";
-import { VTVLVesting, VTVLVestingFactory } from "../typechain";
-import { BigNumber } from "ethers";
+import { TestERC20Token, VTVLVesting, VTVLVestingFactory } from "../typechain";
+import { BigNumber, BigNumberish } from "ethers";
 const VaultFactoryJson = require("../artifacts/contracts/VTVLVestingFactory.sol/VTVLVestingFactory.json");
 
 const iface = new ethers.utils.Interface(VaultFactoryJson.abi);
@@ -46,14 +46,35 @@ const createContractFactory = async () =>
 
 let factoryContract: VTVLVestingFactory;
 
-const deployVestingContract = async (tokenAddress?: string) => {
+interface ClaimInput {
+  startTimestamp: BigNumberish;
+  endTimestamp: BigNumberish;
+  cliffReleaseTimestamp: BigNumberish;
+  releaseIntervalSecs: BigNumberish;
+  linearVestAmount: BigNumberish;
+  cliffAmount: BigNumberish;
+  recipient: string;
+}
+
+const deployVestingContract = async (
+  tokenAddress: string,
+  claimInputs?: ClaimInput[]
+) => {
   const factory = await createContractFactory();
   factoryContract = await factory.deploy();
   await factoryContract.deployed();
 
-  const transaction = await factoryContract.createVestingContract(
-    tokenAddress ?? (await randomAddress())
-  );
+  let transaction;
+  if (!claimInputs) {
+    transaction = await factoryContract.createVestingContract(
+      tokenAddress ?? (await randomAddress())
+    );
+  } else {
+    transaction = await factoryContract.createVestingContractWithSchedules(
+      tokenAddress ?? (await randomAddress()),
+      claimInputs
+    );
+  }
 
   const vestingContractAddress = getParamFromEvent(
     await transaction.wait(),
@@ -183,8 +204,9 @@ describe("Contract creation", async function () {
 
   it("the deployer is the owner", async function () {
     const [owner] = await ethers.getSigners();
+    tokenAddress = await randomAddress();
 
-    const contract = await deployVestingContract();
+    const contract = await deployVestingContract(tokenAddress);
 
     expect(await contract.owner()).to.be.equal(owner.address);
   });
@@ -967,6 +989,7 @@ describe("Revoke Claim", async () => {
     ).to.be.equal(BigNumber.from(0));
   });
 });
+
 describe("Vested amount", async () => {
   let vestingContract: VestingContractType;
   // Default params
@@ -1399,5 +1422,89 @@ describe("Long vest fail", async () => {
     expect(
       await vestingContract.vestedAmount(recipientAddress, endTimestamp)
     ).to.be.equal("170000000000000000000000000");
+  });
+});
+
+describe("Create vesting contract with fund and claims", async () => {
+  let tokenContract: TestERC20Token;
+  // Default params
+  // linearly Vest 10000, every 1s, between TS 1000 and 2000
+  // additionally, cliff vests another 5000, at TS = 900
+  const claim = {
+    recipient: await randomAddress(),
+    startTimestamp: BigNumber.from(1000),
+    endTimestamp: BigNumber.from(2000),
+    cliffReleaseTimestamp: BigNumber.from(900),
+    linearVestAmount: BigNumber.from(10000),
+    cliffAmount: BigNumber.from(5000),
+    releaseIntervalSecs: BigNumber.from(1),
+  };
+
+  before(async () => {
+    // Create an example token
+    const tokenContractFactory = await ethers.getContractFactory(
+      "TestERC20Token"
+    );
+    // const initialSupply = ethers.utils.parseUnits(initialSupplyTokens.toString(), decimals);
+    tokenContract = await tokenContractFactory.deploy(
+      tokenName,
+      tokenSymbol,
+      initialSupplyTokens
+    );
+    await tokenContract.deployed();
+  });
+
+  it("shouldn't create the claim without token approve", async () => {
+    await expect(
+      deployVestingContract(tokenContract.address, [claim])
+    ).to.be.revertedWith("ERC20: insufficient allowance");
+  });
+
+  it("shouldn't create the claim when insufficient allowance", async () => {
+    const factory = await createContractFactory();
+    factoryContract = await factory.deploy();
+    await factoryContract.deployed();
+
+    tokenContract.approve(
+      factoryContract.address,
+      claim.cliffAmount.add(claim.linearVestAmount).sub(1)
+    );
+    await expect(
+      factoryContract.createVestingContractWithSchedules(
+        tokenContract.address,
+        [claim]
+      )
+    ).to.be.revertedWith("ERC20: insufficient allowance");
+  });
+
+  it("should create the claim with fund ", async () => {
+    const factory = await createContractFactory();
+    factoryContract = await factory.deploy();
+    await factoryContract.deployed();
+
+    tokenContract.approve(
+      factoryContract.address,
+      claim.cliffAmount.add(claim.linearVestAmount)
+    );
+    const transaction =
+      await factoryContract.createVestingContractWithSchedules(
+        tokenContract.address,
+        [claim]
+      );
+
+    const vestingContractAddress = getParamFromEvent(
+      await transaction.wait(),
+      "CreateVestingContract(address,address)",
+      0
+    );
+
+    // TODO: check if we need any checks that the token be valid, etc
+    const VestingContract = await ethers.getContractFactory("VTVLVesting");
+    const contract = await VestingContract.attach(vestingContractAddress);
+
+    const _claim = await contract.getClaim(claim.recipient);
+    expect(_claim[0]).to.be.equal(claim.startTimestamp);
+    expect(_claim[1]).to.be.equal(claim.endTimestamp);
+    expect(_claim[2]).to.be.equal(claim.cliffReleaseTimestamp);
   });
 });

@@ -70,7 +70,7 @@ contract VTVLVestingFactory is Ownable {
      * @dev This will deposit funds and create the vesting schedules as well.
      * @param _tokenAddress Vesting Fund token address.
      */
-    function createVestingContractWithShcedules(
+    function createVestingContractWithSchedules(
         IERC20 _tokenAddress,
         ClaimInput[] calldata claimInputs
     ) public {

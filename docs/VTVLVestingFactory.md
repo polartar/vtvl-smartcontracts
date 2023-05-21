@@ -26,10 +26,10 @@ Create Vesting contract without funding.
 |---|---|---|
 | _tokenAddress | contract IERC20 | Vesting Fund token address. |
 
-### createVestingContractWithShcedules
+### createVestingContractWithSchedules
 
 ```solidity
-function createVestingContractWithShcedules(contract IERC20 _tokenAddress, ClaimInput[] claimInputs) external nonpayable
+function createVestingContractWithSchedules(contract IERC20 _tokenAddress, ClaimInput[] claimInputs) external nonpayable
 ```
 
 
