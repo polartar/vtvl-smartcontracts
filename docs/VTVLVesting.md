@@ -47,7 +47,7 @@ Get amount that is not vested in contract
 ### claimableAmount
 
 ```solidity
-function claimableAmount(address _recipient) external view returns (uint256)
+function claimableAmount(address _recipient, uint256 _scheduleIndex) external view returns (uint256)
 ```
 
 Calculates how much can we claim, by subtracting the already withdrawn amount from the vestedAmount at this moment.
@@ -59,6 +59,7 @@ Calculates how much can we claim, by subtracting the already withdrawn amount fr
 | Name | Type | Description |
 |---|---|---|
 | _recipient | address | - The address for whom we&#39;re calculating |
+| _scheduleIndex | uint256 | - The index of the vesting schedules of the recipient. |
 
 #### Returns
 
@@ -101,7 +102,7 @@ function createClaimsBatch(ClaimInput[] claimInputs) external nonpayable
 ### finalClaimableAmount
 
 ```solidity
-function finalClaimableAmount(address _recipient) external view returns (uint256)
+function finalClaimableAmount(address _recipient, uint256 _scheduleIndex) external view returns (uint256)
 ```
 
 Calculates how much wil be possible to claim at the end of vesting date, by subtracting the already withdrawn amount from the vestedAmount at this moment. Vesting date is either the end timestamp or the deactivation timestamp.
@@ -113,6 +114,7 @@ Calculates how much wil be possible to claim at the end of vesting date, by subt
 | Name | Type | Description |
 |---|---|---|
 | _recipient | address | - The address for whom we&#39;re calculating |
+| _scheduleIndex | uint256 | - The index of the vesting schedules of the recipient. |
 
 #### Returns
 
@@ -123,7 +125,7 @@ Calculates how much wil be possible to claim at the end of vesting date, by subt
 ### finalVestedAmount
 
 ```solidity
-function finalVestedAmount(address _recipient) external view returns (uint256)
+function finalVestedAmount(address _recipient, uint256 _scheduleIndex) external view returns (uint256)
 ```
 
 Calculate the total vested at the end of the schedule, by simply feeding in the end timestamp to the function above.
@@ -135,6 +137,7 @@ Calculate the total vested at the end of the schedule, by simply feeding in the 
 | Name | Type | Description |
 |---|---|---|
 | _recipient | address | - The address for whom we&#39;re calculating |
+| _scheduleIndex | uint256 | - The index of the vesting schedules of the recipient. |
 
 #### Returns
 
@@ -145,7 +148,7 @@ Calculate the total vested at the end of the schedule, by simply feeding in the 
 ### getClaim
 
 ```solidity
-function getClaim(address _recipient) external view returns (struct VTVLVesting.Claim)
+function getClaim(address _recipient, uint256 _scheduleIndex) external view returns (struct VTVLVesting.Claim)
 ```
 
 Basic getter for a claim. 
@@ -157,12 +160,35 @@ Basic getter for a claim.
 | Name | Type | Description |
 |---|---|---|
 | _recipient | address | - the address for which we fetch the claim. |
+| _scheduleIndex | uint256 | - the index of the schedules. |
 
 #### Returns
 
 | Name | Type | Description |
 |---|---|---|
 | _0 | VTVLVesting.Claim | undefined |
+
+### getNumberOfVestings
+
+```solidity
+function getNumberOfVestings(address _recipient) external view returns (uint256)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _recipient | address | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
 
 ### numTokensReservedForVesting
 
@@ -229,7 +255,7 @@ function renounceOwnership() external nonpayable
 ### revokeClaim
 
 ```solidity
-function revokeClaim(address _recipient) external nonpayable
+function revokeClaim(address _recipient, uint256 _scheduleIndex) external nonpayable
 ```
 
 Allow an Owner to revoke a claim that is already active.
@@ -241,6 +267,7 @@ Allow an Owner to revoke a claim that is already active.
 | Name | Type | Description |
 |---|---|---|
 | _recipient | address | undefined |
+| _scheduleIndex | uint256 | - The index of the vesting schedules of the recipient. |
 
 ### tokenAddress
 
@@ -278,7 +305,7 @@ function transferOwnership(address newOwner) external nonpayable
 ### vestedAmount
 
 ```solidity
-function vestedAmount(address _recipient, uint40 _referenceTs) external view returns (uint256)
+function vestedAmount(address _recipient, uint256 _scheduleIndex, uint40 _referenceTs) external view returns (uint256)
 ```
 
 Calculate the amount vested for a given _recipient at a reference timestamp.
@@ -290,6 +317,7 @@ Calculate the amount vested for a given _recipient at a reference timestamp.
 | Name | Type | Description |
 |---|---|---|
 | _recipient | address | - The address for whom we&#39;re calculating |
+| _scheduleIndex | uint256 | - The index of the vesting schedules of the recipient. |
 | _referenceTs | uint40 | - The timestamp at which we want to calculate the vested amount. |
 
 #### Returns
@@ -301,13 +329,18 @@ Calculate the amount vested for a given _recipient at a reference timestamp.
 ### withdraw
 
 ```solidity
-function withdraw() external nonpayable
+function withdraw(uint256 _scheduleIndex) external nonpayable
 ```
 
 Withdraw the full claimable balance.
 
 *hasActiveClaim throws off anyone without a claim.*
 
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _scheduleIndex | uint256 | - The index of the vesting schedules of the recipient. |
 
 ### withdrawAdmin
 
@@ -365,7 +398,7 @@ Emitted when admin withdraws.
 ### ClaimCreated
 
 ```solidity
-event ClaimCreated(address indexed _recipient, VTVLVesting.Claim _claim)
+event ClaimCreated(address indexed _recipient, VTVLVesting.Claim _claim, uint256 _scheduleIndex)
 ```
 
 Emitted when a founder adds a vesting schedule.
@@ -378,11 +411,12 @@ Emitted when a founder adds a vesting schedule.
 |---|---|---|
 | _recipient `indexed` | address | undefined |
 | _claim  | VTVLVesting.Claim | undefined |
+| _scheduleIndex  | uint256 | undefined |
 
 ### ClaimRevoked
 
 ```solidity
-event ClaimRevoked(address indexed _recipient, uint256 _numTokensWithheld, uint256 revocationTimestamp, VTVLVesting.Claim _claim)
+event ClaimRevoked(address indexed _recipient, uint256 _numTokensWithheld, uint256 revocationTimestamp, VTVLVesting.Claim _claim, uint256 _scheduleIndex)
 ```
 
 Emitted when a claim is revoked
@@ -397,11 +431,12 @@ Emitted when a claim is revoked
 | _numTokensWithheld  | uint256 | undefined |
 | revocationTimestamp  | uint256 | undefined |
 | _claim  | VTVLVesting.Claim | undefined |
+| _scheduleIndex  | uint256 | undefined |
 
 ### Claimed
 
 ```solidity
-event Claimed(address indexed _recipient, uint256 _withdrawalAmount)
+event Claimed(address indexed _recipient, uint256 _withdrawalAmount, uint256 _scheduleIndex)
 ```
 
 Emitted when someone withdraws a vested amount
@@ -414,6 +449,7 @@ Emitted when someone withdraws a vested amount
 |---|---|---|
 | _recipient `indexed` | address | undefined |
 | _withdrawalAmount  | uint256 | undefined |
+| _scheduleIndex  | uint256 | undefined |
 
 ### OwnershipTransferred
 

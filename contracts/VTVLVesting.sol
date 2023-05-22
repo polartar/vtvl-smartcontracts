@@ -57,8 +57,9 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     }
 
     // Mapping every user address to his/her Claim
+    // This could be array because a recipient can have multiple schdules.
     // Only one Claim possible per address
-    mapping(address => Claim) internal claims;
+    mapping(address => Claim[]) internal claims;
 
     // Track the recipients of the vesting
     address[] internal vestingRecipients;
@@ -69,12 +70,20 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     /**
     @notice Emitted when a founder adds a vesting schedule.
      */
-    event ClaimCreated(address indexed _recipient, Claim _claim);
+    event ClaimCreated(
+        address indexed _recipient,
+        Claim _claim,
+        uint256 _scheduleIndex
+    );
 
     /**
     @notice Emitted when someone withdraws a vested amount
     */
-    event Claimed(address indexed _recipient, uint256 _withdrawalAmount);
+    event Claimed(
+        address indexed _recipient,
+        uint256 _withdrawalAmount,
+        uint256 _scheduleIndex
+    );
 
     /** 
     @notice Emitted when a claim is revoked
@@ -83,7 +92,8 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
         address indexed _recipient,
         uint256 _numTokensWithheld,
         uint256 revocationTimestamp,
-        Claim _claim
+        Claim _claim,
+        uint256 _scheduleIndex
     );
 
     /** 
@@ -107,9 +117,16 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     @notice Basic getter for a claim. 
     @dev Could be using public claims var, but this is cleaner in terms of naming. (getClaim(address) as opposed to claims(address)). 
     @param _recipient - the address for which we fetch the claim.
+    @param _scheduleIndex - the index of the schedules.
      */
-    function getClaim(address _recipient) external view returns (Claim memory) {
-        return claims[_recipient];
+    function getClaim(
+        address _recipient,
+        uint256 _scheduleIndex
+    ) external view returns (Claim memory) {
+        if (claims[_recipient].length <= _scheduleIndex) {
+            revert("NO_SCHEDULE_EXIST");
+        }
+        return claims[_recipient][_scheduleIndex];
     }
 
     /**
@@ -122,8 +139,10 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     * IFF a claim has been created. In addition to that, we need to check
     * a claim is active (since this is has_*Active*_Claim)
     */
-    modifier hasActiveClaim(address _recipient) {
-        Claim storage _claim = claims[_recipient];
+    modifier hasActiveClaim(address _recipient, uint256 _scheduleIndex) {
+        require(claims[_recipient].length > _scheduleIndex, "NO_ACTIVE_CLAIM");
+
+        Claim storage _claim = claims[_recipient][_scheduleIndex];
         require(_claim.startTimestamp > 0, "NO_ACTIVE_CLAIM");
 
         // We however still need the active check, since (due to the name of the function)
@@ -144,29 +163,6 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
             _checkOwner();
         }
 
-        _;
-    }
-
-    /** 
-    @notice Modifier which is opposite hasActiveClaim
-    @dev Requires that all fields are unset
-    */
-    modifier hasNoClaim(address _recipient) {
-        Claim storage _claim = claims[_recipient];
-        // Start timestamp != 0 is a sufficient condition for a claim to exist
-        // This is because we only ever add claims (or modify startTs) in the createClaim function
-        // Which requires that its input startTimestamp be nonzero
-        // So therefore, a zero value for this indicates the claim does not exist.
-        require(_claim.startTimestamp == 0, "CLAIM_ALREADY_EXISTS");
-
-        // We don't even need to check for active to be unset, since this function only
-        // determines that a claim hasn't been set
-        // require(_claim.isActive == false, "CLAIM_ALREADY_EXISTS");
-
-        // Further checks aren't necessary (to save gas), as they're done at creation time (createClaim)
-        // require(_claim.endTimestamp == 0, "CLAIM_ALREADY_EXISTS");
-        // require(_claim.linearVestAmount + _claim.cliffAmount == 0, "CLAIM_ALREADY_EXISTS");
-        // require(_claim.amountWithdrawn == 0, "CLAIM_ALREADY_EXISTS");
         _;
     }
 
@@ -227,14 +223,16 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     /**
     @notice Calculate the amount vested for a given _recipient at a reference timestamp.
     @param _recipient - The address for whom we're calculating
+    @param _scheduleIndex - The index of the vesting schedules of the recipient.
     @param _referenceTs - The timestamp at which we want to calculate the vested amount.
     @dev Simply call the _baseVestedAmount for the claim in question
     */
     function vestedAmount(
         address _recipient,
+        uint256 _scheduleIndex,
         uint40 _referenceTs
     ) public view returns (uint256) {
-        Claim memory _claim = claims[_recipient];
+        Claim memory _claim = claims[_recipient][_scheduleIndex];
         uint40 vestEndTimestamp = _claim.isActive
             ? _referenceTs
             : _claim.deactivationTimestamp;
@@ -245,22 +243,28 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     @notice Calculate the total vested at the end of the schedule, by simply feeding in the end timestamp to the function above.
     @dev This fn is somewhat superfluous, should probably be removed.
     @param _recipient - The address for whom we're calculating
+    @param _scheduleIndex - The index of the vesting schedules of the recipient.
      */
     function finalVestedAmount(
-        address _recipient
+        address _recipient,
+        uint256 _scheduleIndex
     ) public view returns (uint256) {
-        Claim memory _claim = claims[_recipient];
+        Claim memory _claim = claims[_recipient][_scheduleIndex];
         return _baseVestedAmount(_claim, _claim.endTimestamp);
     }
 
     /**
     @notice Calculates how much can we claim, by subtracting the already withdrawn amount from the vestedAmount at this moment.
     @param _recipient - The address for whom we're calculating
+    @param _scheduleIndex - The index of the vesting schedules of the recipient.
     */
-    function claimableAmount(address _recipient) public view returns (uint256) {
-        Claim memory _claim = claims[_recipient];
+    function claimableAmount(
+        address _recipient,
+        uint256 _scheduleIndex
+    ) public view returns (uint256) {
+        Claim memory _claim = claims[_recipient][_scheduleIndex];
         return
-            vestedAmount(_recipient, uint40(block.timestamp)) -
+            vestedAmount(_recipient, _scheduleIndex, uint40(block.timestamp)) -
             _claim.amountWithdrawn;
     }
 
@@ -268,11 +272,13 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     @notice Calculates how much wil be possible to claim at the end of vesting date, by subtracting the already withdrawn
             amount from the vestedAmount at this moment. Vesting date is either the end timestamp or the deactivation timestamp.
     @param _recipient - The address for whom we're calculating
+    @param _scheduleIndex - The index of the vesting schedules of the recipient.
     */
     function finalClaimableAmount(
-        address _recipient
+        address _recipient,
+        uint256 _scheduleIndex
     ) external view returns (uint256) {
-        Claim storage _claim = claims[_recipient];
+        Claim storage _claim = claims[_recipient][_scheduleIndex];
         uint40 vestEndTimestamp = _claim.isActive
             ? _claim.endTimestamp
             : _claim.deactivationTimestamp;
@@ -299,9 +305,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     @notice Permission-unchecked version of claim creation (no onlyOwner). Actual logic for create claim, to be run within either createClaim or createClaimBatch.
     @dev This'll simply check the input parameters, and create the structure verbatim based on passed in parameters.
      */
-    function _createClaimUnchecked(
-        ClaimInput memory claimInput
-    ) private hasNoClaim(claimInput.recipient) {
+    function _createClaimUnchecked(ClaimInput memory claimInput) private {
         require(claimInput.recipient != address(0), "INVALID_ADDRESS");
         require(
             claimInput.linearVestAmount + claimInput.cliffAmount > 0,
@@ -338,7 +342,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
             "INVALID_CLIFF"
         );
 
-        Claim storage _claim = claims[claimInput.recipient];
+        Claim memory _claim;
         _claim.startTimestamp = claimInput.startTimestamp;
         _claim.endTimestamp = claimInput.endTimestamp;
         _claim.deactivationTimestamp = 0;
@@ -348,6 +352,8 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
         _claim.cliffAmount = uint112(claimInput.cliffAmount);
         _claim.amountWithdrawn = 0;
         _claim.isActive = true;
+
+        claims[claimInput.recipient].push(_claim);
 
         // Our total allocation is simply the full sum of the two amounts, _cliffAmount + _linearVestAmount
         // Not necessary to use the more complex logic from _baseVestedAmount
@@ -365,7 +371,11 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
         // Effects limited to lines below
         numTokensReservedForVesting += allocatedAmount; // track the allocated amount
         vestingRecipients.push(claimInput.recipient); // add the vesting recipient to the list
-        emit ClaimCreated(claimInput.recipient, _claim); // let everyone know
+        emit ClaimCreated(
+            claimInput.recipient,
+            _claim,
+            claims[claimInput.recipient].length
+        ); // let everyone know
     }
 
     /** 
@@ -398,15 +408,22 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     /**
     @notice Withdraw the full claimable balance.
     @dev hasActiveClaim throws off anyone without a claim.
+    @param _scheduleIndex - The index of the vesting schedules of the recipient.
      */
-    function withdraw() external hasActiveClaim(_msgSender()) nonReentrant {
+    function withdraw(
+        uint256 _scheduleIndex
+    ) external hasActiveClaim(_msgSender(), _scheduleIndex) nonReentrant {
         // Get the message sender claim - if any
 
-        Claim storage usrClaim = claims[_msgSender()];
+        Claim storage usrClaim = claims[_msgSender()][_scheduleIndex];
 
         // we can use block.timestamp directly here as reference TS, as the function itself will make sure to cap it to endTimestamp
         // Conversion of timestamp to uint40 should be safe since 48 bit allows for a lot of years.
-        uint256 allowance = vestedAmount(_msgSender(), uint40(block.timestamp));
+        uint256 allowance = vestedAmount(
+            _msgSender(),
+            _scheduleIndex,
+            uint40(block.timestamp)
+        );
 
         // Make sure we didn't already withdraw more that we're allowed.
         require(
@@ -430,7 +447,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
         tokenAddress.safeTransfer(_msgSender(), amountRemaining);
 
         // Let withdrawal known to everyone.
-        emit Claimed(_msgSender(), amountRemaining);
+        emit Claimed(_msgSender(), amountRemaining, _scheduleIndex);
     }
 
     /**
@@ -457,15 +474,17 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     /** 
     @notice Allow an Owner to revoke a claim that is already active.
     @dev The requirement is that a claim exists and that it's active.
+    @param _scheduleIndex - The index of the vesting schedules of the recipient.
     */
     function revokeClaim(
-        address _recipient
-    ) external onlyOwner hasActiveClaim(_recipient) {
+        address _recipient,
+        uint256 _scheduleIndex
+    ) external onlyOwner hasActiveClaim(_recipient, _scheduleIndex) {
         // Fetch the claim
-        Claim storage _claim = claims[_recipient];
+        Claim storage _claim = claims[_recipient][_scheduleIndex];
 
         // Calculate what the claim should finally vest to
-        uint256 finalVestAmt = finalVestedAmount(_recipient);
+        uint256 finalVestAmt = finalVestedAmount(_recipient, _scheduleIndex);
 
         // No point in revoking something that has been fully consumed
         // so require that there be unconsumed amount
@@ -478,6 +497,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
         // The amount that is "reclaimed" is equal to the total allocation less what was already withdrawn
         uint256 vestedSoFarAmt = vestedAmount(
             _recipient,
+            _scheduleIndex,
             uint40(block.timestamp)
         );
         uint256 amountRemaining = finalVestAmt - vestedSoFarAmt;
@@ -488,7 +508,8 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
             _recipient,
             amountRemaining,
             uint40(block.timestamp),
-            _claim
+            _claim,
+            _scheduleIndex
         );
     }
 
@@ -515,5 +536,11 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     function amountAvailableToWithdrawByAdmin() public view returns (uint256) {
         return
             tokenAddress.balanceOf(address(this)) - numTokensReservedForVesting;
+    }
+
+    function getNumberOfVestings(
+        address _recipient
+    ) public view returns (uint256) {
+        return claims[_recipient].length;
     }
 }

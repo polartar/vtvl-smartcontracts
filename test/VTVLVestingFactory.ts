@@ -328,15 +328,14 @@ describe("Claim creation", async function () {
     await expect(result).to.be.revertedWith("INVALID_INTERVAL_LENGTH");
   });
 
-  it("fails on existing claim", async () => {
+  it("create 2 schedules for one recipient", async () => {
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
       tokenSymbol,
       initialSupplyTokens,
     });
 
-    // Create a claim first, then try to create a similar one
-    const tx1p = await vestingContract.createClaim({
+    await vestingContract.createClaim({
       recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
@@ -345,9 +344,8 @@ describe("Claim creation", async function () {
       linearVestAmount,
       cliffAmount,
     });
-    await tx1p.wait();
 
-    const tx2p = vestingContract.createClaim({
+    await vestingContract.createClaim({
       recipient: recipientAddress,
       startTimestamp,
       endTimestamp,
@@ -356,7 +354,9 @@ describe("Claim creation", async function () {
       linearVestAmount,
       cliffAmount,
     });
-    await expect(tx2p).to.be.revertedWith("CLAIM_ALREADY_EXISTS");
+    expect(
+      await vestingContract.getNumberOfVestings(recipientAddress)
+    ).to.be.equal(2);
   });
 
   // Try out zeros in each or both. This fn shadows the default params with the "bad" values
@@ -535,22 +535,24 @@ describe("Claim creation", async function () {
     });
   });
 
+  it("should throw error when no schedule exist", async () => {
+    const { vestingContract } = await createPrefundedVestingContract({
+      tokenName,
+      tokenSymbol,
+      initialSupplyTokens,
+    });
+    await expect(vestingContract.getClaim(recipientAddress, 0)).to.revertedWith(
+      "NO_SCHEDULE_EXIST"
+    );
+  });
+
   it("sets the claim", async () => {
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
       tokenSymbol,
       initialSupplyTokens,
     });
-    const returnedClaimBeforeSet = await vestingContract.getClaim(
-      recipientAddress
-    );
-    const nonZeroItemsInReturnedClaim = returnedClaimBeforeSet.filter(
-      (x) => !!x && x.toString() !== "0"
-    );
-    expect(nonZeroItemsInReturnedClaim.length).to.be.equal(
-      0,
-      "Claim nonzero even before setting it."
-    );
+
     await vestingContract.createClaim({
       recipient: recipientAddress,
       startTimestamp,
@@ -560,7 +562,10 @@ describe("Claim creation", async function () {
       linearVestAmount,
       cliffAmount,
     });
-    const returnedClaimInfo = await vestingContract.getClaim(recipientAddress);
+    const returnedClaimInfo = await vestingContract.getClaim(
+      recipientAddress,
+      0
+    );
     // Last two fields are amountWithdrawn and active
     Object.entries({
       startTimestamp,
@@ -633,7 +638,10 @@ describe("Claim creation", async function () {
       linearVestAmount,
       cliffAmount,
     });
-    const returnedClaimInfo = await vestingContract.getClaim(recipientAddress);
+    const returnedClaimInfo = await vestingContract.getClaim(
+      recipientAddress,
+      0
+    );
     expect(tx)
       .to.emit(vestingContract, "ClaimCreated")
       .withArgs(recipientAddress, returnedClaimInfo);
@@ -719,12 +727,12 @@ describe("Withdraw", async () => {
     // Now switch to owner2 as the withdrawer - to make sure admin properry of owner1 doesn't create problems
     const vestingContract = claimCreateContractInstance.connect(owner2);
     // At this moment, we don't have anything to withdraw - this should fail
-    await expect(vestingContract.withdraw()).to.be.revertedWith(
+    await expect(vestingContract.withdraw(0)).to.be.revertedWith(
       "NOTHING_TO_WITHDRAW"
     );
     // await ethers.provider.send("evm_setNextBlockTimestamp", [1000])
     await ethers.provider.send("evm_mine", [startTimestamp + 15]); // by now, we should've vested the cliff and one unlock interval
-    (await vestingContract.withdraw()).wait();
+    (await vestingContract.withdraw(0)).wait();
     const balanceAfterFirstWithdraw = await tokenContract.balanceOf(
       recipientAddress
     );
@@ -734,11 +742,11 @@ describe("Withdraw", async () => {
     );
     await ethers.provider.send("evm_mine", [startTimestamp + 17]); // Fast forward until the moment nothign further has vested
     // Now we don't have anything to withdraw again - as we've withdrawn just before the last vest
-    await expect(vestingContract.withdraw()).to.be.revertedWith(
+    await expect(vestingContract.withdraw(0)).to.be.revertedWith(
       "NOTHING_TO_WITHDRAW"
     );
     await ethers.provider.send("evm_mine", [startTimestamp + 25]); // mine another one
-    await (await vestingContract.withdraw()).wait();
+    await (await vestingContract.withdraw(0)).wait();
     const balanceAfterSecondWithdraw = await tokenContract.balanceOf(
       recipientAddress
     );
@@ -765,9 +773,9 @@ describe("Withdraw", async () => {
       linearVestAmount,
       cliffAmount: 0,
     });
-    await expect(vestingContract.connect(owner2).withdraw()).to.be.revertedWith(
-      "NO_ACTIVE_CLAIM"
-    );
+    await expect(
+      vestingContract.connect(owner2).withdraw(0)
+    ).to.be.revertedWith("NO_ACTIVE_CLAIM");
   });
   it("disallows withdrawal for an user with consumed claim", async () => {
     const { vestingContract } = await createPrefundedVestingContract({
@@ -789,10 +797,10 @@ describe("Withdraw", async () => {
     // Fast forward until past the end of the interval
     await ethers.provider.send("evm_mine", [endTimestamp.toNumber() + 500]);
     // Withdraw once - ok, second time - we're out of balance
-    await (await vestingContract.connect(owner2).withdraw()).wait();
-    await expect(vestingContract.connect(owner2).withdraw()).to.be.revertedWith(
-      "NOTHING_TO_WITHDRAW"
-    );
+    await (await vestingContract.connect(owner2).withdraw(0)).wait();
+    await expect(
+      vestingContract.connect(owner2).withdraw(0)
+    ).to.be.revertedWith("NOTHING_TO_WITHDRAW");
   });
   it("withdraw the vested amount after revoke claim", async () => {
     const { vestingContract } = await createPrefundedVestingContract({
@@ -821,7 +829,7 @@ describe("Withdraw", async () => {
     await ethers.provider.send("evm_mine", [startTimestamp + timePass]);
 
     // Revoke the claim, and try to withdraw afterwards
-    const tx = await vestingContract.revokeClaim(owner2.address);
+    const tx = await vestingContract.revokeClaim(owner2.address, 0);
     await tx.wait();
 
     // Get `revokeClaim` transaction block timestamp
@@ -832,9 +840,9 @@ describe("Withdraw", async () => {
       .mul(BigNumber.from(txTimestamp).sub(BigNumber.from(startTimestamp)))
       .div(BigNumber.from(vestingPeriodTimestamp));
 
-    expect(await vestingContract.claimableAmount(owner2.address)).to.be.equal(
-      expectClaimableAmount
-    );
+    expect(
+      await vestingContract.claimableAmount(owner2.address, 0)
+    ).to.be.equal(expectClaimableAmount);
   });
 });
 describe("Revoke Claim", async () => {
@@ -855,11 +863,11 @@ describe("Revoke Claim", async () => {
       linearVestAmount,
       cliffAmount,
     });
-    (await vestingContract.revokeClaim(recipientAddress)).wait();
+    (await vestingContract.revokeClaim(recipientAddress, 0)).wait();
     // Make sure it gets reverted
     expect(
       await (
-        await vestingContract.getClaim(recipientAddress)
+        await vestingContract.getClaim(recipientAddress, 0)
       ).isActive
     ).to.be.equal(false);
   });
@@ -880,12 +888,12 @@ describe("Revoke Claim", async () => {
     });
     // A random user cant revert it
     await expect(
-      vestingContract.connect(owner2).revokeClaim(recipientAddress)
+      vestingContract.connect(owner2).revokeClaim(recipientAddress, 0)
     ).to.be.revertedWith("Ownable: caller is not the owner");
     // Make sure it stays active
     expect(
       await (
-        await vestingContract.getClaim(recipientAddress)
+        await vestingContract.getClaim(recipientAddress, 0)
       ).isActive
     ).to.be.equal(true);
   });
@@ -896,7 +904,7 @@ describe("Revoke Claim", async () => {
       initialSupplyTokens,
     });
     await expect(
-      vestingContract.revokeClaim(await randomAddress())
+      vestingContract.revokeClaim(await randomAddress(), 0)
     ).to.be.revertedWith("NO_ACTIVE_CLAIM");
   });
   it("fails to revoke an already withdrawn claim", async () => {
@@ -919,10 +927,10 @@ describe("Revoke Claim", async () => {
       cliffAmount,
     });
     await ethers.provider.send("evm_mine", [endTimestamp]);
-    await (await vestingContract.connect(owner2).withdraw()).wait();
+    await (await vestingContract.connect(owner2).withdraw(0)).wait();
     // Later on, the claim should be unrevokable due to no unvested amount
     await expect(
-      vestingContract.revokeClaim(owner2.address)
+      vestingContract.revokeClaim(owner2.address, 0)
     ).to.be.revertedWith("NO_UNVESTED_AMOUNT");
   });
   it("get the correct final vested amount after revoke claim", async () => {
@@ -942,7 +950,7 @@ describe("Revoke Claim", async () => {
       cliffAmount,
     });
 
-    await (await vestingContract.revokeClaim(recipientAddress)).wait();
+    await (await vestingContract.revokeClaim(recipientAddress, 0)).wait();
   });
   it("sample revoke use case USER WIN: employee withdraw immediately before resignation", async () => {
     const { tokenContract, vestingContract } =
@@ -971,11 +979,11 @@ describe("Revoke Claim", async () => {
     await ethers.provider.send("evm_mine", [terminationTimestamp]);
 
     const userBalanceBefore = await tokenContract.balanceOf(owner2.address);
-    await (await vestingContract.connect(owner2).withdraw()).wait();
+    await (await vestingContract.connect(owner2).withdraw(0)).wait();
     const userBalanceAfter = await tokenContract.balanceOf(owner2.address);
 
     // revoke the claim preserving the "already vested but not yet withdrawn amount"
-    await (await vestingContract.revokeClaim(owner2.address)).wait();
+    await (await vestingContract.revokeClaim(owner2.address, 0)).wait();
 
     // move the clock to the programmed end of vesting period
     await ethers.provider.send("evm_mine", [endTimestamp]);
@@ -985,7 +993,7 @@ describe("Revoke Claim", async () => {
       userBalanceAfter.sub(userBalanceBefore).gt(BigNumber.from(0))
     ).to.be.equal(true);
     expect(
-      await vestingContract.finalClaimableAmount(owner2.address)
+      await vestingContract.finalClaimableAmount(owner2.address, 0)
     ).to.be.equal(BigNumber.from(0));
   });
 });
@@ -1023,6 +1031,7 @@ describe("Vested amount", async () => {
     expect(
       await vestingContract.vestedAmount(
         recipientAddress,
+        0,
         cliffReleaseTimestamp.sub(1)
       )
     ).to.be.equal(0);
@@ -1032,6 +1041,7 @@ describe("Vested amount", async () => {
     expect(
       await vestingContract.vestedAmount(
         recipientAddress,
+        0,
         cliffReleaseTimestamp
       )
     ).to.be.equal(cliffAmount);
@@ -1040,12 +1050,14 @@ describe("Vested amount", async () => {
     expect(
       await vestingContract.vestedAmount(
         recipientAddress,
+        0,
         cliffReleaseTimestamp.add(1)
       )
     ).to.be.equal(cliffAmount);
     expect(
       await vestingContract.vestedAmount(
         recipientAddress,
+        0,
         startTimestamp.sub(1)
       )
     ).to.be.equal(cliffAmount);
@@ -1072,12 +1084,13 @@ describe("Vested amount", async () => {
     });
     // at the start (shared start and cliff TS), we've vested exactly the cliff amount
     expect(
-      await vestingContract.vestedAmount(recipientAddress, startTimestamp)
+      await vestingContract.vestedAmount(recipientAddress, 0, startTimestamp)
     ).to.be.equal(cliffAmount);
     // Half the interval past, we've vested the cliff and half the linear amount
     expect(
       await vestingContract.vestedAmount(
         recipientAddress,
+        0,
         startTimestamp.add(500)
       )
     ).to.be.equal(cliffAmount + linearVestAmount * 0.5);
@@ -1085,13 +1098,14 @@ describe("Vested amount", async () => {
   it("correctly calculates the vested amount at the linear start time", async () => {
     // We've just released the cliff at the first second
     expect(
-      await vestingContract.vestedAmount(recipientAddress, startTimestamp)
+      await vestingContract.vestedAmount(recipientAddress, 0, startTimestamp)
     ).to.be.equal(cliffAmount);
   });
   it("correctly calculates the vested amount after the start", async () => {
     // We've just released the cliff at the first second
     const vestAmt = await vestingContract.vestedAmount(
       recipientAddress,
+      0,
       startTimestamp.add(1)
     );
     // 10% vested, ie 10 out of 10000, so add that to the cliff amound
@@ -1102,6 +1116,7 @@ describe("Vested amount", async () => {
       // Due to how our vesting is set up (length 1000, amount 10000), every 10*x a release of 100x should happen
       const vestAmt = await vestingContract.vestedAmount(
         recipientAddress,
+        0,
         startTimestamp.add(percentage * 10)
       );
       const expectedVestAmt = cliffAmount.add(percentage * 100);
@@ -1111,7 +1126,7 @@ describe("Vested amount", async () => {
   it("calculates the vested amount at the end of the linear interval to be the full amount allocated", async () => {
     // The full amount vested at the end
     expect(
-      await vestingContract.vestedAmount(recipientAddress, endTimestamp)
+      await vestingContract.vestedAmount(recipientAddress, 0, endTimestamp)
     ).to.be.equal(cliffAmount.add(linearVestAmount));
   });
   it("doesn't vest further after the end of the linear interval", async () => {
@@ -1119,13 +1134,14 @@ describe("Vested amount", async () => {
     expect(
       await vestingContract.vestedAmount(
         recipientAddress,
+        0,
         endTimestamp.add(100000000)
       )
     ).to.be.equal(cliffAmount.add(linearVestAmount));
   });
   it("calculates the finalVestedAmount to be equal the total amount to be vested", async () => {
     expect(
-      await vestingContract.finalVestedAmount(recipientAddress)
+      await vestingContract.finalVestedAmount(recipientAddress, 0)
     ).to.be.equal(cliffAmount.add(linearVestAmount));
   });
   it("takes the release interval into account", async () => {
@@ -1147,6 +1163,7 @@ describe("Vested amount", async () => {
     });
     const vestedAtStart = await vestingContract.vestedAmount(
       recipientAddress,
+      0,
       startTimestamp
     );
     expect(vestedAtStart).to.be.equal(cliffAmount);
@@ -1154,6 +1171,7 @@ describe("Vested amount", async () => {
     expect(
       await vestingContract.vestedAmount(
         recipientAddress,
+        0,
         startTimestamp.add(releaseIntervalSecs).sub(1)
       )
     ).to.be.equal(cliffAmount);
@@ -1161,12 +1179,13 @@ describe("Vested amount", async () => {
     expect(
       await vestingContract.vestedAmount(
         recipientAddress,
+        0,
         startTimestamp.add(releaseIntervalSecs)
       )
     ).to.be.equal(cliffAmount.add(linearVestAmount.div(2)));
     // Expect everything at the end
     expect(
-      await vestingContract.vestedAmount(recipientAddress, endTimestamp)
+      await vestingContract.vestedAmount(recipientAddress, 0, endTimestamp)
     ).to.be.equal(cliffAmount.add(linearVestAmount));
   });
 });
@@ -1199,9 +1218,10 @@ describe("Claimable amount", async () => {
     // Try couple of different points, no matter where we are, it should be the same since we have no withdrawals
     for (let ts = startTimestamp; ts <= endTimestamp; ts += 100) {
       await ethers.provider.send("evm_mine", [ts]); // Make sure we're at the relevant ts
-      const vestAmt = await vestingContract.vestedAmount(owner2.address, ts);
+      const vestAmt = await vestingContract.vestedAmount(owner2.address, 0, ts);
       const claimableAmount = await vestingContract.claimableAmount(
-        owner2.address
+        owner2.address,
+        0
       );
       expect(claimableAmount).to.be.equal(vestAmt);
     }
@@ -1227,22 +1247,25 @@ describe("Claimable amount", async () => {
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
     // const amtFirstWithdraw = vestingContract.vestedAmount(owner2.address, ts);
     // second owner withdraws
-    const tx = await vestingContract.connect(owner2).withdraw();
+    const tx = await vestingContract.connect(owner2).withdraw(0);
     // TODO: fetch the withdraw amount in a better way
     const amtFirstWithdraw = (await tx.wait()).events?.[1]?.args
       ?._withdrawalAmount;
     // Nothing should be claimable
-    expect(await vestingContract.claimableAmount(owner2.address)).to.be.equal(
-      0
-    );
+    expect(
+      await vestingContract.claimableAmount(owner2.address, 0)
+    ).to.be.equal(0);
     // now wait a bit till the end of the interval for everything to get vested
     await ethers.provider.send("evm_mine", [endTimestamp]);
     // we expect the claimble be less than vested for the amt withdrawn
-    const vestAmtEnd = await vestingContract.finalVestedAmount(owner2.address);
-    const expectedClaimable = vestAmtEnd.sub(amtFirstWithdraw);
-    expect(await vestingContract.claimableAmount(owner2.address)).to.be.equal(
-      expectedClaimable
+    const vestAmtEnd = await vestingContract.finalVestedAmount(
+      owner2.address,
+      0
     );
+    const expectedClaimable = vestAmtEnd.sub(amtFirstWithdraw);
+    expect(
+      await vestingContract.claimableAmount(owner2.address, 0)
+    ).to.be.equal(expectedClaimable);
   });
 });
 describe("Admin withdrawal", async () => {
@@ -1413,14 +1436,14 @@ describe("Long vest fail", async () => {
 
   it("half term works", async () => {
     expect(
-      await vestingContract.vestedAmount(recipientAddress, midTimestamp)
+      await vestingContract.vestedAmount(recipientAddress, 0, midTimestamp)
     ).to.be.equal("85000000000000000000000000");
   });
 
   it("full term works", async () => {
     // Note: at exactly the cliff time, linear vested amount won't yet come in play as we're only at second 0
     expect(
-      await vestingContract.vestedAmount(recipientAddress, endTimestamp)
+      await vestingContract.vestedAmount(recipientAddress, 0, endTimestamp)
     ).to.be.equal("170000000000000000000000000");
   });
 });
@@ -1502,7 +1525,7 @@ describe("Create vesting contract with fund and claims", async () => {
     const VestingContract = await ethers.getContractFactory("VTVLVesting");
     const contract = await VestingContract.attach(vestingContractAddress);
 
-    const _claim = await contract.getClaim(claim.recipient);
+    const _claim = await contract.getClaim(claim.recipient, 0);
     expect(_claim[0]).to.be.equal(claim.startTimestamp);
     expect(_claim[1]).to.be.equal(claim.endTimestamp);
     expect(_claim[2]).to.be.equal(claim.cliffReleaseTimestamp);
