@@ -13,26 +13,26 @@ Create Milestone contracts
 ### createSimpleMilestones
 
 ```solidity
-function createSimpleMilestones(contract IERC20 _tokenAddress, uint256 _totalAllocation, uint256[] _allocationPercents, address _recipient) external nonpayable
+function createSimpleMilestones(contract IERC20 _tokenAddress, uint256 _allocation, uint256[] _allocationPercents, address[] _recipients) external nonpayable
 ```
 
-Create simple milestones
+Create simple milestones.
 
-
+*All recipients will have the same milestones.*
 
 #### Parameters
 
 | Name | Type | Description |
 |---|---|---|
-| _tokenAddress | contract IERC20 | Vesting Fund token address |
-| _totalAllocation | uint256 | undefined |
+| _tokenAddress | contract IERC20 | Vesting fund token address. |
+| _allocation | uint256 | The total allocation amount for the milestones. |
 | _allocationPercents | uint256[] | undefined |
-| _recipient | address | undefined |
+| _recipients | address[] | The addresses of the recipients. |
 
 ### createVestingMilestone
 
 ```solidity
-function createVestingMilestone(contract IERC20 _tokenAddress, uint256 _totalAllocation, InputMilestone[] _milestones, address _recipient) external nonpayable
+function createVestingMilestone(contract IERC20 _tokenAddress, uint256 _allocation, InputMilestone[] _milestones, address[] _recipients) external nonpayable
 ```
 
 
@@ -44,9 +44,9 @@ function createVestingMilestone(contract IERC20 _tokenAddress, uint256 _totalAll
 | Name | Type | Description |
 |---|---|---|
 | _tokenAddress | contract IERC20 | undefined |
-| _totalAllocation | uint256 | undefined |
+| _allocation | uint256 | undefined |
 | _milestones | InputMilestone[] | undefined |
-| _recipient | address | undefined |
+| _recipients | address[] | undefined |
 
 ### owner
 

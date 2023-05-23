@@ -81,51 +81,68 @@ contract VTVLMilestoneFactory is Ownable {
     }
 
     /**
-     * @notice Create milestone based Vesting contract
-     * @param _tokenAddress Vesting Fund token address
+     * @notice Create milestone based Vesting contract.
+     * @dev All recipients will have the same milestones.
+     * @param _tokenAddress Vesting fund token address.
+     * @param _allocation The total allocation amount for the milestones.
+     * @param _recipients The addresses of the recipients.
      */
     function createVestingMilestone(
         IERC20 _tokenAddress,
-        uint256 _totalAllocation,
+        uint256 _allocation,
         InputMilestone[] calldata _milestones,
-        address _recipient
+        address[] calldata _recipients
     ) public {
+        require(_recipients.length > 0, "Invalid Recipients");
         milestoneValidate(_milestones);
 
         VestingMilestone milestoneContract = new VestingMilestone(
             _tokenAddress,
-            _totalAllocation,
+            _allocation,
             _milestones,
-            _recipient,
+            _recipients,
             msg.sender
         );
 
-        _deposit(_tokenAddress, _totalAllocation, address(milestoneContract));
+        _deposit(
+            _tokenAddress,
+            _allocation * _recipients.length,
+            address(milestoneContract)
+        );
 
         emit CreateMilestoneContract(address(milestoneContract), msg.sender);
     }
 
     /**
-     * @notice Create simple milestones
-     * @param _tokenAddress Vesting Fund token address
+     * @notice Create simple milestones.
+     * @dev All recipients will have the same milestones.
+     * @param _tokenAddress Vesting fund token address.
+     * @param _allocation The total allocation amount for the milestones.
+     * @param _recipients The addresses of the recipients.
      */
     function createSimpleMilestones(
         IERC20 _tokenAddress,
-        uint256 _totalAllocation,
+        uint256 _allocation,
         uint256[] calldata _allocationPercents,
-        address _recipient
+        address[] calldata _recipients
     ) public {
+        require(_recipients.length > 0, "Invalid Recipients");
+
         allocationValidate(_allocationPercents);
 
         SimpleMilestone milestoneContract = new SimpleMilestone(
             _tokenAddress,
-            _totalAllocation,
+            _allocation,
             _allocationPercents,
-            _recipient,
+            _recipients,
             msg.sender
         );
 
-        _deposit(_tokenAddress, _totalAllocation, address(milestoneContract));
+        _deposit(
+            _tokenAddress,
+            _allocation * _recipients.length,
+            address(milestoneContract)
+        );
 
         emit CreateMilestoneContract(address(milestoneContract), msg.sender);
     }

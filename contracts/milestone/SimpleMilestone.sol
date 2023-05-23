@@ -12,9 +12,9 @@ contract SimpleMilestone is BaseMilestone {
     /**
     @notice Construct the contract.
     @param _tokenAddress - the address of the claim token.
-    @param _totalAllocation - the allocation amount for this milestone.
+    @param _allocation - the allocation amount for this milestone.
     @param _allcationPercents - the allocation percents
-    @param _recipient - the address for which we fetch the claim.
+    @param _recipients - the addresses for which we fetch the claim.
     @param _owner - the owner of this contract.
     @dev Factory contract will deposit the token when creating this contract.
     // This is created by Factory contract and Safe wallet can be used, 
@@ -22,15 +22,15 @@ contract SimpleMilestone is BaseMilestone {
      */
     constructor(
         IERC20 _tokenAddress,
-        uint256 _totalAllocation,
+        uint256 _allocation,
         uint256[] memory _allcationPercents,
-        address _recipient,
+        address[] memory _recipients,
         address _owner
     ) {
-        recipient = _recipient;
+        recipients = _recipients;
         tokenAddress = _tokenAddress;
         _transferOwnership(_owner);
-        totalAllocation = _totalAllocation;
+        allocation = _allocation;
 
         super.initializeAllocations(_allcationPercents);
     }
@@ -39,9 +39,10 @@ contract SimpleMilestone is BaseMilestone {
     @notice Calculates how much recipient can claim.
     */
     function claimableAmount(
+        address _recipient,
         uint256 _milestoneIndex
     ) public view returns (uint256) {
-        Milestone memory milestone = milestones[_milestoneIndex];
+        Milestone memory milestone = milestones[_recipient][_milestoneIndex];
         if (milestone.startTime == 0 || milestone.isWithdrawn) {
             return 0;
         } else {
@@ -55,11 +56,15 @@ contract SimpleMilestone is BaseMilestone {
      */
     function withdraw(
         uint256 _milestoneIndex
-    ) public onlyRecipient onlyCompleted(_milestoneIndex) {
-        Milestone storage milestone = milestones[_milestoneIndex];
+    )
+        public
+        hasMilestone(_msgSender(), _milestoneIndex)
+        onlyCompleted(_msgSender(), _milestoneIndex)
+    {
+        Milestone storage milestone = milestones[_msgSender()][_milestoneIndex];
         require(!milestone.isWithdrawn, "ALREADY_WITHDRAWED");
 
         milestone.isWithdrawn = true;
-        tokenAddress.safeTransfer(recipient, milestone.allocation);
+        tokenAddress.safeTransfer(_msgSender(), milestone.allocation);
     }
 }

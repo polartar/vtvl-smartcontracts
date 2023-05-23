@@ -22,31 +22,33 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
      */
     constructor(
         IERC20 _tokenAddress,
-        uint256 _totalAllocation,
+        uint256 _allocation,
         InputMilestone[] memory _milestones,
-        address _recipient,
+        address[] memory _recipients,
         address _owner
     ) {
         require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
         tokenAddress = _tokenAddress;
         _transferOwnership(_owner);
-        recipient = _recipient;
-        totalAllocation = _totalAllocation;
+        recipients = _recipients;
+        allocation = _allocation;
 
         super.initializeMilestones(_milestones);
     }
 
     /**
     @notice Calculate the amount vested for a given _recipient at a reference timestamp.
+    @param _recipient - The recipient address
     @param _milestoneIndex - The index of Milestone
     @param _referenceTs - The timestamp at which we want to calculate the vested amount.
     @dev Simply call the _baseVestedAmount for the claim in question
     */
     function vestedAmount(
+        address _recipient,
         uint256 _milestoneIndex,
         uint256 _referenceTs
-    ) public view returns (uint256) {
-        Milestone memory milestone = milestones[_milestoneIndex];
+    ) public view hasMilestone(_recipient, _milestoneIndex) returns (uint256) {
+        Milestone memory milestone = milestones[_recipient][_milestoneIndex];
         if (milestone.startTime == 0) {
             return 0;
         }
@@ -76,21 +78,24 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
     @dev This fn is somewhat superfluous, should probably be removed.
      */
     function finalVestedAmount(
+        address _recipient,
         uint256 _milestoneIndex
     ) public view returns (uint256) {
-        return milestones[_milestoneIndex].allocation;
+        return milestones[_recipient][_milestoneIndex].allocation;
     }
 
     /**
     @notice Calculates how much can we claim, by subtracting the already withdrawn amount from the vestedAmount at this moment.
+    @param _recipient the address of the recipient.
     @param _milestoneIndex the index of milestones.
     */
     function claimableAmount(
+        address _recipient,
         uint256 _milestoneIndex
     ) public view returns (uint256) {
         return
-            vestedAmount(_milestoneIndex, block.timestamp) -
-            milestones[_milestoneIndex].withdrawnAmount;
+            vestedAmount(_recipient, _milestoneIndex, block.timestamp) -
+            milestones[_recipient][_milestoneIndex].withdrawnAmount;
     }
 
     /**
@@ -100,11 +105,19 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
      */
     function withdraw(
         uint256 _milestoneIndex
-    ) external onlyRecipient onlyCompleted(_milestoneIndex) {
-        Milestone storage milestone = milestones[_milestoneIndex];
+    )
+        external
+        hasMilestone(_msgSender(), _milestoneIndex)
+        onlyCompleted(_msgSender(), _milestoneIndex)
+    {
+        Milestone storage milestone = milestones[_msgSender()][_milestoneIndex];
         // we can use block.timestamp directly here as reference TS, as the function itself will make sure to cap it to endTimestamp
         // Conversion of timestamp to uint40 should be safe since 48 bit allows for a lot of years.
-        uint256 allowance = vestedAmount(_milestoneIndex, block.timestamp);
+        uint256 allowance = vestedAmount(
+            _msgSender(),
+            _milestoneIndex,
+            block.timestamp
+        );
 
         // Make sure we didn't already withdraw more that we're allowed.
         require(allowance > milestone.withdrawnAmount, "NOTHING_TO_WITHDRAW");

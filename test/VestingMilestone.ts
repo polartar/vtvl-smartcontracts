@@ -91,7 +91,7 @@ const deployTestToken = async () => {
 
 const createVestingMilestone = async (
   tokenContract: TestERC20Token,
-  recipient: string
+  recipients: string[]
 ) => {
   const factory = await createContractFactory();
   factoryContract = await factory.deploy();
@@ -103,7 +103,7 @@ const createVestingMilestone = async (
     tokenContract.address,
     totalAllocation,
     milestones,
-    recipient
+    recipients
   );
 
   const milestoneContractAddress = getParamFromEvent(
@@ -133,7 +133,7 @@ describe("Milestone Based Vesting Contract creation with fund", async function (
     [owner, other, recipient] = await ethers.getSigners();
     tokenContract = await deployTestToken();
 
-    contract = await createVestingMilestone(tokenContract, recipient.address);
+    contract = await createVestingMilestone(tokenContract, [recipient.address]);
   });
 
   it("should not create contract if invalid IERC20 token", async function () {
@@ -143,7 +143,7 @@ describe("Milestone Based Vesting Contract creation with fund", async function (
         tokenAddress,
         totalAllocation,
         milestones,
-        recipient.address
+        [recipient.address]
       )
     ).to.be.reverted;
   });
@@ -157,34 +157,34 @@ describe("Milestone Based Vesting Contract creation with fund", async function (
   });
 
   it("should not completed when deployed", async function () {
-    expect(await contract.isCompleted(0)).to.be.equal(false);
+    expect(await contract.isCompleted(recipient.address, 0)).to.be.equal(false);
   });
 
   it("should only owner can mark isCompleted", async function () {
-    await expect(contract.connect(other).setComplete(0)).to.be.revertedWith(
-      "Ownable: caller is not the owner"
-    );
+    await expect(
+      contract.connect(other).setComplete(recipient.address, 0)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
 
-    await contract.setComplete(0);
-    expect(await contract.isCompleted(0)).to.be.equal(true);
+    await contract.setComplete(recipient.address, 0);
+    expect(await contract.isCompleted(recipient.address, 0)).to.be.equal(true);
   });
 
   it("should not completed if already completed", async function () {
-    await expect(contract.setComplete(0)).to.be.revertedWith(
+    await expect(contract.setComplete(recipient.address, 0)).to.be.revertedWith(
       "ALREADY_COMPLETED"
     );
   });
 
   it("should final vested amount be same as allocation", async function () {
-    expect(await contract.finalVestedAmount(0)).to.be.equal(
+    expect(await contract.finalVestedAmount(recipient.address, 0)).to.be.equal(
       totalAllocation.mul(allocationPercents[0]).div(100)
     );
   });
 
   it("should only recipient can withdraw", async function () {
-    await expect(contract.connect(other).withdraw(0)).to.be.revertedWith(
-      "NO_RECIPIENT"
-    );
+    await expect(
+      contract.connect(other).withdraw(recipient.address)
+    ).to.be.revertedWith("NO_MILESTONE");
   });
 
   it("should admin withdraw uncompleted allocations", async function () {
@@ -213,16 +213,16 @@ describe("Milestone Based Vesting Contract claim", async function () {
     [, , recipient] = await ethers.getSigners();
     tokenContract = await deployTestToken();
 
-    contract = await createVestingMilestone(tokenContract, recipient.address);
+    contract = await createVestingMilestone(tokenContract, [recipient.address]);
   });
 
   it("should claimable amount be 0 when not completed", async function () {
-    expect(await contract.isCompleted(1)).to.be.equal(false);
-    expect(await contract.claimableAmount(1)).to.be.equal(0);
+    expect(await contract.isCompleted(recipient.address, 1)).to.be.equal(false);
+    expect(await contract.claimableAmount(recipient.address, 1)).to.be.equal(0);
   });
 
   it("should calculate claimable amount after 10 hours passed", async function () {
-    await contract.setComplete(0);
+    await contract.setComplete(recipient.address, 0);
     const startTimestamp = (await getLastBlockTs()) + 100;
     const endTimestamp = startTimestamp + 10 * 3600;
 
@@ -232,13 +232,13 @@ describe("Milestone Based Vesting Contract claim", async function () {
     const intervals = BigNumber.from(3600 * 10).div(
       milestones[0].releaseIntervalSecs
     );
-    expect((await contract.claimableAmount(0)).toString()).to.be.equal(
-      amountPerInterval(0).mul(intervals).toString()
-    );
+    expect(
+      (await contract.claimableAmount(recipient.address, 0)).toString()
+    ).to.be.equal(amountPerInterval(0).mul(intervals).toString());
   });
 
   it("should recipient withdraw correct amount from milestone 0", async function () {
-    await contract.setComplete(0);
+    await contract.setComplete(recipient.address, 0);
     const startTimestamp = (await getLastBlockTs()) + 100;
     const endTimestamp = startTimestamp + 10 * 3600;
 
@@ -258,7 +258,7 @@ describe("Milestone Based Vesting Contract claim", async function () {
   });
 
   it("should recipient withdraw correct amount from milestone 1", async function () {
-    await contract.setComplete(1);
+    await contract.setComplete(recipient.address, 1);
     const startTimestamp = (await getLastBlockTs()) + 100;
     const endTimestamp = startTimestamp + 10 * 3600;
 
@@ -278,21 +278,24 @@ describe("Milestone Based Vesting Contract claim", async function () {
   });
 
   it("should recipient withdraw same amount with claimable amount", async function () {
-    await contract.setComplete(1);
+    await contract.setComplete(recipient.address, 1);
     const startTimestamp = (await getLastBlockTs()) + 100;
     const endTimestamp = startTimestamp + 10 * 3600;
 
     // 10 hours passed after completed
     await ethers.provider.send("evm_mine", [endTimestamp]);
 
-    const claimableAmount = await contract.claimableAmount(1);
+    const claimableAmount = await contract.claimableAmount(
+      recipient.address,
+      1
+    );
     await expect(() =>
       contract.connect(recipient).withdraw(1)
     ).to.changeTokenBalance(tokenContract, recipient, claimableAmount);
   });
 
   it("should not claim after claim", async function () {
-    await contract.setComplete(0);
+    await contract.setComplete(recipient.address, 0);
     const startTimestamp = (await getLastBlockTs()) + 100;
     const endTimestamp = startTimestamp + 10 * 3600;
 
@@ -318,7 +321,7 @@ describe("Milestone Based Vesting Contract claim", async function () {
   });
 
   it("should claim all allocation after period", async function () {
-    await contract.setComplete(0);
+    await contract.setComplete(recipient.address, 0);
     const startTimestamp = (await getLastBlockTs()) + 100;
 
     // vesting period ended
@@ -350,7 +353,7 @@ describe("Milestone Based Contract creation without fund", async function () {
     // transfer all tokens to other
     await tokenContract.transfer(other.address, totalAllocation);
 
-    contract = await createVestingMilestone(tokenContract, recipient.address);
+    contract = await createVestingMilestone(tokenContract, [recipient.address]);
   });
 
   it("should the balance of milestone contract is 0", async function () {
@@ -364,11 +367,13 @@ describe("Milestone Based Contract creation without fund", async function () {
   });
 
   it("should not completed when deployed", async function () {
-    expect(await contract.isCompleted(0)).to.be.equal(false);
+    expect(await contract.isCompleted(recipient.address, 0)).to.be.equal(false);
   });
 
   it("should not set the complete if not deposited", async function () {
-    await expect(contract.setComplete(0)).to.be.revertedWith("NOT_DEPOSITED");
+    await expect(contract.setComplete(recipient.address, 0)).to.be.revertedWith(
+      "NOT_DEPOSITED"
+    );
   });
 
   it("should set the complete if deposited", async function () {
@@ -376,7 +381,35 @@ describe("Milestone Based Contract creation without fund", async function () {
       .connect(other)
       .transfer(contract.address, totalAllocation);
 
-    await contract.setComplete(0);
-    expect(await contract.isCompleted(0)).to.be.equal(true);
+    await contract.setComplete(recipient.address, 0);
+    expect(await contract.isCompleted(recipient.address, 0)).to.be.equal(true);
+  });
+});
+
+describe("Milestone Based Contract creation with multiple recipients", async function () {
+  let tokenContract: TestERC20Token;
+
+  let contract: VestingMilestone;
+
+  before(async () => {
+    tokenContract = await deployTestToken();
+  });
+
+  it("should create milestones for 50 recipients", async function () {
+    const recipients = [];
+    for (let i = 0; i < 50; i++) {
+      recipients.push(await randomAddress());
+    }
+    contract = await createVestingMilestone(tokenContract, recipients);
+
+    const milestoneRecipients = await contract.getAllRecipients();
+    expect(milestoneRecipients.length).to.be.equal(recipients.length);
+    expect(milestoneRecipients[33]).to.be.equal(recipients[33]);
+
+    const milestone = await contract.getMilestone(recipients[0], 1);
+    expect(milestone.releaseIntervalSecs).to.be.equal(
+      milestones[1].releaseIntervalSecs
+    );
+    expect(milestone.period).to.be.equal(milestones[1].period);
   });
 });

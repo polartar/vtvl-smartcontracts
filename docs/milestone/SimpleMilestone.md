@@ -10,10 +10,27 @@
 
 ## Methods
 
+### allocation
+
+```solidity
+function allocation() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### claimableAmount
 
 ```solidity
-function claimableAmount(uint256 _milestoneIndex) external view returns (uint256)
+function claimableAmount(address _recipient, uint256 _milestoneIndex) external view returns (uint256)
 ```
 
 Calculates how much recipient can claim.
@@ -24,6 +41,7 @@ Calculates how much recipient can claim.
 
 | Name | Type | Description |
 |---|---|---|
+| _recipient | address | undefined |
 | _milestoneIndex | uint256 | undefined |
 
 #### Returns
@@ -48,10 +66,27 @@ function deposit(uint256 amount) external nonpayable
 |---|---|---|
 | amount | uint256 | undefined |
 
-### isCompleted
+### getAllRecipients
 
 ```solidity
-function isCompleted(uint256 _milestoneIndex) external view returns (bool)
+function getAllRecipients() external view returns (address[])
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address[] | undefined |
+
+### getMilestone
+
+```solidity
+function getMilestone(address _recipient, uint256 _milestoneIndex) external view returns (struct Milestone)
 ```
 
 
@@ -62,6 +97,30 @@ function isCompleted(uint256 _milestoneIndex) external view returns (bool)
 
 | Name | Type | Description |
 |---|---|---|
+| _recipient | address | undefined |
+| _milestoneIndex | uint256 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | Milestone | undefined |
+
+### isCompleted
+
+```solidity
+function isCompleted(address _recipient, uint256 _milestoneIndex) external view returns (bool)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _recipient | address | undefined |
 | _milestoneIndex | uint256 | undefined |
 
 #### Returns
@@ -104,16 +163,21 @@ function owner() external view returns (address)
 |---|---|---|
 | _0 | address | undefined |
 
-### recipient
+### recipients
 
 ```solidity
-function recipient() external view returns (address)
+function recipients(uint256) external view returns (address)
 ```
 
 
 
 
 
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
 
 #### Returns
 
@@ -135,10 +199,10 @@ function renounceOwnership() external nonpayable
 ### setComplete
 
 ```solidity
-function setComplete(uint256 _milestoneIndex) external nonpayable
+function setComplete(address _recipient, uint256 _milestoneIndex) external nonpayable
 ```
 
-Only can mark as completed when it&#39;s deposited.
+Only can mark as completed when it&#39;s deposited fully.
 
 *Only onwer can mark as completed.*
 
@@ -146,6 +210,7 @@ Only can mark as completed when it&#39;s deposited.
 
 | Name | Type | Description |
 |---|---|---|
+| _recipient | address | undefined |
 | _milestoneIndex | uint256 | undefined |
 
 ### tokenAddress
@@ -164,23 +229,6 @@ function tokenAddress() external view returns (contract IERC20)
 | Name | Type | Description |
 |---|---|---|
 | _0 | contract IERC20 | undefined |
-
-### totalAllocation
-
-```solidity
-function totalAllocation() external view returns (uint256)
-```
-
-
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | uint256 | undefined |
 
 ### transferOwnership
 

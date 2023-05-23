@@ -10,7 +10,7 @@ struct Milestone {
     uint256 withdrawnAmount;
     uint128 period;
     uint120 releaseIntervalSecs;
-    bool isWithdrawn;
+    bool isWithdrawn; // This is for simple milestone contract.
     uint248 allocation;
     uint8 percent;
 }
@@ -24,12 +24,12 @@ struct InputMilestone {
 contract BaseMilestone is Ownable {
     using SafeERC20 for IERC20;
 
-    address public recipient;
+    address[] public recipients;
     IERC20 public tokenAddress;
-    uint256 public totalAllocation;
+    uint256 public allocation;
     uint256 public numTokensReservedForVesting;
 
-    mapping(uint256 => Milestone) milestones;
+    mapping(address => mapping(uint256 => Milestone)) milestones;
 
     /** 
     @notice Emitted when admin withdraws.
@@ -47,10 +47,18 @@ contract BaseMilestone is Ownable {
             milestone.period = _milestones[i].period;
             milestone.releaseIntervalSecs = _milestones[i].releaseIntervalSecs;
             milestone.allocation = uint248(
-                (_milestones[i].percent * totalAllocation) / 100
+                (_milestones[i].percent * allocation) / 100
             );
 
-            milestones[i] = milestone;
+            uint256 recipientLenth = recipients.length;
+
+            for (uint256 j = 0; j < recipientLenth; j++) {
+                milestones[recipients[j]][i] = milestone;
+                unchecked {
+                    ++j;
+                }
+            }
+
             unchecked {
                 ++i;
             }
@@ -62,46 +70,67 @@ contract BaseMilestone is Ownable {
     ) internal {
         uint256 length = _allocationPercents.length;
         for (uint256 i = 0; i < length; ) {
-            milestones[i].allocation = uint248(
-                (_allocationPercents[i] * totalAllocation) / 100
+            uint256 recipientLenth = recipients.length;
+            uint248 amount = uint248(
+                (_allocationPercents[i] * allocation) / 100
             );
+            for (uint256 j = 0; j < recipientLenth; j++) {
+                unchecked {
+                    milestones[recipients[j]][i].allocation = amount;
+                    ++j;
+                }
+            }
+
             unchecked {
                 ++i;
             }
         }
     }
 
-    modifier onlyRecipient() {
-        require(msg.sender == recipient, "NO_RECIPIENT");
+    modifier hasMilestone(address _recipient, uint256 _milestoneIndex) {
+        require(
+            milestones[_recipient][_milestoneIndex].allocation != 0,
+            "NO_MILESTONE"
+        );
 
         _;
     }
 
-    modifier onlyCompleted(uint256 _milestoneIndex) {
-        require(milestones[_milestoneIndex].startTime != 0, "NOT_COMPLETED");
+    modifier onlyCompleted(address _recipient, uint256 _milestoneIndex) {
+        require(
+            milestones[_recipient][_milestoneIndex].startTime != 0,
+            "NOT_COMPLETED"
+        );
 
         _;
     }
 
     modifier onlyDeposited() {
         uint256 balance = tokenAddress.balanceOf(address(this));
-        require(balance >= totalAllocation, "NOT_DEPOSITED");
+        require(balance >= allocation * recipients.length, "NOT_DEPOSITED");
 
         _;
     }
 
-    function isCompleted(uint256 _milestoneIndex) public view returns (bool) {
-        return milestones[_milestoneIndex].startTime == 0 ? false : true;
+    function isCompleted(
+        address _recipient,
+        uint256 _milestoneIndex
+    ) public view returns (bool) {
+        return
+            milestones[_recipient][_milestoneIndex].startTime == 0
+                ? false
+                : true;
     }
 
     /**
-    @notice Only can mark as completed when it's deposited.
+    @notice Only can mark as completed when it's deposited fully.
     @dev Only onwer can mark as completed.
      */
     function setComplete(
+        address _recipient,
         uint256 _milestoneIndex
     ) public onlyOwner onlyDeposited {
-        Milestone storage milestone = milestones[_milestoneIndex];
+        Milestone storage milestone = milestones[_recipient][_milestoneIndex];
 
         require(milestone.startTime == 0, "ALREADY_COMPLETED");
 
@@ -113,7 +142,9 @@ contract BaseMilestone is Ownable {
     @notice Only admin can withdraw the amount before it's completed.
      */
     function withdrawAdmin() public onlyOwner {
-        uint256 availableAmount = totalAllocation - numTokensReservedForVesting;
+        uint256 availableAmount = allocation *
+            recipients.length -
+            numTokensReservedForVesting;
 
         tokenAddress.safeTransfer(msg.sender, availableAmount);
 
@@ -122,5 +153,16 @@ contract BaseMilestone is Ownable {
 
     function deposit(uint256 amount) public {
         tokenAddress.safeTransferFrom(msg.sender, address(this), amount);
+    }
+
+    function getAllRecipients() public view returns (address[] memory) {
+        return recipients;
+    }
+
+    function getMilestone(
+        address _recipient,
+        uint256 _milestoneIndex
+    ) public view returns (Milestone memory) {
+        return milestones[_recipient][_milestoneIndex];
     }
 }

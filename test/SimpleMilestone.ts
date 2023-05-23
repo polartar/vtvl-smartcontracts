@@ -69,7 +69,7 @@ const createSimpleMilestone = async (
     tokenContractAddress,
     totalAllocation,
     allocationPercents,
-    recipient
+    [recipient]
   );
 
   const milestoneContractAddress = getParamFromEvent(
@@ -121,7 +121,7 @@ describe("Simple Milestone Contract creation with fund", async function () {
         tokenAddress,
         totalAllocation,
         allocationPercents,
-        recipient.address
+        [recipient.address]
       )
     ).to.be.reverted;
   });
@@ -135,38 +135,38 @@ describe("Simple Milestone Contract creation with fund", async function () {
   });
 
   it("should not completed when deployed", async function () {
-    expect(await contract.isCompleted(0)).to.be.equal(false);
+    expect(await contract.isCompleted(recipient.address, 0)).to.be.equal(false);
   });
 
   it("should only owner can mark isCompleted", async function () {
-    await expect(contract.connect(other).setComplete(0)).to.be.revertedWith(
-      "Ownable: caller is not the owner"
-    );
+    await expect(
+      contract.connect(other).setComplete(recipient.address, 0)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
 
-    await contract.setComplete(0);
-    expect(await contract.isCompleted(0)).to.be.equal(true);
+    await contract.setComplete(recipient.address, 0);
+    expect(await contract.isCompleted(recipient.address, 0)).to.be.equal(true);
   });
 
   it("should not completed if already completed", async function () {
-    await expect(contract.setComplete(0)).to.be.revertedWith(
+    await expect(contract.setComplete(recipient.address, 0)).to.be.revertedWith(
       "ALREADY_COMPLETED"
     );
   });
 
   it("should claimable amount be same as allocation when completed", async function () {
-    expect(await contract.claimableAmount(0)).to.be.equal(
+    expect(await contract.claimableAmount(recipient.address, 0)).to.be.equal(
       totalAllocation.mul(allocationPercents[0]).div(100)
     );
   });
 
   it("should claimable amount be 0 when not completed", async function () {
-    expect(await contract.isCompleted(1)).to.be.equal(false);
-    expect(await contract.claimableAmount(1)).to.be.equal(0);
+    expect(await contract.isCompleted(recipient.address, 1)).to.be.equal(false);
+    expect(await contract.claimableAmount(recipient.address, 1)).to.be.equal(0);
   });
 
   it("should only recipient can withdraw", async function () {
     await expect(contract.connect(other).withdraw(0)).to.be.revertedWith(
-      "NO_RECIPIENT"
+      "NO_MILESTONE"
     );
   });
 
@@ -226,11 +226,13 @@ describe("Simple Milestone Contract creation without fund", async function () {
   });
 
   it("should not completed when deployed", async function () {
-    expect(await contract.isCompleted(0)).to.be.equal(false);
+    expect(await contract.isCompleted(recipient.address, 0)).to.be.equal(false);
   });
 
   it("should not set the complete if not deposited", async function () {
-    await expect(contract.setComplete(0)).to.be.revertedWith("NOT_DEPOSITED");
+    await expect(contract.setComplete(recipient.address, 0)).to.be.revertedWith(
+      "NOT_DEPOSITED"
+    );
   });
 
   it("should set the complete if deposited", async function () {
@@ -238,7 +240,7 @@ describe("Simple Milestone Contract creation without fund", async function () {
       .connect(other)
       .transfer(contract.address, totalAllocation);
 
-    await contract.setComplete(0);
-    expect(await contract.isCompleted(0)).to.be.equal(true);
+    await contract.setComplete(recipient.address, 0);
+    expect(await contract.isCompleted(recipient.address, 0)).to.be.equal(true);
   });
 });
