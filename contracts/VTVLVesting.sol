@@ -160,7 +160,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     */
     modifier onlyOwnerOrFactory() {
         if (msg.sender != factoryAddress) {
-            _checkOwner();
+            super._checkOwner();
         }
 
         _;
