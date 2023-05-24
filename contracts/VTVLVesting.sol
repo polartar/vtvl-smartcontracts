@@ -159,10 +159,10 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     @notice This modifier requires that owner or factory contract.
     */
     modifier onlyOwnerOrFactory() {
-        if (msg.sender != factoryAddress) {
-            super._checkOwner();
-        }
-
+        require(
+            msg.sender == owner() || msg.sender == factoryAddress,
+            "Not Owner or Factory"
+        );
         _;
     }
 
