@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 import Chance from "chance";
 import { TestERC20Token, VTVLVesting, VTVLVestingFactory } from "../typechain";
 import { BigNumber, BigNumberish } from "ethers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 const VaultFactoryJson = require("../artifacts/contracts/VTVLVestingFactory.sol/VTVLVestingFactory.json");
 
 const iface = new ethers.utils.Interface(VaultFactoryJson.abi);
@@ -231,6 +232,7 @@ const cliffAmount = ethers.utils.parseUnits("10", 18);
 
 describe("Claim creation", async function () {
   const recipientAddress = await randomAddress();
+  const [, other] = await ethers.getSigners();
   // const defaultCreateClaimParams = [recipientAddress, startTimestamp, endTimestamp, cliffReleaseTimestamp, releaseIntervalSecs, linearVestAmount, cliffAmount ];
   it("fails on recipientAddress = 0", async () => {
     const { vestingContract } = await createPrefundedVestingContract({
@@ -400,6 +402,25 @@ describe("Claim creation", async function () {
       cliffAmount: 0,
     });
     await expect(result).to.be.revertedWith("INVALID_VESTED_AMOUNT");
+  });
+
+  it(`fails for non owner`, async () => {
+    const { vestingContract } = await createPrefundedVestingContract({
+      tokenName,
+      tokenSymbol,
+      initialSupplyTokens,
+    });
+    // We also use 0 on cliff amount
+    const result = vestingContract.connect(other).createClaim({
+      recipient: recipientAddress,
+      startTimestamp,
+      endTimestamp,
+      cliffReleaseTimestamp: 0,
+      releaseIntervalSecs,
+      linearVestAmount: 0,
+      cliffAmount: 0,
+    });
+    await expect(result).to.be.revertedWith("Not Owner or Factory");
   });
 
   it("fails on insufficient balance on initial allocation", async () => {
