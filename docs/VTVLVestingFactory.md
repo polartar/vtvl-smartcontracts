@@ -104,6 +104,23 @@ Set the fee recipient of Vesting contract.
 | _vestingContract | address | undefined |
 | _newReceiver | address | undefined |
 
+### withdraw
+
+```solidity
+function withdraw(address _tokenAddress, address _receiver) external nonpayable
+```
+
+Set the fee recipient of Vesting contract.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _tokenAddress | address | undefined |
+| _receiver | address | undefined |
+
 
 
 ## Events

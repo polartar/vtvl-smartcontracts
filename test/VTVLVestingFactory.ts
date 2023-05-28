@@ -1468,7 +1468,7 @@ describe("Long vest fail", async () => {
 });
 
 describe("Apply Fee", async () => {
-  const [, owner2] = await ethers.getSigners();
+  const [, owner2, recipient] = await ethers.getSigners();
   // Default params - a bit different than those above
   // linearly Vest 10000, every 1s, between last block ts+100 and 1000 secs forward
   // No cliff
@@ -1554,6 +1554,79 @@ describe("Apply Fee", async () => {
     expect(await tokenContract.balanceOf(factoryContract.address)).to.be.equal(
       feeAmount
     );
+  });
+
+  it("should withdraw the token from the Factory", async () => {
+    const startTimestamp = (await getLastBlockTs()) + 100;
+    const endTimestamp = startTimestamp + 1000;
+    const { tokenContract, vestingContract } =
+      await createPrefundedVestingContract({
+        tokenName,
+        tokenSymbol,
+        initialSupplyTokens,
+      });
+    await vestingContract.createClaim({
+      recipient: owner2.address,
+      startTimestamp,
+      endTimestamp,
+      cliffReleaseTimestamp,
+      releaseIntervalSecs,
+      linearVestAmount,
+      cliffAmount,
+    });
+    const ts = startTimestamp + 500;
+    await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
+
+    await factoryContract.setFee(vestingContract.address, 100); // set the fee 1%
+    const feeAmount = linearVestAmount.div(2).mul(100).div(10000);
+    await vestingContract.connect(owner2).withdraw(0);
+
+    await expect(
+      factoryContract
+        .connect(owner2)
+        .withdraw(tokenContract.address, owner2.address)
+    ).to.revertedWith("Ownable: caller is not the owner");
+
+    await expect(() =>
+      factoryContract.withdraw(tokenContract.address, owner2.address)
+    ).to.changeTokenBalance(tokenContract, owner2, feeAmount);
+
+    expect(await tokenContract.balanceOf(factoryContract.address)).to.be.equal(
+      0
+    );
+  });
+
+  it("should send the fee to the new recipient ", async () => {
+    const startTimestamp = (await getLastBlockTs()) + 100;
+    const endTimestamp = startTimestamp + 1000;
+    const { tokenContract, vestingContract } =
+      await createPrefundedVestingContract({
+        tokenName,
+        tokenSymbol,
+        initialSupplyTokens,
+      });
+    await vestingContract.createClaim({
+      recipient: owner2.address,
+      startTimestamp,
+      endTimestamp,
+      cliffReleaseTimestamp,
+      releaseIntervalSecs,
+      linearVestAmount,
+      cliffAmount,
+    });
+    const ts = startTimestamp + 500;
+    await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
+
+    await factoryContract.setFee(vestingContract.address, 100); // set the fee 1%
+    await factoryContract.updateFeeReceiver(
+      vestingContract.address,
+      recipient.address
+    ); // set the fee 1%
+    const feeAmount = linearVestAmount.div(2).mul(100).div(10000);
+
+    await expect(() =>
+      vestingContract.connect(owner2).withdraw(0)
+    ).to.changeTokenBalance(tokenContract, recipient, feeAmount);
   });
 });
 
