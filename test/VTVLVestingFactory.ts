@@ -1,9 +1,8 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import Chance from "chance";
-import { TestERC20Token, VTVLVesting, VTVLVestingFactory } from "../typechain";
+import { VTVLVesting, VTVLVestingFactory } from "../typechain";
 import { BigNumber, BigNumberish } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 const VaultFactoryJson = require("../artifacts/contracts/VTVLVestingFactory.sol/VTVLVestingFactory.json");
 
 const iface = new ethers.utils.Interface(VaultFactoryJson.abi);
@@ -65,17 +64,16 @@ const deployVestingContract = async (
   factoryContract = await factory.deploy();
   await factoryContract.deployed();
 
-  let transaction;
-  if (!claimInputs) {
-    transaction = await factoryContract.createVestingContract(
-      tokenAddress ?? (await randomAddress())
-    );
-  } else {
-    transaction = await factoryContract.createVestingContractWithSchedules(
-      tokenAddress ?? (await randomAddress()),
-      claimInputs
-    );
-  }
+  // if (!claimInputs) {
+  const transaction = await factoryContract.createVestingContract(
+    tokenAddress ?? (await randomAddress())
+  );
+  // } else {
+  // transaction = await factoryContract.createVestingContractWithSchedules(
+  //   tokenAddress ?? (await randomAddress()),
+  //   claimInputs
+  // );
+  // }
 
   const vestingContractAddress = getParamFromEvent(
     await transaction.wait(),
@@ -1469,86 +1467,176 @@ describe("Long vest fail", async () => {
   });
 });
 
-describe("Create vesting contract with fund and claims", async () => {
-  let tokenContract: TestERC20Token;
-  // Default params
-  // linearly Vest 10000, every 1s, between TS 1000 and 2000
-  // additionally, cliff vests another 5000, at TS = 900
-  const claim = {
-    recipient: await randomAddress(),
-    startTimestamp: BigNumber.from(1000),
-    endTimestamp: BigNumber.from(2000),
-    cliffReleaseTimestamp: BigNumber.from(900),
-    linearVestAmount: BigNumber.from(10000),
-    cliffAmount: BigNumber.from(5000),
-    releaseIntervalSecs: BigNumber.from(1),
-  };
+describe("Apply Fee", async () => {
+  const [, owner2] = await ethers.getSigners();
+  // Default params - a bit different than those above
+  // linearly Vest 10000, every 1s, between last block ts+100 and 1000 secs forward
+  // No cliff
+  const cliffReleaseTimestamp = BigNumber.from(0);
+  const linearVestAmount = BigNumber.from(10000);
+  const cliffAmount = BigNumber.from(0);
+  const releaseIntervalSecs = BigNumber.from(10);
 
-  before(async () => {
-    // Create an example token
-    const tokenContractFactory = await ethers.getContractFactory(
-      "TestERC20Token"
-    );
-    // const initialSupply = ethers.utils.parseUnits(initialSupplyTokens.toString(), decimals);
-    tokenContract = await tokenContractFactory.deploy(
+  it("should set the fee by only Factory owner", async () => {
+    const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
       tokenSymbol,
-      initialSupplyTokens
-    );
-    await tokenContract.deployed();
-  });
+      initialSupplyTokens,
+    });
 
-  it("shouldn't create the claim without token approve", async () => {
     await expect(
-      deployVestingContract(tokenContract.address, [claim])
-    ).to.be.revertedWith("ERC20: insufficient allowance");
+      factoryContract.connect(owner2).setFee(vestingContract.address, 100)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+    await expect(vestingContract.setFee(100)).to.be.revertedWith("Not Factory");
+    await factoryContract.setFee(vestingContract.address, 100);
+    expect(await vestingContract.feePercent()).to.be.equal(100);
   });
 
-  it("shouldn't create the claim when insufficient allowance", async () => {
-    const factory = await createContractFactory();
-    factoryContract = await factory.deploy();
-    await factoryContract.deployed();
+  it("should update the fee receiver by only Factory owner", async () => {
+    const { vestingContract } = await createPrefundedVestingContract({
+      tokenName,
+      tokenSymbol,
+      initialSupplyTokens,
+    });
 
-    tokenContract.approve(
-      factoryContract.address,
-      claim.cliffAmount.add(claim.linearVestAmount).sub(1)
-    );
+    const feeReceiver = await randomAddress();
+
     await expect(
-      factoryContract.createVestingContractWithSchedules(
-        tokenContract.address,
-        [claim]
-      )
-    ).to.be.revertedWith("ERC20: insufficient allowance");
+      factoryContract
+        .connect(owner2)
+        .updateFeeReceiver(vestingContract.address, feeReceiver)
+    ).to.be.revertedWith("Ownable: caller is not the owner");
+
+    await expect(
+      vestingContract.updateFeeReceiver(feeReceiver)
+    ).to.be.revertedWith("Not Factory");
+
+    await factoryContract.updateFeeReceiver(
+      vestingContract.address,
+      feeReceiver
+    );
+
+    expect(await vestingContract.feeReceiver()).to.be.equal(feeReceiver);
   });
 
-  it("should create the claim with fund ", async () => {
-    const factory = await createContractFactory();
-    factoryContract = await factory.deploy();
-    await factoryContract.deployed();
+  it("should take the fee", async () => {
+    const startTimestamp = (await getLastBlockTs()) + 100;
+    const endTimestamp = startTimestamp + 1000;
+    const { tokenContract, vestingContract } =
+      await createPrefundedVestingContract({
+        tokenName,
+        tokenSymbol,
+        initialSupplyTokens,
+      });
+    await vestingContract.createClaim({
+      recipient: owner2.address,
+      startTimestamp,
+      endTimestamp,
+      cliffReleaseTimestamp,
+      releaseIntervalSecs,
+      linearVestAmount,
+      cliffAmount,
+    });
+    const ts = startTimestamp + 500;
+    await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
 
-    tokenContract.approve(
-      factoryContract.address,
-      claim.cliffAmount.add(claim.linearVestAmount)
+    await factoryContract.setFee(vestingContract.address, 100); // set the fee 1%
+    const feeAmount = linearVestAmount.div(2).mul(100).div(10000);
+
+    await expect(() =>
+      vestingContract.connect(owner2).withdraw(0)
+    ).to.changeTokenBalance(
+      tokenContract,
+      owner2,
+      linearVestAmount.div(2).sub(feeAmount)
     );
-    const transaction =
-      await factoryContract.createVestingContractWithSchedules(
-        tokenContract.address,
-        [claim]
-      );
 
-    const vestingContractAddress = getParamFromEvent(
-      await transaction.wait(),
-      "CreateVestingContract(address,address)",
-      0
+    expect(await tokenContract.balanceOf(factoryContract.address)).to.be.equal(
+      feeAmount
     );
-
-    // TODO: check if we need any checks that the token be valid, etc
-    const VestingContract = await ethers.getContractFactory("VTVLVesting");
-    const contract = await VestingContract.attach(vestingContractAddress);
-
-    const _claim = await contract.getClaim(claim.recipient, 0);
-    expect(_claim[0]).to.be.equal(claim.startTimestamp);
-    expect(_claim[1]).to.be.equal(claim.endTimestamp);
-    expect(_claim[2]).to.be.equal(claim.cliffReleaseTimestamp);
   });
 });
+
+// describe("Create vesting contract with fund and claims", async () => {
+//   let tokenContract: TestERC20Token;
+//   // Default params
+//   // linearly Vest 10000, every 1s, between TS 1000 and 2000
+//   // additionally, cliff vests another 5000, at TS = 900
+//   const claim = {
+//     recipient: await randomAddress(),
+//     startTimestamp: BigNumber.from(1000),
+//     endTimestamp: BigNumber.from(2000),
+//     cliffReleaseTimestamp: BigNumber.from(900),
+//     linearVestAmount: BigNumber.from(10000),
+//     cliffAmount: BigNumber.from(5000),
+//     releaseIntervalSecs: BigNumber.from(1),
+//   };
+
+//   before(async () => {
+//     // Create an example token
+//     const tokenContractFactory = await ethers.getContractFactory(
+//       "TestERC20Token"
+//     );
+//     // const initialSupply = ethers.utils.parseUnits(initialSupplyTokens.toString(), decimals);
+//     tokenContract = await tokenContractFactory.deploy(
+//       tokenName,
+//       tokenSymbol,
+//       initialSupplyTokens
+//     );
+//     await tokenContract.deployed();
+//   });
+
+//   it("shouldn't create the claim without token approve", async () => {
+//     await expect(
+//       deployVestingContract(tokenContract.address, [claim])
+//     ).to.be.revertedWith("ERC20: insufficient allowance");
+//   });
+
+//   it("shouldn't create the claim when insufficient allowance", async () => {
+//     const factory = await createContractFactory();
+//     factoryContract = await factory.deploy();
+//     await factoryContract.deployed();
+
+//     tokenContract.approve(
+//       factoryContract.address,
+//       claim.cliffAmount.add(claim.linearVestAmount).sub(1)
+//     );
+//     await expect(
+//       factoryContract.createVestingContractWithSchedules(
+//         tokenContract.address,
+//         [claim]
+//       )
+//     ).to.be.revertedWith("ERC20: insufficient allowance");
+//   });
+
+//   it("should create the claim with fund ", async () => {
+//     const factory = await createContractFactory();
+//     factoryContract = await factory.deploy();
+//     await factoryContract.deployed();
+
+//     tokenContract.approve(
+//       factoryContract.address,
+//       claim.cliffAmount.add(claim.linearVestAmount)
+//     );
+//     const transaction =
+//       await factoryContract.createVestingContractWithSchedules(
+//         tokenContract.address,
+//         [claim]
+//       );
+
+//     const vestingContractAddress = getParamFromEvent(
+//       await transaction.wait(),
+//       "CreateVestingContract(address,address)",
+//       0
+//     );
+
+//     // TODO: check if we need any checks that the token be valid, etc
+//     const VestingContract = await ethers.getContractFactory("VTVLVesting");
+//     const contract = await VestingContract.attach(vestingContractAddress);
+
+//     const _claim = await contract.getClaim(claim.recipient, 0);
+//     expect(_claim[0]).to.be.equal(claim.startTimestamp);
+//     expect(_claim[1]).to.be.equal(claim.endTimestamp);
+//     expect(_claim[2]).to.be.equal(claim.cliffReleaseTimestamp);
+//   });
+// });

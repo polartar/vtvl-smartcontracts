@@ -1,30 +1,48 @@
-# VTVLVestingFactory
+# FeeControl
 
 
 
-> Vesting Factory contract
 
-Create Vesting contract
+
+
 
 
 
 ## Methods
 
-### createVestingContract
+### feePercent
 
 ```solidity
-function createVestingContract(contract IERC20 _tokenAddress) external nonpayable
+function feePercent() external view returns (uint256)
 ```
 
-Create Vesting contract without funding.
 
-*This will only create the vesting contract.*
 
-#### Parameters
+
+
+
+#### Returns
 
 | Name | Type | Description |
 |---|---|---|
-| _tokenAddress | contract IERC20 | Vesting Fund token address. |
+| _0 | uint256 | undefined |
+
+### feeReceiver
+
+```solidity
+function feeReceiver() external view returns (address)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address | undefined |
 
 ### owner
 
@@ -57,18 +75,17 @@ function renounceOwnership() external nonpayable
 ### setFee
 
 ```solidity
-function setFee(address _vestingContract, uint256 _feePercent) external nonpayable
+function setFee(uint256 _feePercent) external nonpayable
 ```
 
-Set the fee percent of Vesting contract.
 
-*100% will be 10000.*
+
+
 
 #### Parameters
 
 | Name | Type | Description |
 |---|---|---|
-| _vestingContract | address | undefined |
 | _feePercent | uint256 | undefined |
 
 ### transferOwnership
@@ -90,10 +107,10 @@ function transferOwnership(address newOwner) external nonpayable
 ### updateFeeReceiver
 
 ```solidity
-function updateFeeReceiver(address _vestingContract, address _newReceiver) external nonpayable
+function updateFeeReceiver(address _newReceiver) external nonpayable
 ```
 
-Set the fee recipient of Vesting contract.
+
 
 
 
@@ -101,29 +118,11 @@ Set the fee recipient of Vesting contract.
 
 | Name | Type | Description |
 |---|---|---|
-| _vestingContract | address | undefined |
 | _newReceiver | address | undefined |
 
 
 
 ## Events
-
-### CreateVestingContract
-
-```solidity
-event CreateVestingContract(address indexed vestingAddress, address deployer)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| vestingAddress `indexed` | address | undefined |
-| deployer  | address | undefined |
 
 ### OwnershipTransferred
 

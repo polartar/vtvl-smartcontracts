@@ -99,6 +99,40 @@ function createClaimsBatch(ClaimInput[] claimInputs) external nonpayable
 |---|---|---|
 | claimInputs | ClaimInput[] | undefined |
 
+### feePercent
+
+```solidity
+function feePercent() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
+### feeReceiver
+
+```solidity
+function feeReceiver() external view returns (address)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address | undefined |
+
 ### finalClaimableAmount
 
 ```solidity
@@ -269,6 +303,22 @@ Allow an Owner to revoke a claim that is already active.
 | _recipient | address | undefined |
 | _scheduleIndex | uint256 | - The index of the vesting schedules of the recipient. |
 
+### setFee
+
+```solidity
+function setFee(uint256 _feePercent) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _feePercent | uint256 | undefined |
+
 ### tokenAddress
 
 ```solidity
@@ -301,6 +351,22 @@ function transferOwnership(address newOwner) external nonpayable
 | Name | Type | Description |
 |---|---|---|
 | newOwner | address | undefined |
+
+### updateFeeReceiver
+
+```solidity
+function updateFeeReceiver(address _newReceiver) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _newReceiver | address | undefined |
 
 ### vestedAmount
 

@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./IVestingFee.sol";
 
 struct ClaimInput {
     uint40 startTimestamp; // When does the vesting start (40 bits is enough for TS)
@@ -18,7 +19,7 @@ struct ClaimInput {
     address recipient; // the recipient address
 }
 
-contract VTVLVesting is Ownable, ReentrancyGuard {
+contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee {
     using SafeERC20 for IERC20;
 
     /**
@@ -65,6 +66,8 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
     address[] internal vestingRecipients;
 
     address private immutable factoryAddress;
+    uint256 public feePercent; // Fee percent.  500 means 5%, 1 means 0.01 %
+    address public feeReceiver; // The receier address that will get the fee.
 
     // Events:
     /**
@@ -111,6 +114,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
         tokenAddress = _tokenAddress;
         _transferOwnership(_owner);
         factoryAddress = msg.sender;
+        feeReceiver = msg.sender;
     }
 
     /**
@@ -152,6 +156,14 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
         // Save gas, omit further checks
         // require(_claim.linearVestAmount + _claim.cliffAmount > 0, "INVALID_VESTED_AMOUNT");
         // require(_claim.endTimestamp > 0, "NO_END_TIMESTAMP");
+        _;
+    }
+
+    /**
+    @notice This modifier requires that owner or factory contract.
+    */
+    modifier onlyFactory() {
+        require(msg.sender == factoryAddress, "Not Factory");
         _;
     }
 
@@ -444,10 +456,24 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
         // After the "books" are set, transfer the tokens
         // Reentrancy note - internal vars have been changed by now
         // Also following Checks-effects-interactions pattern
-        tokenAddress.safeTransfer(_msgSender(), amountRemaining);
+
+        if (feePercent > 0) {
+            uint256 _feeAmount = calculateFee(amountRemaining);
+            tokenAddress.safeTransfer(
+                _msgSender(),
+                amountRemaining - _feeAmount
+            );
+            tokenAddress.safeTransfer(feeReceiver, _feeAmount);
+        } else {
+            tokenAddress.safeTransfer(_msgSender(), amountRemaining);
+        }
 
         // Let withdrawal known to everyone.
         emit Claimed(_msgSender(), amountRemaining, _scheduleIndex);
+    }
+
+    function calculateFee(uint256 _amount) private view returns (uint256) {
+        return (_amount * feePercent) / 10000;
     }
 
     /**
@@ -542,5 +568,13 @@ contract VTVLVesting is Ownable, ReentrancyGuard {
         address _recipient
     ) public view returns (uint256) {
         return claims[_recipient].length;
+    }
+
+    function setFee(uint256 _feePercent) external onlyFactory {
+        feePercent = _feePercent;
+    }
+
+    function updateFeeReceiver(address _newReceiver) external onlyFactory {
+        feeReceiver = _newReceiver;
     }
 }
