@@ -74,14 +74,14 @@ contract VTVLVestingFactory is Ownable {
     }
 
     /**
-     * @notice Set the fee recipient of Vesting contract.
+     * @notice Withdraw the token to the receiver.
      */
     function withdraw(
         address _tokenAddress,
         address _receiver
     ) external onlyOwner {
-        uint256 amount = IERC20(_tokenAddress).balanceOf(address(this));
-        IERC20(_tokenAddress).transfer(_receiver, amount);
+        uint256 balance = IERC20(_tokenAddress).balanceOf(address(this));
+        IERC20(_tokenAddress).transfer(_receiver, balance);
     }
 
     // We will need the below functions later.

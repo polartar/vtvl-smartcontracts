@@ -110,7 +110,7 @@ Set the fee recipient of Vesting contract.
 function withdraw(address _tokenAddress, address _receiver) external nonpayable
 ```
 
-Set the fee recipient of Vesting contract.
+Withdraw the token to the receiver.
 
 
 
