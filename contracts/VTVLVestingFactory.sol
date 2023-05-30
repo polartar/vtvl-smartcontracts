@@ -36,10 +36,15 @@ contract VTVLVestingFactory is Ownable {
      * @notice Create Vesting contract without funding.
      * @dev This will only create the vesting contract.
      * @param _tokenAddress Vesting Fund token address.
+     * @param _feePercent The percent of fee.
      */
-    function createVestingContract(IERC20 _tokenAddress) public {
+    function createVestingContract(
+        IERC20 _tokenAddress,
+        uint256 _feePercent
+    ) public {
         VTVLVesting vestingContract = new VTVLVesting(
             _tokenAddress,
+            _feePercent,
             msg.sender
         );
 

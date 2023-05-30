@@ -109,12 +109,13 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee {
     @notice Construct the contract, taking the ERC20 token to be vested as the parameter.
     @dev The owner can set the contract in question when creating the contract.
      */
-    constructor(IERC20 _tokenAddress, address _owner) {
+    constructor(IERC20 _tokenAddress, uint256 _feePercent, address _owner) {
         require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
         tokenAddress = _tokenAddress;
         _transferOwnership(_owner);
         factoryAddress = msg.sender;
         feeReceiver = msg.sender;
+        feePercent = _feePercent;
     }
 
     /**

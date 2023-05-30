@@ -13,7 +13,7 @@ Create Vesting contract
 ### createVestingContract
 
 ```solidity
-function createVestingContract(contract IERC20 _tokenAddress) external nonpayable
+function createVestingContract(contract IERC20 _tokenAddress, uint256 _feePercent) external nonpayable
 ```
 
 Create Vesting contract without funding.
@@ -25,6 +25,7 @@ Create Vesting contract without funding.
 | Name | Type | Description |
 |---|---|---|
 | _tokenAddress | contract IERC20 | Vesting Fund token address. |
+| _feePercent | uint256 | The percent of fee. |
 
 ### owner
 

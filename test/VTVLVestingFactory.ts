@@ -66,7 +66,8 @@ const deployVestingContract = async (
 
   // if (!claimInputs) {
   const transaction = await factoryContract.createVestingContract(
-    tokenAddress ?? (await randomAddress())
+    tokenAddress ?? (await randomAddress()),
+    0
   );
   // } else {
   // transaction = await factoryContract.createVestingContractWithSchedules(
@@ -165,6 +166,7 @@ describe("Contract creation", async function () {
         // @ts-ignore - Need to ignore invalid type because initializing with an invalid type is the whole point of this test
         const contractDeploymentPromise = factory.deploy(
           invalidParam as string,
+          0,
           owner.address
         );
 
