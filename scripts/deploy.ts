@@ -5,7 +5,6 @@
 // Runtime Environment's members available in the global scope.
 import { parseEther } from "ethers/lib/utils";
 import { ethers } from "hardhat";
-const hre = require("hardhat");
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -38,7 +37,9 @@ async function main() {
   // We get the contract to deploy
   const VTVLVestingFactory = await ethers.getContractFactory("VTVLVesting");
   const vestingContract = await VTVLVestingFactory.deploy(
-    tokenContract.address
+    tokenContract.address,
+    0,
+    deployer.address
   );
   console.log(
     `vestingContract initialized on ${vestingContract.address}, waiting to be deployed...`

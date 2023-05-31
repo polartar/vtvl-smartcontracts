@@ -9,7 +9,8 @@ const main = async () => {
   // We get the contract to deploy
   const VTVLVestingFactory = await ethers.getContractFactory("VTVLVesting");
   const vestingContract = await VTVLVestingFactory.deploy(
-    tokenContract.address
+    tokenContract.address,
+    0
   );
   console.log(
     `vestingContract initialized on ${vestingContract.address}, waiting to be deployed...`
