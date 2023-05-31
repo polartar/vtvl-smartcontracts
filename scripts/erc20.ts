@@ -14,7 +14,9 @@ async function main() {
     "VTVL",
     parseEther("100")
   );
+  console.log("Deploying...");
   const tx = await tokenContract.deployed();
+  console.log("Deploye: ", tokenContract.address);
   await tx.deployTransaction.wait();
 
   // console.log("Address:", tokenContract.address);
