@@ -6,5 +6,6 @@ export { AccessProtected__factory } from "./AccessProtected__factory";
 export { FeeControl__factory } from "./FeeControl__factory";
 export { IVestingFee__factory } from "./IVestingFee__factory";
 export { TestERC20Token__factory } from "./TestERC20Token__factory";
+export { UniswapOracle__factory } from "./UniswapOracle__factory";
 export { VTVLVesting__factory } from "./VTVLVesting__factory";
 export { VTVLVestingFactory__factory } from "./VTVLVestingFactory__factory";

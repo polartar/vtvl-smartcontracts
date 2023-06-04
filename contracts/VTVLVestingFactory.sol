@@ -79,6 +79,16 @@ contract VTVLVestingFactory is Ownable {
     }
 
     /**
+     * @notice Set the minimum price that will take the fee.
+     */
+    function updateMinWithdrawPrice(
+        address _vestingContract,
+        uint256 _minPrice
+    ) external onlyOwner onlyVestingContract(_vestingContract) {
+        IVestingFee(_vestingContract).updateMinWithdrawPrice(_minPrice);
+    }
+
+    /**
      * @notice Withdraw the token to the receiver.
      */
     function withdraw(

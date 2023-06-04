@@ -1,11 +1,12 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.15;
+pragma solidity 0.8.14;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./IVestingFee.sol";
+import "./UniswapOracle.sol";
 
 struct ClaimInput {
     uint40 startTimestamp; // When does the vesting start (40 bits is enough for TS)
@@ -19,13 +20,8 @@ struct ClaimInput {
     address recipient; // the recipient address
 }
 
-contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee {
+contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
     using SafeERC20 for IERC20;
-
-    /**
-    @notice Address of the token that we're vesting
-     */
-    IERC20 public immutable tokenAddress;
 
     /**
     @notice How many tokens are already allocated to vesting schedules.
@@ -69,6 +65,8 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee {
     uint256 public feePercent; // Fee percent.  500 means 5%, 1 means 0.01 %
     address public feeReceiver; // The receier address that will get the fee.
 
+    uint256 public minWithdrawPrice;
+
     // Events:
     /**
     @notice Emitted when a founder adds a vesting schedule.
@@ -109,13 +107,18 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee {
     @notice Construct the contract, taking the ERC20 token to be vested as the parameter.
     @dev The owner can set the contract in question when creating the contract.
      */
-    constructor(IERC20 _tokenAddress, uint256 _feePercent, address _owner) {
-        require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
-        tokenAddress = _tokenAddress;
+    constructor(
+        IERC20 _tokenAddress,
+        uint256 _feePercent,
+        address _owner
+    ) UniswapOracle(_tokenAddress) {
         _transferOwnership(_owner);
         factoryAddress = msg.sender;
         feeReceiver = msg.sender;
         feePercent = _feePercent;
+
+        // mint price is 0.3 USD
+        minWithdrawPrice = 30;
     }
 
     /**
@@ -458,13 +461,19 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee {
         // Reentrancy note - internal vars have been changed by now
         // Also following Checks-effects-interactions pattern
 
-        if (feePercent > 0) {
-            uint256 _feeAmount = calculateFee(amountRemaining);
-            tokenAddress.safeTransfer(
-                _msgSender(),
-                amountRemaining - _feeAmount
-            );
-            tokenAddress.safeTransfer(feeReceiver, _feeAmount);
+        if (feePercent > 0 && pool != address(0)) {
+            // calcualte the price when 10 secs ago.
+            uint256 price = getPrice(uint128(amountRemaining), 10);
+            if (price >= minWithdrawPrice) {
+                uint256 _feeAmount = calculateFee(amountRemaining);
+                tokenAddress.safeTransfer(
+                    _msgSender(),
+                    amountRemaining - _feeAmount
+                );
+                tokenAddress.safeTransfer(feeReceiver, _feeAmount);
+            } else {
+                tokenAddress.safeTransfer(_msgSender(), amountRemaining);
+            }
         } else {
             tokenAddress.safeTransfer(_msgSender(), amountRemaining);
         }
@@ -577,5 +586,9 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee {
 
     function updateFeeReceiver(address _newReceiver) external onlyFactory {
         feeReceiver = _newReceiver;
+    }
+
+    function updateMinWithdrawPrice(uint256 _minPrice) external onlyFactory {
+        minWithdrawPrice = _minPrice;
     }
 }

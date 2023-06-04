@@ -10,6 +10,40 @@
 
 ## Methods
 
+### UNISWAP_V3_FACTORY_ADDRESS
+
+```solidity
+function UNISWAP_V3_FACTORY_ADDRESS() external view returns (address)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address | undefined |
+
+### USDC_ADDRESS
+
+```solidity
+function USDC_ADDRESS() external view returns (address)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address | undefined |
+
 ### allVestingRecipients
 
 ```solidity
@@ -224,6 +258,46 @@ function getNumberOfVestings(address _recipient) external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### getPrice
+
+```solidity
+function getPrice(uint128 amount, uint32 secondsAgo) external view returns (uint256 amountOut)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| amount | uint128 | undefined |
+| secondsAgo | uint32 | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| amountOut | uint256 | undefined |
+
+### minWithdrawPrice
+
+```solidity
+function minWithdrawPrice() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### numTokensReservedForVesting
 
 ```solidity
@@ -267,6 +341,23 @@ function owner() external view returns (address)
 
 
 *Returns the address of the current owner.*
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address | undefined |
+
+### pool
+
+```solidity
+function pool() external view returns (address)
+```
+
+
+
+
 
 
 #### Returns
@@ -367,6 +458,22 @@ function updateFeeReceiver(address _newReceiver) external nonpayable
 | Name | Type | Description |
 |---|---|---|
 | _newReceiver | address | undefined |
+
+### updateMinWithdrawPrice
+
+```solidity
+function updateMinWithdrawPrice(uint256 _minPrice) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _minPrice | uint256 | undefined |
 
 ### vestedAmount
 
@@ -533,6 +640,20 @@ event OwnershipTransferred(address indexed previousOwner, address indexed newOwn
 |---|---|---|
 | previousOwner `indexed` | address | undefined |
 | newOwner `indexed` | address | undefined |
+
+
+
+## Errors
+
+### T
+
+```solidity
+error T()
+```
+
+
+
+
 
 
 

@@ -42,6 +42,22 @@ function updateFeeReceiver(address _newReceiver) external nonpayable
 |---|---|---|
 | _newReceiver | address | undefined |
 
+### updateMinWithdrawPrice
+
+```solidity
+function updateMinWithdrawPrice(uint256 _minPrice) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _minPrice | uint256 | undefined |
+
 
 
 

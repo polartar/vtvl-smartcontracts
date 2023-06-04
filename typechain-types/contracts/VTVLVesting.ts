@@ -92,6 +92,8 @@ export declare namespace VTVLVesting {
 
 export interface VTVLVestingInterface extends utils.Interface {
   functions: {
+    "UNISWAP_V3_FACTORY_ADDRESS()": FunctionFragment;
+    "USDC_ADDRESS()": FunctionFragment;
     "allVestingRecipients()": FunctionFragment;
     "amountAvailableToWithdrawByAdmin()": FunctionFragment;
     "claimableAmount(address,uint256)": FunctionFragment;
@@ -103,15 +105,19 @@ export interface VTVLVestingInterface extends utils.Interface {
     "finalVestedAmount(address,uint256)": FunctionFragment;
     "getClaim(address,uint256)": FunctionFragment;
     "getNumberOfVestings(address)": FunctionFragment;
+    "getPrice(uint128,uint32)": FunctionFragment;
+    "minWithdrawPrice()": FunctionFragment;
     "numTokensReservedForVesting()": FunctionFragment;
     "numVestingRecipients()": FunctionFragment;
     "owner()": FunctionFragment;
+    "pool()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "revokeClaim(address,uint256)": FunctionFragment;
     "setFee(uint256)": FunctionFragment;
     "tokenAddress()": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "updateFeeReceiver(address)": FunctionFragment;
+    "updateMinWithdrawPrice(uint256)": FunctionFragment;
     "vestedAmount(address,uint256,uint40)": FunctionFragment;
     "withdraw(uint256)": FunctionFragment;
     "withdrawAdmin(uint256)": FunctionFragment;
@@ -120,6 +126,8 @@ export interface VTVLVestingInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "UNISWAP_V3_FACTORY_ADDRESS"
+      | "USDC_ADDRESS"
       | "allVestingRecipients"
       | "amountAvailableToWithdrawByAdmin"
       | "claimableAmount"
@@ -131,21 +139,33 @@ export interface VTVLVestingInterface extends utils.Interface {
       | "finalVestedAmount"
       | "getClaim"
       | "getNumberOfVestings"
+      | "getPrice"
+      | "minWithdrawPrice"
       | "numTokensReservedForVesting"
       | "numVestingRecipients"
       | "owner"
+      | "pool"
       | "renounceOwnership"
       | "revokeClaim"
       | "setFee"
       | "tokenAddress"
       | "transferOwnership"
       | "updateFeeReceiver"
+      | "updateMinWithdrawPrice"
       | "vestedAmount"
       | "withdraw"
       | "withdrawAdmin"
       | "withdrawOtherToken"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "UNISWAP_V3_FACTORY_ADDRESS",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "USDC_ADDRESS",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "allVestingRecipients",
     values?: undefined
@@ -191,6 +211,14 @@ export interface VTVLVestingInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
+    functionFragment: "getPrice",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "minWithdrawPrice",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "numTokensReservedForVesting",
     values?: undefined
   ): string;
@@ -199,6 +227,7 @@ export interface VTVLVestingInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "pool", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
@@ -224,6 +253,10 @@ export interface VTVLVestingInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
+    functionFragment: "updateMinWithdrawPrice",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "vestedAmount",
     values: [string, BigNumberish, BigNumberish]
   ): string;
@@ -240,6 +273,14 @@ export interface VTVLVestingInterface extends utils.Interface {
     values: [string]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "UNISWAP_V3_FACTORY_ADDRESS",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "USDC_ADDRESS",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "allVestingRecipients",
     data: BytesLike
@@ -278,6 +319,11 @@ export interface VTVLVestingInterface extends utils.Interface {
     functionFragment: "getNumberOfVestings",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getPrice", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "minWithdrawPrice",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "numTokensReservedForVesting",
     data: BytesLike
@@ -287,6 +333,7 @@ export interface VTVLVestingInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "pool", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
@@ -306,6 +353,10 @@ export interface VTVLVestingInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "updateFeeReceiver",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "updateMinWithdrawPrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -425,6 +476,10 @@ export interface VTVLVesting extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    UNISWAP_V3_FACTORY_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
+
+    USDC_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
+
     allVestingRecipients(overrides?: CallOverrides): Promise<[string[]]>;
 
     amountAvailableToWithdrawByAdmin(
@@ -474,6 +529,14 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    getPrice(
+      amount: BigNumberish,
+      secondsAgo: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { amountOut: BigNumber }>;
+
+    minWithdrawPrice(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     numTokensReservedForVesting(
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
@@ -481,6 +544,8 @@ export interface VTVLVesting extends BaseContract {
     numVestingRecipients(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
+
+    pool(overrides?: CallOverrides): Promise<[string]>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: string }
@@ -509,6 +574,11 @@ export interface VTVLVesting extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
+    updateMinWithdrawPrice(
+      _minPrice: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<ContractTransaction>;
+
     vestedAmount(
       _recipient: string,
       _scheduleIndex: BigNumberish,
@@ -531,6 +601,10 @@ export interface VTVLVesting extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
   };
+
+  UNISWAP_V3_FACTORY_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+  USDC_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
   allVestingRecipients(overrides?: CallOverrides): Promise<string[]>;
 
@@ -581,11 +655,21 @@ export interface VTVLVesting extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  getPrice(
+    amount: BigNumberish,
+    secondsAgo: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  minWithdrawPrice(overrides?: CallOverrides): Promise<BigNumber>;
+
   numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
   numVestingRecipients(overrides?: CallOverrides): Promise<BigNumber>;
 
   owner(overrides?: CallOverrides): Promise<string>;
+
+  pool(overrides?: CallOverrides): Promise<string>;
 
   renounceOwnership(
     overrides?: Overrides & { from?: string }
@@ -614,6 +698,11 @@ export interface VTVLVesting extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
+  updateMinWithdrawPrice(
+    _minPrice: BigNumberish,
+    overrides?: Overrides & { from?: string }
+  ): Promise<ContractTransaction>;
+
   vestedAmount(
     _recipient: string,
     _scheduleIndex: BigNumberish,
@@ -637,6 +726,10 @@ export interface VTVLVesting extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    UNISWAP_V3_FACTORY_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+    USDC_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
     allVestingRecipients(overrides?: CallOverrides): Promise<string[]>;
 
     amountAvailableToWithdrawByAdmin(
@@ -686,11 +779,21 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getPrice(
+      amount: BigNumberish,
+      secondsAgo: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    minWithdrawPrice(overrides?: CallOverrides): Promise<BigNumber>;
+
     numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
     numVestingRecipients(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
+
+    pool(overrides?: CallOverrides): Promise<string>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
@@ -711,6 +814,11 @@ export interface VTVLVesting extends BaseContract {
 
     updateFeeReceiver(
       _newReceiver: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    updateMinWithdrawPrice(
+      _minPrice: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -795,6 +903,10 @@ export interface VTVLVesting extends BaseContract {
   };
 
   estimateGas: {
+    UNISWAP_V3_FACTORY_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
+
+    USDC_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
+
     allVestingRecipients(overrides?: CallOverrides): Promise<BigNumber>;
 
     amountAvailableToWithdrawByAdmin(
@@ -844,11 +956,21 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getPrice(
+      amount: BigNumberish,
+      secondsAgo: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    minWithdrawPrice(overrides?: CallOverrides): Promise<BigNumber>;
+
     numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
     numVestingRecipients(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
+
+    pool(overrides?: CallOverrides): Promise<BigNumber>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: string }
@@ -877,6 +999,11 @@ export interface VTVLVesting extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
+    updateMinWithdrawPrice(
+      _minPrice: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<BigNumber>;
+
     vestedAmount(
       _recipient: string,
       _scheduleIndex: BigNumberish,
@@ -901,6 +1028,12 @@ export interface VTVLVesting extends BaseContract {
   };
 
   populateTransaction: {
+    UNISWAP_V3_FACTORY_ADDRESS(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    USDC_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     allVestingRecipients(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -952,6 +1085,14 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getPrice(
+      amount: BigNumberish,
+      secondsAgo: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    minWithdrawPrice(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     numTokensReservedForVesting(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -961,6 +1102,8 @@ export interface VTVLVesting extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    pool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: string }
@@ -986,6 +1129,11 @@ export interface VTVLVesting extends BaseContract {
 
     updateFeeReceiver(
       _newReceiver: string,
+      overrides?: Overrides & { from?: string }
+    ): Promise<PopulatedTransaction>;
+
+    updateMinWithdrawPrice(
+      _minPrice: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 

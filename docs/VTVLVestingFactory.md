@@ -105,6 +105,23 @@ Set the fee recipient of Vesting contract.
 | _vestingContract | address | undefined |
 | _newReceiver | address | undefined |
 
+### updateMinWithdrawPrice
+
+```solidity
+function updateMinWithdrawPrice(address _vestingContract, uint256 _minPrice) external nonpayable
+```
+
+Set the minimum price that will take the fee.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _vestingContract | address | undefined |
+| _minPrice | uint256 | undefined |
+
 ### withdraw
 
 ```solidity

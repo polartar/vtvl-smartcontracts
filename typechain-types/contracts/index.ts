@@ -7,5 +7,6 @@ export type { AccessProtected } from "./AccessProtected";
 export type { FeeControl } from "./FeeControl";
 export type { IVestingFee } from "./IVestingFee";
 export type { TestERC20Token } from "./TestERC20Token";
+export type { UniswapOracle } from "./UniswapOracle";
 export type { VTVLVesting } from "./VTVLVesting";
 export type { VTVLVestingFactory } from "./VTVLVestingFactory";

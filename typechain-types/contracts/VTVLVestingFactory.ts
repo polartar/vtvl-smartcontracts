@@ -34,6 +34,7 @@ export interface VTVLVestingFactoryInterface extends utils.Interface {
     "setFee(address,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "updateFeeReceiver(address,address)": FunctionFragment;
+    "updateMinWithdrawPrice(address,uint256)": FunctionFragment;
     "withdraw(address,address)": FunctionFragment;
   };
 
@@ -45,6 +46,7 @@ export interface VTVLVestingFactoryInterface extends utils.Interface {
       | "setFee"
       | "transferOwnership"
       | "updateFeeReceiver"
+      | "updateMinWithdrawPrice"
       | "withdraw"
   ): FunctionFragment;
 
@@ -70,6 +72,10 @@ export interface VTVLVestingFactoryInterface extends utils.Interface {
     values: [string, string]
   ): string;
   encodeFunctionData(
+    functionFragment: "updateMinWithdrawPrice",
+    values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "withdraw",
     values: [string, string]
   ): string;
@@ -90,6 +96,10 @@ export interface VTVLVestingFactoryInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "updateFeeReceiver",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "updateMinWithdrawPrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
@@ -183,6 +193,12 @@ export interface VTVLVestingFactory extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
+    updateMinWithdrawPrice(
+      _vestingContract: string,
+      _minPrice: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<ContractTransaction>;
+
     withdraw(
       _tokenAddress: string,
       _receiver: string,
@@ -219,6 +235,12 @@ export interface VTVLVestingFactory extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
+  updateMinWithdrawPrice(
+    _vestingContract: string,
+    _minPrice: BigNumberish,
+    overrides?: Overrides & { from?: string }
+  ): Promise<ContractTransaction>;
+
   withdraw(
     _tokenAddress: string,
     _receiver: string,
@@ -250,6 +272,12 @@ export interface VTVLVestingFactory extends BaseContract {
     updateFeeReceiver(
       _vestingContract: string,
       _newReceiver: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    updateMinWithdrawPrice(
+      _vestingContract: string,
+      _minPrice: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -310,6 +338,12 @@ export interface VTVLVestingFactory extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
+    updateMinWithdrawPrice(
+      _vestingContract: string,
+      _minPrice: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<BigNumber>;
+
     withdraw(
       _tokenAddress: string,
       _receiver: string,
@@ -344,6 +378,12 @@ export interface VTVLVestingFactory extends BaseContract {
     updateFeeReceiver(
       _vestingContract: string,
       _newReceiver: string,
+      overrides?: Overrides & { from?: string }
+    ): Promise<PopulatedTransaction>;
+
+    updateMinWithdrawPrice(
+      _vestingContract: string,
+      _minPrice: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
