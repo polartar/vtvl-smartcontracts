@@ -40,11 +40,11 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "_minPrice",
+        name: "_threshold",
         type: "uint256",
       },
     ],
-    name: "updateMinWithdrawPrice",
+    name: "updateconversionThreshold",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

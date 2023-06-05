@@ -5,11 +5,15 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 
+interface IERC20Extented is IERC20 {
+    function decimals() external view returns (uint8);
+}
+
 contract UniswapOracle {
     /**
     @notice Address of the token that we're vesting
      */
-    IERC20 public immutable tokenAddress;
+    IERC20Extented public immutable tokenAddress;
 
     // USDC contract address
     address public constant USDC_ADDRESS =
@@ -24,7 +28,7 @@ contract UniswapOracle {
     bytes4 private constant FUNC_SELECTOR =
         bytes4(keccak256("getPool(address,address,uint256)"));
 
-    constructor(IERC20 _tokenAddress) {
+    constructor(IERC20Extented _tokenAddress) {
         require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
         tokenAddress = _tokenAddress;
         pool = IUniswapV3Factory(UNISWAP_V3_FACTORY_ADDRESS).getPool(
@@ -35,7 +39,7 @@ contract UniswapOracle {
     }
 
     // get the price of the token that will be calculated by 100 times.
-    function getPrice(
+    function getTokenPrice(
         uint128 amount,
         uint32 secondsAgo
     ) public view returns (uint amountOut) {
@@ -46,15 +50,10 @@ contract UniswapOracle {
             address(tokenAddress),
             USDC_ADDRESS
         );
-        // uint256 amountOut = getQuoteAtTick(
-        //     tick,
-        //     amount,
-        //     tokenAddress,
-        //     USDC_ADDRESS
-        // );
 
         // calculate the price with 100 times
-        return (amountOut * 100) / amount;
+        uint256 decimal = IERC20Extented(tokenAddress).decimals();
+        return (amountOut * 100 * 10 ** (decimal - 6)) / amount;
     }
 
     /// @notice Calculates time-weighted means of tick and liquidity for a given Uniswap V3 pool
@@ -64,7 +63,7 @@ contract UniswapOracle {
     function consult(
         uint32 secondsAgo
     )
-        private
+        public
         view
         returns (int24 arithmeticMeanTick, uint128 harmonicMeanLiquidity)
     {

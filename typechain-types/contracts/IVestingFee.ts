@@ -26,14 +26,14 @@ export interface IVestingFeeInterface extends utils.Interface {
   functions: {
     "setFee(uint256)": FunctionFragment;
     "updateFeeReceiver(address)": FunctionFragment;
-    "updateMinWithdrawPrice(uint256)": FunctionFragment;
+    "updateconversionThreshold(uint256)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "setFee"
       | "updateFeeReceiver"
-      | "updateMinWithdrawPrice"
+      | "updateconversionThreshold"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -45,7 +45,7 @@ export interface IVestingFeeInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "updateMinWithdrawPrice",
+    functionFragment: "updateconversionThreshold",
     values: [BigNumberish]
   ): string;
 
@@ -55,7 +55,7 @@ export interface IVestingFeeInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "updateMinWithdrawPrice",
+    functionFragment: "updateconversionThreshold",
     data: BytesLike
   ): Result;
 
@@ -99,8 +99,8 @@ export interface IVestingFee extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    updateMinWithdrawPrice(
-      _minPrice: BigNumberish,
+    updateconversionThreshold(
+      _threshold: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
   };
@@ -115,8 +115,8 @@ export interface IVestingFee extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  updateMinWithdrawPrice(
-    _minPrice: BigNumberish,
+  updateconversionThreshold(
+    _threshold: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -128,8 +128,8 @@ export interface IVestingFee extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    updateMinWithdrawPrice(
-      _minPrice: BigNumberish,
+    updateconversionThreshold(
+      _threshold: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -147,8 +147,8 @@ export interface IVestingFee extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    updateMinWithdrawPrice(
-      _minPrice: BigNumberish,
+    updateconversionThreshold(
+      _threshold: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
   };
@@ -164,8 +164,8 @@ export interface IVestingFee extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    updateMinWithdrawPrice(
-      _minPrice: BigNumberish,
+    updateconversionThreshold(
+      _threshold: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
   };

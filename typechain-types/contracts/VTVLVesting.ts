@@ -97,6 +97,8 @@ export interface VTVLVestingInterface extends utils.Interface {
     "allVestingRecipients()": FunctionFragment;
     "amountAvailableToWithdrawByAdmin()": FunctionFragment;
     "claimableAmount(address,uint256)": FunctionFragment;
+    "consult(uint32)": FunctionFragment;
+    "conversionThreshold()": FunctionFragment;
     "createClaim((uint40,uint40,uint40,uint40,uint256,uint256,address))": FunctionFragment;
     "createClaimsBatch((uint40,uint40,uint40,uint40,uint256,uint256,address)[])": FunctionFragment;
     "feePercent()": FunctionFragment;
@@ -105,8 +107,7 @@ export interface VTVLVestingInterface extends utils.Interface {
     "finalVestedAmount(address,uint256)": FunctionFragment;
     "getClaim(address,uint256)": FunctionFragment;
     "getNumberOfVestings(address)": FunctionFragment;
-    "getPrice(uint128,uint32)": FunctionFragment;
-    "minWithdrawPrice()": FunctionFragment;
+    "getTokenPrice(uint128,uint32)": FunctionFragment;
     "numTokensReservedForVesting()": FunctionFragment;
     "numVestingRecipients()": FunctionFragment;
     "owner()": FunctionFragment;
@@ -117,7 +118,7 @@ export interface VTVLVestingInterface extends utils.Interface {
     "tokenAddress()": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "updateFeeReceiver(address)": FunctionFragment;
-    "updateMinWithdrawPrice(uint256)": FunctionFragment;
+    "updateconversionThreshold(uint256)": FunctionFragment;
     "vestedAmount(address,uint256,uint40)": FunctionFragment;
     "withdraw(uint256)": FunctionFragment;
     "withdrawAdmin(uint256)": FunctionFragment;
@@ -131,6 +132,8 @@ export interface VTVLVestingInterface extends utils.Interface {
       | "allVestingRecipients"
       | "amountAvailableToWithdrawByAdmin"
       | "claimableAmount"
+      | "consult"
+      | "conversionThreshold"
       | "createClaim"
       | "createClaimsBatch"
       | "feePercent"
@@ -139,8 +142,7 @@ export interface VTVLVestingInterface extends utils.Interface {
       | "finalVestedAmount"
       | "getClaim"
       | "getNumberOfVestings"
-      | "getPrice"
-      | "minWithdrawPrice"
+      | "getTokenPrice"
       | "numTokensReservedForVesting"
       | "numVestingRecipients"
       | "owner"
@@ -151,7 +153,7 @@ export interface VTVLVestingInterface extends utils.Interface {
       | "tokenAddress"
       | "transferOwnership"
       | "updateFeeReceiver"
-      | "updateMinWithdrawPrice"
+      | "updateconversionThreshold"
       | "vestedAmount"
       | "withdraw"
       | "withdrawAdmin"
@@ -177,6 +179,14 @@ export interface VTVLVestingInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "claimableAmount",
     values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "consult",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "conversionThreshold",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "createClaim",
@@ -211,12 +221,8 @@ export interface VTVLVestingInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "getPrice",
+    functionFragment: "getTokenPrice",
     values: [BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "minWithdrawPrice",
-    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "numTokensReservedForVesting",
@@ -253,7 +259,7 @@ export interface VTVLVestingInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "updateMinWithdrawPrice",
+    functionFragment: "updateconversionThreshold",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -293,6 +299,11 @@ export interface VTVLVestingInterface extends utils.Interface {
     functionFragment: "claimableAmount",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "consult", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "conversionThreshold",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "createClaim",
     data: BytesLike
@@ -319,9 +330,8 @@ export interface VTVLVestingInterface extends utils.Interface {
     functionFragment: "getNumberOfVestings",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "getPrice", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "minWithdrawPrice",
+    functionFragment: "getTokenPrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -356,7 +366,7 @@ export interface VTVLVestingInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "updateMinWithdrawPrice",
+    functionFragment: "updateconversionThreshold",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -378,6 +388,7 @@ export interface VTVLVestingInterface extends utils.Interface {
     "ClaimCreated(address,tuple,uint256)": EventFragment;
     "ClaimRevoked(address,uint256,uint256,tuple,uint256)": EventFragment;
     "Claimed(address,uint256,uint256)": EventFragment;
+    "FeeReceived(address,uint256,uint256,address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
   };
 
@@ -385,6 +396,7 @@ export interface VTVLVestingInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "ClaimCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ClaimRevoked"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Claimed"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "FeeReceived"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
 
@@ -436,6 +448,19 @@ export type ClaimedEvent = TypedEvent<
 >;
 
 export type ClaimedEventFilter = TypedEventFilter<ClaimedEvent>;
+
+export interface FeeReceivedEventObject {
+  _recipient: string;
+  _feeAmount: BigNumber;
+  _scheduleIndex: BigNumber;
+  _tokenAddress: string;
+}
+export type FeeReceivedEvent = TypedEvent<
+  [string, BigNumber, BigNumber, string],
+  FeeReceivedEventObject
+>;
+
+export type FeeReceivedEventFilter = TypedEventFilter<FeeReceivedEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -492,6 +517,18 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    consult(
+      secondsAgo: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [number, BigNumber] & {
+        arithmeticMeanTick: number;
+        harmonicMeanLiquidity: BigNumber;
+      }
+    >;
+
+    conversionThreshold(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     createClaim(
       claimInput: ClaimInputStruct,
       overrides?: Overrides & { from?: string }
@@ -529,13 +566,11 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    getPrice(
+    getTokenPrice(
       amount: BigNumberish,
       secondsAgo: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { amountOut: BigNumber }>;
-
-    minWithdrawPrice(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     numTokensReservedForVesting(
       overrides?: CallOverrides
@@ -574,8 +609,8 @@ export interface VTVLVesting extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    updateMinWithdrawPrice(
-      _minPrice: BigNumberish,
+    updateconversionThreshold(
+      _threshold: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -618,6 +653,18 @@ export interface VTVLVesting extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  consult(
+    secondsAgo: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<
+    [number, BigNumber] & {
+      arithmeticMeanTick: number;
+      harmonicMeanLiquidity: BigNumber;
+    }
+  >;
+
+  conversionThreshold(overrides?: CallOverrides): Promise<BigNumber>;
+
   createClaim(
     claimInput: ClaimInputStruct,
     overrides?: Overrides & { from?: string }
@@ -655,13 +702,11 @@ export interface VTVLVesting extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  getPrice(
+  getTokenPrice(
     amount: BigNumberish,
     secondsAgo: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
-
-  minWithdrawPrice(overrides?: CallOverrides): Promise<BigNumber>;
 
   numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -698,8 +743,8 @@ export interface VTVLVesting extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  updateMinWithdrawPrice(
-    _minPrice: BigNumberish,
+  updateconversionThreshold(
+    _threshold: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -742,6 +787,18 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    consult(
+      secondsAgo: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [number, BigNumber] & {
+        arithmeticMeanTick: number;
+        harmonicMeanLiquidity: BigNumber;
+      }
+    >;
+
+    conversionThreshold(overrides?: CallOverrides): Promise<BigNumber>;
+
     createClaim(
       claimInput: ClaimInputStruct,
       overrides?: CallOverrides
@@ -779,13 +836,11 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getPrice(
+    getTokenPrice(
       amount: BigNumberish,
       secondsAgo: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    minWithdrawPrice(overrides?: CallOverrides): Promise<BigNumber>;
 
     numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -817,8 +872,8 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    updateMinWithdrawPrice(
-      _minPrice: BigNumberish,
+    updateconversionThreshold(
+      _threshold: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -892,6 +947,19 @@ export interface VTVLVesting extends BaseContract {
       _scheduleIndex?: null
     ): ClaimedEventFilter;
 
+    "FeeReceived(address,uint256,uint256,address)"(
+      _recipient?: string | null,
+      _feeAmount?: null,
+      _scheduleIndex?: null,
+      _tokenAddress?: null
+    ): FeeReceivedEventFilter;
+    FeeReceived(
+      _recipient?: string | null,
+      _feeAmount?: null,
+      _scheduleIndex?: null,
+      _tokenAddress?: null
+    ): FeeReceivedEventFilter;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
       newOwner?: string | null
@@ -918,6 +986,13 @@ export interface VTVLVesting extends BaseContract {
       _scheduleIndex: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    consult(
+      secondsAgo: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    conversionThreshold(overrides?: CallOverrides): Promise<BigNumber>;
 
     createClaim(
       claimInput: ClaimInputStruct,
@@ -956,13 +1031,11 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getPrice(
+    getTokenPrice(
       amount: BigNumberish,
       secondsAgo: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    minWithdrawPrice(overrides?: CallOverrides): Promise<BigNumber>;
 
     numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -999,8 +1072,8 @@ export interface VTVLVesting extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    updateMinWithdrawPrice(
-      _minPrice: BigNumberish,
+    updateconversionThreshold(
+      _threshold: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -1048,6 +1121,15 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    consult(
+      secondsAgo: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    conversionThreshold(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     createClaim(
       claimInput: ClaimInputStruct,
       overrides?: Overrides & { from?: string }
@@ -1085,13 +1167,11 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getPrice(
+    getTokenPrice(
       amount: BigNumberish,
       secondsAgo: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
-
-    minWithdrawPrice(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     numTokensReservedForVesting(
       overrides?: CallOverrides
@@ -1132,8 +1212,8 @@ export interface VTVLVesting extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    updateMinWithdrawPrice(
-      _minPrice: BigNumberish,
+    updateconversionThreshold(
+      _threshold: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 

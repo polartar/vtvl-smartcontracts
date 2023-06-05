@@ -39,7 +39,7 @@ contract VTVLVestingFactory is Ownable {
      * @param _feePercent The percent of fee.
      */
     function createVestingContract(
-        IERC20 _tokenAddress,
+        IERC20Extented _tokenAddress,
         uint256 _feePercent
     ) public {
         VTVLVesting vestingContract = new VTVLVesting(
@@ -81,11 +81,11 @@ contract VTVLVestingFactory is Ownable {
     /**
      * @notice Set the minimum price that will take the fee.
      */
-    function updateMinWithdrawPrice(
+    function updateconversionThreshold(
         address _vestingContract,
-        uint256 _minPrice
+        uint256 _threshold
     ) external onlyOwner onlyVestingContract(_vestingContract) {
-        IVestingFee(_vestingContract).updateMinWithdrawPrice(_minPrice);
+        IVestingFee(_vestingContract).updateconversionThreshold(_threshold);
     }
 
     /**

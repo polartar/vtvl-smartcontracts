@@ -68,7 +68,16 @@ const config: HardhatUserConfig = {
       },
     },
   },
-  networks: getNetworkConfig(),
+  networks: {
+    ...getNetworkConfig(),
+    hardhat: {
+      forking: {
+        enabled: true,
+        url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+        blockNumber: 17411078,
+      },
+    },
+  },
   gasReporter: {
     enabled: IS_GAS_REPORT_ENABLED,
     currency: "USD",

@@ -34,7 +34,7 @@ export interface VTVLVestingFactoryInterface extends utils.Interface {
     "setFee(address,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "updateFeeReceiver(address,address)": FunctionFragment;
-    "updateMinWithdrawPrice(address,uint256)": FunctionFragment;
+    "updateconversionThreshold(address,uint256)": FunctionFragment;
     "withdraw(address,address)": FunctionFragment;
   };
 
@@ -46,7 +46,7 @@ export interface VTVLVestingFactoryInterface extends utils.Interface {
       | "setFee"
       | "transferOwnership"
       | "updateFeeReceiver"
-      | "updateMinWithdrawPrice"
+      | "updateconversionThreshold"
       | "withdraw"
   ): FunctionFragment;
 
@@ -72,7 +72,7 @@ export interface VTVLVestingFactoryInterface extends utils.Interface {
     values: [string, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "updateMinWithdrawPrice",
+    functionFragment: "updateconversionThreshold",
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
@@ -99,7 +99,7 @@ export interface VTVLVestingFactoryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "updateMinWithdrawPrice",
+    functionFragment: "updateconversionThreshold",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
@@ -193,9 +193,9 @@ export interface VTVLVestingFactory extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    updateMinWithdrawPrice(
+    updateconversionThreshold(
       _vestingContract: string,
-      _minPrice: BigNumberish,
+      _threshold: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -235,9 +235,9 @@ export interface VTVLVestingFactory extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  updateMinWithdrawPrice(
+  updateconversionThreshold(
     _vestingContract: string,
-    _minPrice: BigNumberish,
+    _threshold: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -275,9 +275,9 @@ export interface VTVLVestingFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    updateMinWithdrawPrice(
+    updateconversionThreshold(
       _vestingContract: string,
-      _minPrice: BigNumberish,
+      _threshold: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -338,9 +338,9 @@ export interface VTVLVestingFactory extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    updateMinWithdrawPrice(
+    updateconversionThreshold(
       _vestingContract: string,
-      _minPrice: BigNumberish,
+      _threshold: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -381,9 +381,9 @@ export interface VTVLVestingFactory extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    updateMinWithdrawPrice(
+    updateconversionThreshold(
       _vestingContract: string,
-      _minPrice: BigNumberish,
+      _threshold: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 

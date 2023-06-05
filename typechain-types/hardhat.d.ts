@@ -21,10 +21,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20__factory>;
     getContractFactory(
-      name: "IERC20Permit",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IERC20Permit__factory>;
-    getContractFactory(
       name: "IERC20Metadata",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20Metadata__factory>;
@@ -101,6 +97,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.VariableSupplyERC20Token__factory>;
     getContractFactory(
+      name: "IERC20Extented",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC20Extented__factory>;
+    getContractFactory(
       name: "UniswapOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.UniswapOracle__factory>;
@@ -123,11 +123,6 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.ERC20>;
-    getContractAt(
-      name: "IERC20Permit",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IERC20Permit>;
     getContractAt(
       name: "IERC20Metadata",
       address: string,
@@ -223,6 +218,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.VariableSupplyERC20Token>;
+    getContractAt(
+      name: "IERC20Extented",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC20Extented>;
     getContractAt(
       name: "UniswapOracle",
       address: string,

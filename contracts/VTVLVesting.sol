@@ -21,7 +21,7 @@ struct ClaimInput {
 }
 
 contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
-    using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20Extented;
 
     /**
     @notice How many tokens are already allocated to vesting schedules.
@@ -65,7 +65,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
     uint256 public feePercent; // Fee percent.  500 means 5%, 1 means 0.01 %
     address public feeReceiver; // The receier address that will get the fee.
 
-    uint256 public minWithdrawPrice;
+    uint256 public conversionThreshold;
 
     // Events:
     /**
@@ -84,6 +84,16 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
         address indexed _recipient,
         uint256 _withdrawalAmount,
         uint256 _scheduleIndex
+    );
+
+    /**
+    @notice Emitted when receiving the fee
+    */
+    event FeeReceived(
+        address indexed _recipient,
+        uint256 _feeAmount,
+        uint256 _scheduleIndex,
+        address _tokenAddress
     );
 
     /** 
@@ -108,7 +118,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
     @dev The owner can set the contract in question when creating the contract.
      */
     constructor(
-        IERC20 _tokenAddress,
+        IERC20Extented _tokenAddress,
         uint256 _feePercent,
         address _owner
     ) UniswapOracle(_tokenAddress) {
@@ -118,7 +128,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
         feePercent = _feePercent;
 
         // mint price is 0.3 USD
-        minWithdrawPrice = 30;
+        conversionThreshold = 30;
     }
 
     /**
@@ -457,29 +467,72 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
         // Reduce the allocated amount since the following transaction pays out so the "debt" gets reduced
         numTokensReservedForVesting -= amountRemaining;
 
+        _transferToken(amountRemaining, _scheduleIndex);
         // After the "books" are set, transfer the tokens
         // Reentrancy note - internal vars have been changed by now
         // Also following Checks-effects-interactions pattern
 
-        if (feePercent > 0 && pool != address(0)) {
-            // calcualte the price when 10 secs ago.
-            uint256 price = getPrice(uint128(amountRemaining), 10);
-            if (price >= minWithdrawPrice) {
-                uint256 _feeAmount = calculateFee(amountRemaining);
-                tokenAddress.safeTransfer(
-                    _msgSender(),
-                    amountRemaining - _feeAmount
-                );
-                tokenAddress.safeTransfer(feeReceiver, _feeAmount);
-            } else {
-                tokenAddress.safeTransfer(_msgSender(), amountRemaining);
-            }
-        } else {
-            tokenAddress.safeTransfer(_msgSender(), amountRemaining);
-        }
-
         // Let withdrawal known to everyone.
         emit Claimed(_msgSender(), amountRemaining, _scheduleIndex);
+    }
+
+    /**
+     * @notice transfer the token to the user and fee receiver.
+     * // if the token price is samller than the conversionThreshold, then it will transfer USDC to the recipient.
+     * @param _amount The total amount that will be transfered.
+     * @param _scheduleIndex The index of the schedule.
+     */
+    function _transferToken(uint256 _amount, uint256 _scheduleIndex) private {
+        if (feePercent > 0) {
+            uint256 _feeAmount = calculateFee(_amount);
+
+            if (pool != address(0)) {
+                // calcualte the price when 10 secs ago.
+                uint256 price = getTokenPrice(uint128(_amount), 10);
+                if (price >= conversionThreshold) {
+                    tokenAddress.safeTransfer(
+                        _msgSender(),
+                        _amount - _feeAmount
+                    );
+                    tokenAddress.safeTransfer(feeReceiver, _feeAmount);
+                    emit FeeReceived(
+                        feeReceiver,
+                        _feeAmount,
+                        _scheduleIndex,
+                        address(tokenAddress)
+                    );
+                } else {
+                    tokenAddress.safeTransfer(_msgSender(), _amount);
+                    IERC20Extented(USDC_ADDRESS).safeTransferFrom(
+                        msg.sender,
+                        feeReceiver,
+                        (_feeAmount * conversionThreshold) / 100
+                    );
+                    emit FeeReceived(
+                        feeReceiver,
+                        (_feeAmount * conversionThreshold) / 100,
+                        _scheduleIndex,
+                        address(USDC_ADDRESS)
+                    );
+                }
+            } else {
+                tokenAddress.safeTransfer(_msgSender(), _amount);
+                IERC20Extented(USDC_ADDRESS).safeTransferFrom(
+                    msg.sender,
+                    feeReceiver,
+                    (_feeAmount * conversionThreshold) / 100
+                );
+
+                emit FeeReceived(
+                    feeReceiver,
+                    (_feeAmount * conversionThreshold) / 100,
+                    _scheduleIndex,
+                    address(USDC_ADDRESS)
+                );
+            }
+        } else {
+            tokenAddress.safeTransfer(_msgSender(), _amount);
+        }
     }
 
     function calculateFee(uint256 _amount) private view returns (uint256) {
@@ -562,7 +615,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
         require(_otherTokenAddress != tokenAddress, "INVALID_TOKEN"); // tokenAddress address is already sure to be nonzero due to constructor
         uint256 bal = _otherTokenAddress.balanceOf(address(this));
         require(bal > 0, "INSUFFICIENT_BALANCE");
-        _otherTokenAddress.safeTransfer(_msgSender(), bal);
+        _otherTokenAddress.transfer(_msgSender(), bal);
     }
 
     /**
@@ -588,7 +641,9 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
         feeReceiver = _newReceiver;
     }
 
-    function updateMinWithdrawPrice(uint256 _minPrice) external onlyFactory {
-        minWithdrawPrice = _minPrice;
+    function updateconversionThreshold(
+        uint256 _threshold
+    ) external onlyFactory {
+        conversionThreshold = _threshold;
     }
 }
