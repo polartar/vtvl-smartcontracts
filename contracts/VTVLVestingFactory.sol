@@ -80,6 +80,7 @@ contract VTVLVestingFactory is Ownable {
 
     /**
      * @notice Set the minimum price that will take the fee.
+     * @dev 0.3 will be 30.
      */
     function updateconversionThreshold(
         address _vestingContract,

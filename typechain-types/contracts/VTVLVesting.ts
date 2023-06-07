@@ -97,7 +97,6 @@ export interface VTVLVestingInterface extends utils.Interface {
     "allVestingRecipients()": FunctionFragment;
     "amountAvailableToWithdrawByAdmin()": FunctionFragment;
     "claimableAmount(address,uint256)": FunctionFragment;
-    "consult(uint32)": FunctionFragment;
     "conversionThreshold()": FunctionFragment;
     "createClaim((uint40,uint40,uint40,uint40,uint256,uint256,address))": FunctionFragment;
     "createClaimsBatch((uint40,uint40,uint40,uint40,uint256,uint256,address)[])": FunctionFragment;
@@ -132,7 +131,6 @@ export interface VTVLVestingInterface extends utils.Interface {
       | "allVestingRecipients"
       | "amountAvailableToWithdrawByAdmin"
       | "claimableAmount"
-      | "consult"
       | "conversionThreshold"
       | "createClaim"
       | "createClaimsBatch"
@@ -179,10 +177,6 @@ export interface VTVLVestingInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "claimableAmount",
     values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "consult",
-    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "conversionThreshold",
@@ -299,7 +293,6 @@ export interface VTVLVestingInterface extends utils.Interface {
     functionFragment: "claimableAmount",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "consult", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "conversionThreshold",
     data: BytesLike
@@ -517,16 +510,6 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    consult(
-      secondsAgo: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [number, BigNumber] & {
-        arithmeticMeanTick: number;
-        harmonicMeanLiquidity: BigNumber;
-      }
-    >;
-
     conversionThreshold(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     createClaim(
@@ -653,16 +636,6 @@ export interface VTVLVesting extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  consult(
-    secondsAgo: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
-    [number, BigNumber] & {
-      arithmeticMeanTick: number;
-      harmonicMeanLiquidity: BigNumber;
-    }
-  >;
-
   conversionThreshold(overrides?: CallOverrides): Promise<BigNumber>;
 
   createClaim(
@@ -786,16 +759,6 @@ export interface VTVLVesting extends BaseContract {
       _scheduleIndex: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    consult(
-      secondsAgo: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [number, BigNumber] & {
-        arithmeticMeanTick: number;
-        harmonicMeanLiquidity: BigNumber;
-      }
-    >;
 
     conversionThreshold(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -987,11 +950,6 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    consult(
-      secondsAgo: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     conversionThreshold(overrides?: CallOverrides): Promise<BigNumber>;
 
     createClaim(
@@ -1118,11 +1076,6 @@ export interface VTVLVesting extends BaseContract {
     claimableAmount(
       _recipient: string,
       _scheduleIndex: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    consult(
-      secondsAgo: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

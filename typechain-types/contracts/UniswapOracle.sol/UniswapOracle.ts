@@ -24,7 +24,6 @@ export interface UniswapOracleInterface extends utils.Interface {
   functions: {
     "UNISWAP_V3_FACTORY_ADDRESS()": FunctionFragment;
     "USDC_ADDRESS()": FunctionFragment;
-    "consult(uint32)": FunctionFragment;
     "getTokenPrice(uint128,uint32)": FunctionFragment;
     "pool()": FunctionFragment;
     "tokenAddress()": FunctionFragment;
@@ -34,7 +33,6 @@ export interface UniswapOracleInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "UNISWAP_V3_FACTORY_ADDRESS"
       | "USDC_ADDRESS"
-      | "consult"
       | "getTokenPrice"
       | "pool"
       | "tokenAddress"
@@ -47,10 +45,6 @@ export interface UniswapOracleInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "USDC_ADDRESS",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "consult",
-    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getTokenPrice",
@@ -70,7 +64,6 @@ export interface UniswapOracleInterface extends utils.Interface {
     functionFragment: "USDC_ADDRESS",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "consult", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getTokenPrice",
     data: BytesLike
@@ -115,16 +108,6 @@ export interface UniswapOracle extends BaseContract {
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
 
-    consult(
-      secondsAgo: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [number, BigNumber] & {
-        arithmeticMeanTick: number;
-        harmonicMeanLiquidity: BigNumber;
-      }
-    >;
-
     getTokenPrice(
       amount: BigNumberish,
       secondsAgo: BigNumberish,
@@ -140,16 +123,6 @@ export interface UniswapOracle extends BaseContract {
 
   USDC_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
-  consult(
-    secondsAgo: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
-    [number, BigNumber] & {
-      arithmeticMeanTick: number;
-      harmonicMeanLiquidity: BigNumber;
-    }
-  >;
-
   getTokenPrice(
     amount: BigNumberish,
     secondsAgo: BigNumberish,
@@ -164,16 +137,6 @@ export interface UniswapOracle extends BaseContract {
     UNISWAP_V3_FACTORY_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<string>;
-
-    consult(
-      secondsAgo: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [number, BigNumber] & {
-        arithmeticMeanTick: number;
-        harmonicMeanLiquidity: BigNumber;
-      }
-    >;
 
     getTokenPrice(
       amount: BigNumberish,
@@ -193,11 +156,6 @@ export interface UniswapOracle extends BaseContract {
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
 
-    consult(
-      secondsAgo: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getTokenPrice(
       amount: BigNumberish,
       secondsAgo: BigNumberish,
@@ -215,11 +173,6 @@ export interface UniswapOracle extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    consult(
-      secondsAgo: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     getTokenPrice(
       amount: BigNumberish,

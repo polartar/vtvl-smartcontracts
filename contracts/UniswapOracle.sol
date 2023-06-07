@@ -47,13 +47,13 @@ contract UniswapOracle {
         amountOut = OracleLibrary.getQuoteAtTick(
             tick,
             amount,
-            address(tokenAddress),
-            USDC_ADDRESS
+            USDC_ADDRESS,
+            address(tokenAddress)
         );
 
         // calculate the price with 100 times
         uint256 decimal = IERC20Extented(tokenAddress).decimals();
-        return (amountOut * 100 * 10 ** (decimal - 6)) / amount;
+        return ((amountOut * 100) / 10 ** (decimal - 6)) / amount;
     }
 
     /// @notice Calculates time-weighted means of tick and liquidity for a given Uniswap V3 pool
@@ -63,7 +63,7 @@ contract UniswapOracle {
     function consult(
         uint32 secondsAgo
     )
-        public
+        private
         view
         returns (int24 arithmeticMeanTick, uint128 harmonicMeanLiquidity)
     {

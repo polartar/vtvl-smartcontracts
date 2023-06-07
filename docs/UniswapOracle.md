@@ -44,29 +44,6 @@ function USDC_ADDRESS() external view returns (address)
 |---|---|---|
 | _0 | address | undefined |
 
-### consult
-
-```solidity
-function consult(uint32 secondsAgo) external view returns (int24 arithmeticMeanTick, uint128 harmonicMeanLiquidity)
-```
-
-Calculates time-weighted means of tick and liquidity for a given Uniswap V3 pool
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| secondsAgo | uint32 | Number of seconds in the past from which to calculate the time-weighted means |
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| arithmeticMeanTick | int24 | The arithmetic mean tick from (block.timestamp - secondsAgo) to block.timestamp |
-| harmonicMeanLiquidity | uint128 | The harmonic mean liquidity from (block.timestamp - secondsAgo) to block.timestamp |
-
 ### getTokenPrice
 
 ```solidity

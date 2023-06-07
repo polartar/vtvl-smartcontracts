@@ -10,9 +10,9 @@ const iface = new ethers.utils.Interface(VaultFactoryJson.abi);
 
 const chance = new Chance(43153); // Make sure we have a predictable seed for repeatability
 const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-const DAI_ADDRESS = "0x6b175474e89094c44da98b954eedeac495271d0f";
+const INCH_ADDRESS = "0x111111111117dc0aa78b770fa6a738034120c302";
 const USDC_IMPERSONATE_ACCOUNT = "0xf3B0073E3a7F747C7A38B36B805247B222C302A3";
-const DAI_IMPERSONATE_ACCOUNT = "0x1b7baa734c00298b9429b518d621753bb0f6eff2";
+const INCH_IMPERSONATE_ACCOUNT = "0x3744da57184575064838bbc87a0fc791f5e39ea2";
 const initialSupplyTokens = 1000;
 
 const tokenName = chance.string({ length: 10 });
@@ -408,7 +408,7 @@ describe("Claim creation", async function () {
     await expect(result).to.be.revertedWith("INVALID_VESTED_AMOUNT");
   });
 
-  it(`fails for non owner`, async () => {
+  it(`fails for none owner`, async () => {
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
       tokenSymbol,
@@ -1615,19 +1615,19 @@ describe("Apply Fee", async () => {
       "TestERC20Token"
     );
 
-    const tokenContract = tokenContractFactory.attach(DAI_ADDRESS);
-    const vestingContract = await deployVestingContract(DAI_ADDRESS);
+    const tokenContract = tokenContractFactory.attach(INCH_ADDRESS);
+    const vestingContract = await deployVestingContract(INCH_ADDRESS);
     await vestingContract.deployed();
 
     await network.provider.request({
       method: "hardhat_impersonateAccount",
-      params: [DAI_IMPERSONATE_ACCOUNT],
+      params: [INCH_IMPERSONATE_ACCOUNT],
     });
-    const unibotSigner = await ethers.getSigner(DAI_IMPERSONATE_ACCOUNT);
+    const inchSigner = await ethers.getSigner(INCH_IMPERSONATE_ACCOUNT);
 
     //deposit unibot to vesting contract
     await await tokenContract
-      .connect(unibotSigner)
+      .connect(inchSigner)
       .transfer(vestingContract.address, BigNumber.from(20000));
 
     await vestingContract.createClaim({
@@ -1639,6 +1639,7 @@ describe("Apply Fee", async () => {
       linearVestAmount,
       cliffAmount,
     });
+
     const ts = startTimestamp + 500;
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
 
@@ -1664,10 +1665,21 @@ describe("Apply Fee", async () => {
     const tokenContractFactory = await ethers.getContractFactory(
       "TestERC20Token"
     );
-    const tokenContract = tokenContractFactory.attach(DAI_ADDRESS);
+    const tokenContract = tokenContractFactory.attach(INCH_ADDRESS);
 
-    const vestingContract = await deployVestingContract(DAI_ADDRESS);
+    const vestingContract = await deployVestingContract(INCH_ADDRESS);
     await vestingContract.deployed();
+
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [INCH_IMPERSONATE_ACCOUNT],
+    });
+    const inchSigner = await ethers.getSigner(INCH_IMPERSONATE_ACCOUNT);
+
+    //deposit unibot to vesting contract
+    await await tokenContract
+      .connect(inchSigner)
+      .transfer(vestingContract.address, BigNumber.from(20000));
 
     await vestingContract.createClaim({
       recipient: owner2.address,
@@ -1726,6 +1738,21 @@ describe("Apply Fee", async () => {
     });
     const ts = startTimestamp + 500;
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
+
+    // transfer USDC to the user so that he can pay USDC
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [USDC_IMPERSONATE_ACCOUNT],
+    });
+    const usdcSigner = await ethers.getSigner(USDC_IMPERSONATE_ACCOUNT);
+    //transfer USDC from usdcSigner to owner2
+    await usdcContract
+      .connect(usdcSigner)
+      .transfer(owner2.address, BigNumber.from(20000));
+
+    await usdcContract
+      .connect(owner2)
+      .approve(vestingContract.address, BigNumber.from(10000));
 
     await factoryContract.setFee(vestingContract.address, 100); // set the fee 1%
     await factoryContract.updateFeeReceiver(
