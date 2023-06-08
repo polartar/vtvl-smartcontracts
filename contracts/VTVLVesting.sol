@@ -87,7 +87,8 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
     );
 
     /**
-    @notice Emitted when receiving the fee
+    @notice Emitted when receiving the fee.
+    @dev _tokenAddress may be vesting token address or USDC address depending on the token price.
     */
     event FeeReceived(
         address indexed _recipient,
