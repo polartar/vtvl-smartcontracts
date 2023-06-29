@@ -6,7 +6,6 @@ export type { uniswapOracleSol };
 import type * as token from "./token";
 export type { token };
 export type { AccessProtected } from "./AccessProtected";
-export type { FeeControl } from "./FeeControl";
 export type { IVestingFee } from "./IVestingFee";
 export type { TestERC20Token } from "./TestERC20Token";
 export type { VTVLVesting } from "./VTVLVesting";

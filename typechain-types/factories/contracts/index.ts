@@ -4,7 +4,6 @@
 export * as uniswapOracleSol from "./UniswapOracle.sol";
 export * as token from "./token";
 export { AccessProtected__factory } from "./AccessProtected__factory";
-export { FeeControl__factory } from "./FeeControl__factory";
 export { IVestingFee__factory } from "./IVestingFee__factory";
 export { TestERC20Token__factory } from "./TestERC20Token__factory";
 export { VTVLVesting__factory } from "./VTVLVesting__factory";

@@ -113,7 +113,7 @@ function updateconversionThreshold(address _vestingContract, uint256 _threshold)
 
 Set the minimum price that will take the fee.
 
-
+*0.3 will be 30.*
 
 #### Parameters
 

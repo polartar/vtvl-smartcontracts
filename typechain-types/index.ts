@@ -40,8 +40,6 @@ export type { TickMath } from "./@uniswap/v3-core/contracts/libraries/TickMath";
 export { TickMath__factory } from "./factories/@uniswap/v3-core/contracts/libraries/TickMath__factory";
 export type { AccessProtected } from "./contracts/AccessProtected";
 export { AccessProtected__factory } from "./factories/contracts/AccessProtected__factory";
-export type { FeeControl } from "./contracts/FeeControl";
-export { FeeControl__factory } from "./factories/contracts/FeeControl__factory";
 export type { IVestingFee } from "./contracts/IVestingFee";
 export { IVestingFee__factory } from "./factories/contracts/IVestingFee__factory";
 export type { TestERC20Token } from "./contracts/TestERC20Token";

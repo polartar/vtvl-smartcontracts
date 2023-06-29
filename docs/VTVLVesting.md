@@ -630,9 +630,9 @@ Emitted when someone withdraws a vested amount
 event FeeReceived(address indexed _recipient, uint256 _feeAmount, uint256 _scheduleIndex, address _tokenAddress)
 ```
 
-Emitted when receiving the fee
+Emitted when receiving the fee.
 
-
+*_tokenAddress may be vesting token address or USDC address depending on the token price.*
 
 #### Parameters
 
