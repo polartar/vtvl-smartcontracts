@@ -170,7 +170,7 @@ function renounceOwnership() external nonpayable
 
 
 
-*Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.*
+*Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner.*
 
 
 ### setComplete
@@ -254,6 +254,23 @@ Emitted when admin withdraws.
 |---|---|---|
 | _recipient `indexed` | address | undefined |
 | _amountRequested  | uint256 | undefined |
+
+### Claimed
+
+```solidity
+event Claimed(address indexed _recipient, uint256 _withdrawalAmount)
+```
+
+Emitted when someone withdraws a vested amount
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _recipient `indexed` | address | undefined |
+| _withdrawalAmount  | uint256 | undefined |
 
 ### OwnershipTransferred
 

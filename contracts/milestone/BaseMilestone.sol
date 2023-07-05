@@ -24,6 +24,11 @@ struct InputMilestone {
 contract BaseMilestone is Ownable {
     using SafeERC20 for IERC20;
 
+    /**
+    @notice Emitted when someone withdraws a vested amount
+    */
+    event Claimed(address indexed _recipient, uint256 _withdrawalAmount);
+
     address[] public recipients;
     IERC20 public tokenAddress;
     uint256 public allocation;

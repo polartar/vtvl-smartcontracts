@@ -66,5 +66,8 @@ contract SimpleMilestone is BaseMilestone {
 
         milestone.isWithdrawn = true;
         tokenAddress.safeTransfer(_msgSender(), milestone.allocation);
+
+        // Let withdrawal known to everyone.
+        emit Claimed(_msgSender(), milestone.allocation);
     }
 }

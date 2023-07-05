@@ -10,11 +10,6 @@ import "./BaseMilestone.sol";
 contract VestingMilestone is BaseMilestone, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    /**
-    @notice Emitted when someone withdraws a vested amount
-    */
-    event Claimed(address indexed _recipient, uint256 _withdrawalAmount);
-
     //
     /**
     @notice Construct the contract, taking the ERC20 token to be vested as the parameter.
@@ -41,7 +36,6 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
     @param _recipient - The recipient address
     @param _milestoneIndex - The index of Milestone
     @param _referenceTs - The timestamp at which we want to calculate the vested amount.
-    @dev Simply call the _baseVestedAmount for the claim in question
     */
     function vestedAmount(
         address _recipient,
@@ -112,7 +106,6 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
     {
         Milestone storage milestone = milestones[_msgSender()][_milestoneIndex];
         // we can use block.timestamp directly here as reference TS, as the function itself will make sure to cap it to endTimestamp
-        // Conversion of timestamp to uint40 should be safe since 48 bit allows for a lot of years.
         uint256 allowance = vestedAmount(
             _msgSender(),
             _milestoneIndex,

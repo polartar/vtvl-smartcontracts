@@ -81,6 +81,18 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IVestingFee__factory>;
     getContractFactory(
+      name: "BaseMilestone",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.BaseMilestone__factory>;
+    getContractFactory(
+      name: "SimpleMilestone",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SimpleMilestone__factory>;
+    getContractFactory(
+      name: "VestingMilestone",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.VestingMilestone__factory>;
+    getContractFactory(
       name: "TestERC20Token",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TestERC20Token__factory>;
@@ -100,6 +112,10 @@ declare module "hardhat/types/runtime" {
       name: "UniswapOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.UniswapOracle__factory>;
+    getContractFactory(
+      name: "VTVLMilestoneFactory",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.VTVLMilestoneFactory__factory>;
     getContractFactory(
       name: "VTVLVesting",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -195,6 +211,21 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IVestingFee>;
     getContractAt(
+      name: "BaseMilestone",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.BaseMilestone>;
+    getContractAt(
+      name: "SimpleMilestone",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SimpleMilestone>;
+    getContractAt(
+      name: "VestingMilestone",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.VestingMilestone>;
+    getContractAt(
       name: "TestERC20Token",
       address: string,
       signer?: ethers.Signer
@@ -219,6 +250,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.UniswapOracle>;
+    getContractAt(
+      name: "VTVLMilestoneFactory",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.VTVLMilestoneFactory>;
     getContractAt(
       name: "VTVLVesting",
       address: string,
