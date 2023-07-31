@@ -9,18 +9,11 @@ contract Verifier {
     //     root = _root;
     // }
 
-    function setMerleRoot(bytes32 _root) external {
+    function setMerleRoot(bytes32 _root) public {
         root = _root;
     }
 
-    function verify(
-        bytes32[] memory proof,
-        address addr,
-        uint256 amount
-    ) public view {
-        bytes32 leaf = keccak256(
-            bytes.concat(keccak256(abi.encode(addr, amount)))
-        );
+    function verify(bytes32[] memory proof, bytes32 leaf) public view {
         require(MerkleProof.verify(proof, root, leaf), "Invalid proof");
     }
 }

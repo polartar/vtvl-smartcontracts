@@ -33,7 +33,7 @@ contract VTVLMerkelVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOrac
     * In other words, this represents the amount the contract is scheduled to pay out at some point if the 
     * owner were to never interact with the contract.
     */
-    uint256 public numTokensReservedForVesting = 0;
+    // uint256 public numTokensReservedForVesting = 0;
 
     /**
     @notice A structure representing a single claim - supporting linear and cliff vesting.
@@ -419,6 +419,11 @@ contract VTVLMerkelVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOrac
     function withdraw(
         Claim memory _claimInput
     ) external hasActiveClaim(_claimInput.recipient, _claimInput.scheduleIndex) nonReentrant {
+        bytes32 leaf = keccak256(
+            bytes.concat(keccak256(abi.encode(_claimInput.startTimestamp, _claimInput.endTimestamp, _claimInput.cliffReleaseTimestamp, _claimInput.releaseIntervalSecs, _claimInput.scheduleIndex, _claimInput.linearVestedAmount, _claimInput.cliffAmount, _claimInput.recipient
+            )))
+        );
+        verify(proof, leaf);
         // Get the message sender claim - if any
         uint40 _scheduleIndex = _claimInput.scheduleIndex;
 
@@ -445,7 +450,7 @@ contract VTVLMerkelVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOrac
         // Carry out the withdrawal by noting the withdrawn amount, and by transferring the tokens.
         usrClaim.amountWithdrawn += amountRemaining;
         // Reduce the allocated amount since the following transaction pays out so the "debt" gets reduced
-        numTokensReservedForVesting -= amountRemaining;
+        // numTokensReservedForVesting -= amountRemaining;
 
         _transferToken(amountRemaining, _scheduleIndex);
         // After the "books" are set, transfer the tokens
@@ -571,7 +576,7 @@ contract VTVLMerkelVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOrac
             uint40(block.timestamp)
         );
         uint256 amountRemaining = finalVestAmt - vestedSoFarAmt;
-        numTokensReservedForVesting -= amountRemaining; // Reduces the allocation
+        // numTokensReservedForVesting -= amountRemaining; // Reduces the allocation
 
         // Tell everyone a claim has been revoked.
         emit ClaimRevoked(
@@ -605,7 +610,7 @@ contract VTVLMerkelVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOrac
      */
     function amountAvailableToWithdrawByAdmin() public view returns (uint256) {
         return
-            tokenAddress.balanceOf(address(this)) - numTokensReservedForVesting;
+            tokenAddress.balanceOf(address(this));
     }
 
     // function getNumberOfVestings(
