@@ -42,7 +42,7 @@ contract VTVLMerkleVestingFactory is Ownable {
         IERC20Extented _tokenAddress,
         uint256 _feePercent
     ) public {
-        Merklevesting vestingContract = new Merklevesting(
+        VTVLMerkelVesting vestingContract = new VTVLMerkelVesting(
             _tokenAddress,
             _feePercent,
             msg.sender

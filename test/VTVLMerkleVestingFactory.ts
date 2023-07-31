@@ -3,7 +3,9 @@ import { ethers, network } from "hardhat";
 import Chance from "chance";
 import { VTVLMerkleVesting, VTVLMerkleVestingFactory } from "../typechain";
 import { BigNumber, BigNumberish } from "ethers";
-
+import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
+import fs from "fs";
+import VestingJson from "../vesting.json";
 const VaultFactoryJson = require("../artifacts/contracts/VTVLMerkleVestingFactory.sol/VTVLMerkleVestingFactory.json");
 
 const iface = new ethers.utils.Interface(VaultFactoryJson.abi);
@@ -17,6 +19,26 @@ const initialSupplyTokens = 1000;
 
 const tokenName = chance.string({ length: 10 });
 const tokenSymbol = chance.string({ length: 3 }).toUpperCase();
+
+function generateMerkleTree() {
+  const tree = StandardMerkleTree.of(VestingJson, [
+    "uint40",
+    "uint40",
+    "uint40",
+    "uint40",
+    "uint40",
+    "uint256",
+    "uint256",
+    "address",
+  ]);
+
+  // (3)
+  console.log("Merkle Root:", tree.root);
+
+  // (4)
+  fs.writeFileSync("tree.json", JSON.stringify(tree.dump()));
+}
+generateMerkleTree();
 
 /**
  * Get the created vault address from the transaction
