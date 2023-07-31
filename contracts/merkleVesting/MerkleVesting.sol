@@ -198,7 +198,7 @@ contract VTVLMerkelVesting is
     function _baseVestedAmount(
         ClaimInput memory _claimInput,
         uint40 _referenceTs
-    ) internal pure returns (uint256) {
+    ) internal view returns (uint256) {
         // If no schedule is created
         if (
             claims[_claimInput.recipient][_claimInput.scheduleIndex]

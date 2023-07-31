@@ -1,5 +1,5 @@
 Arguments: 
-  C:\Program Files\nodejs\node.exe C:\Users\Polaris\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js add @openzeppelin/merkle-tree
+  C:\Program Files\nodejs\node.exe C:\Users\Polaris\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js
 
 PATH: 
   C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Users\Polaris\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\xampp\php;C:\ProgramData\ComposerSetup\bin;C:\Program Files\Java\jdk-19\bin;C:\Program Files\PostgreSQL\15\bin;C:\Program Files\Microsoft SQL Server\150\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\Program Files\dotnet\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Users\Polaris\AppData\Local\Microsoft\WindowsApps;C:\Users\Polaris\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Polaris\AppData\Roaming\npm;C:\Users\Polaris\AppData\Roaming\nvm;C:\Users\Polaris\AppData\Roaming\Composer\vendor\bin;C:\Users\Polaris\.fly\bin;C:\Users\Polaris\.dotnet\tools;C:\Users\Polaris\AppData\Local\GitHubDesktop\bin;C:\Users\Polaris\AppData\Roaming\nvm;C:\Program Files\nodejs

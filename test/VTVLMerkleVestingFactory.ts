@@ -38,7 +38,7 @@ function generateMerkleTree() {
   // (4)
   fs.writeFileSync("tree.json", JSON.stringify(tree.dump()));
 }
-generateMerkleTree();
+// generateMerkleTree();
 
 /**
  * Get the created vault address from the transaction
