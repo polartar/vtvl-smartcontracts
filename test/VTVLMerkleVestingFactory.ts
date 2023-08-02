@@ -270,12 +270,36 @@ describe("Withdraw", async () => {
     const proof = getMkerkleProof(claimInput.recipient);
 
     await ethers.provider.send("evm_mine", [
-      BigNumber.from(BigNumber.from(claimInput.startTimestamp)).add(15),
+      BigNumber.from(BigNumber.from(claimInput.startTimestamp)).add(150),
     ]); // by now, we should've vested the cliff and one unlock interval
 
     await expect(
       vestingContract.withdraw({ ...claimInput, linearVestAmount: 23 }, proof)
-    ).to.be.revertedWith("NOTHING_TO_WITHDRAW");
+    ).to.be.revertedWith("Invalid proof");
+  });
+
+  it("disallow withdraw with wrong recipient", async () => {
+    const { tokenContract, vestingContract: claimCreateContractInstance } =
+      await createPrefundedVestingContract({
+        tokenName,
+        tokenSymbol,
+        initialSupplyTokens,
+      });
+
+    await claimCreateContractInstance.setMerleRoot(getMkerkleRoot());
+    const vestingContract = claimCreateContractInstance.connect(owner2);
+    const proof = getMkerkleProof(claimInput.recipient);
+
+    await ethers.provider.send("evm_mine", [
+      BigNumber.from(BigNumber.from(claimInput.startTimestamp)).add(150),
+    ]); // by now, we should've vested the cliff and one unlock interval
+
+    await expect(
+      vestingContract.withdraw(
+        { ...claimInput, recipient: owner2.address },
+        proof
+      )
+    ).to.be.revertedWith("Invalid proof");
   });
 
   it("allows withdrawal up to the allowance and fails after the allowance is spent", async () => {
@@ -346,7 +370,8 @@ describe("Withdraw", async () => {
       BigNumber.from(claimInput.startTimestamp).add(timePass),
     ]);
     // Revoke the claim, and try to withdraw afterwards
-    const tx = await vestingContract.revokeClaim(claimInput);
+    const proof = getMkerkleProof(claimInput.recipient);
+    const tx = await vestingContract.revokeClaim(claimInput, proof);
     await tx.wait();
 
     // Get `revokeClaim` transaction block timestamp
