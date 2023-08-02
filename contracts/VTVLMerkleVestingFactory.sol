@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "./merkleVesting/MerkleVesting.sol";
+import "./merkleVesting/VTVLMerkleVesting.sol";
 import "./IVestingFee.sol";
 
 /// @title Vesting Factory contract
@@ -42,7 +42,7 @@ contract VTVLMerkleVestingFactory is Ownable {
         IERC20Extented _tokenAddress,
         uint256 _feePercent
     ) public {
-        VTVLMerkelVesting vestingContract = new VTVLMerkelVesting(
+        VTVLMerkleVesting vestingContract = new VTVLMerkleVesting(
             _tokenAddress,
             _feePercent,
             msg.sender
@@ -57,11 +57,10 @@ contract VTVLMerkleVestingFactory is Ownable {
      * @notice Set the fee percent of Vesting contract.
      * @dev 100% will be 10000.
      */
-    function setFee(address _vestingContract, uint256 _feePercent)
-        external
-        onlyOwner
-        onlyVestingContract(_vestingContract)
-    {
+    function setFee(
+        address _vestingContract,
+        uint256 _feePercent
+    ) external onlyOwner onlyVestingContract(_vestingContract) {
         if (_feePercent > 0 && _feePercent < 10000) {
             IVestingFee(_vestingContract).setFee(_feePercent);
         } else {
@@ -72,11 +71,10 @@ contract VTVLMerkleVestingFactory is Ownable {
     /**
      * @notice Set the fee recipient of Vesting contract.
      */
-    function updateFeeReceiver(address _vestingContract, address _newReceiver)
-        external
-        onlyOwner
-        onlyVestingContract(_vestingContract)
-    {
+    function updateFeeReceiver(
+        address _vestingContract,
+        address _newReceiver
+    ) external onlyOwner onlyVestingContract(_vestingContract) {
         IVestingFee(_vestingContract).updateFeeReceiver(_newReceiver);
     }
 
@@ -94,10 +92,10 @@ contract VTVLMerkleVestingFactory is Ownable {
     /**
      * @notice Withdraw the token to the receiver.
      */
-    function withdraw(address _tokenAddress, address _receiver)
-        external
-        onlyOwner
-    {
+    function withdraw(
+        address _tokenAddress,
+        address _receiver
+    ) external onlyOwner {
         uint256 balance = IERC20(_tokenAddress).balanceOf(address(this));
         IERC20(_tokenAddress).transfer(_receiver, balance);
     }

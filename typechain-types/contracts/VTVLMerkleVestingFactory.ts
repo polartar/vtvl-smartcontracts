@@ -26,35 +26,33 @@ import type {
   OnEvent,
 } from "../common";
 
-export interface FeeControlInterface extends utils.Interface {
+export interface VTVLMerkleVestingFactoryInterface extends utils.Interface {
   functions: {
-    "feePercent()": FunctionFragment;
-    "feeReceiver()": FunctionFragment;
+    "createVestingContract(address,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
-    "setFee(uint256)": FunctionFragment;
+    "setFee(address,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
-    "updateFeeReceiver(address)": FunctionFragment;
+    "updateFeeReceiver(address,address)": FunctionFragment;
+    "updateconversionThreshold(address,uint256)": FunctionFragment;
+    "withdraw(address,address)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "feePercent"
-      | "feeReceiver"
+      | "createVestingContract"
       | "owner"
       | "renounceOwnership"
       | "setFee"
       | "transferOwnership"
       | "updateFeeReceiver"
+      | "updateconversionThreshold"
+      | "withdraw"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "feePercent",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "feeReceiver",
-    values?: undefined
+    functionFragment: "createVestingContract",
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -63,7 +61,7 @@ export interface FeeControlInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setFee",
-    values: [BigNumberish]
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
@@ -71,12 +69,19 @@ export interface FeeControlInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "updateFeeReceiver",
-    values: [string]
+    values: [string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "updateconversionThreshold",
+    values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "withdraw",
+    values: [string, string]
   ): string;
 
-  decodeFunctionResult(functionFragment: "feePercent", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "feeReceiver",
+    functionFragment: "createVestingContract",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -93,13 +98,32 @@ export interface FeeControlInterface extends utils.Interface {
     functionFragment: "updateFeeReceiver",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "updateconversionThreshold",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
+    "CreateVestingContract(address,address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "CreateVestingContract"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
+
+export interface CreateVestingContractEventObject {
+  vestingAddress: string;
+  deployer: string;
+}
+export type CreateVestingContractEvent = TypedEvent<
+  [string, string],
+  CreateVestingContractEventObject
+>;
+
+export type CreateVestingContractEventFilter =
+  TypedEventFilter<CreateVestingContractEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -113,12 +137,12 @@ export type OwnershipTransferredEvent = TypedEvent<
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
 
-export interface FeeControl extends BaseContract {
+export interface VTVLMerkleVestingFactory extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: FeeControlInterface;
+  interface: VTVLMerkleVestingFactoryInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -140,9 +164,11 @@ export interface FeeControl extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    feePercent(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    feeReceiver(overrides?: CallOverrides): Promise<[string]>;
+    createVestingContract(
+      _tokenAddress: string,
+      _feePercent: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<ContractTransaction>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -151,6 +177,7 @@ export interface FeeControl extends BaseContract {
     ): Promise<ContractTransaction>;
 
     setFee(
+      _vestingContract: string,
       _feePercent: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
@@ -161,14 +188,29 @@ export interface FeeControl extends BaseContract {
     ): Promise<ContractTransaction>;
 
     updateFeeReceiver(
+      _vestingContract: string,
       _newReceiver: string,
+      overrides?: Overrides & { from?: string }
+    ): Promise<ContractTransaction>;
+
+    updateconversionThreshold(
+      _vestingContract: string,
+      _threshold: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<ContractTransaction>;
+
+    withdraw(
+      _tokenAddress: string,
+      _receiver: string,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
   };
 
-  feePercent(overrides?: CallOverrides): Promise<BigNumber>;
-
-  feeReceiver(overrides?: CallOverrides): Promise<string>;
+  createVestingContract(
+    _tokenAddress: string,
+    _feePercent: BigNumberish,
+    overrides?: Overrides & { from?: string }
+  ): Promise<ContractTransaction>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -177,6 +219,7 @@ export interface FeeControl extends BaseContract {
   ): Promise<ContractTransaction>;
 
   setFee(
+    _vestingContract: string,
     _feePercent: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
@@ -187,20 +230,39 @@ export interface FeeControl extends BaseContract {
   ): Promise<ContractTransaction>;
 
   updateFeeReceiver(
+    _vestingContract: string,
     _newReceiver: string,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  callStatic: {
-    feePercent(overrides?: CallOverrides): Promise<BigNumber>;
+  updateconversionThreshold(
+    _vestingContract: string,
+    _threshold: BigNumberish,
+    overrides?: Overrides & { from?: string }
+  ): Promise<ContractTransaction>;
 
-    feeReceiver(overrides?: CallOverrides): Promise<string>;
+  withdraw(
+    _tokenAddress: string,
+    _receiver: string,
+    overrides?: Overrides & { from?: string }
+  ): Promise<ContractTransaction>;
+
+  callStatic: {
+    createVestingContract(
+      _tokenAddress: string,
+      _feePercent: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
-    setFee(_feePercent: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    setFee(
+      _vestingContract: string,
+      _feePercent: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     transferOwnership(
       newOwner: string,
@@ -208,12 +270,34 @@ export interface FeeControl extends BaseContract {
     ): Promise<void>;
 
     updateFeeReceiver(
+      _vestingContract: string,
       _newReceiver: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    updateconversionThreshold(
+      _vestingContract: string,
+      _threshold: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    withdraw(
+      _tokenAddress: string,
+      _receiver: string,
       overrides?: CallOverrides
     ): Promise<void>;
   };
 
   filters: {
+    "CreateVestingContract(address,address)"(
+      vestingAddress?: string | null,
+      deployer?: null
+    ): CreateVestingContractEventFilter;
+    CreateVestingContract(
+      vestingAddress?: string | null,
+      deployer?: null
+    ): CreateVestingContractEventFilter;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
       newOwner?: string | null
@@ -225,9 +309,11 @@ export interface FeeControl extends BaseContract {
   };
 
   estimateGas: {
-    feePercent(overrides?: CallOverrides): Promise<BigNumber>;
-
-    feeReceiver(overrides?: CallOverrides): Promise<BigNumber>;
+    createVestingContract(
+      _tokenAddress: string,
+      _feePercent: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -236,6 +322,7 @@ export interface FeeControl extends BaseContract {
     ): Promise<BigNumber>;
 
     setFee(
+      _vestingContract: string,
       _feePercent: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
@@ -246,15 +333,30 @@ export interface FeeControl extends BaseContract {
     ): Promise<BigNumber>;
 
     updateFeeReceiver(
+      _vestingContract: string,
       _newReceiver: string,
+      overrides?: Overrides & { from?: string }
+    ): Promise<BigNumber>;
+
+    updateconversionThreshold(
+      _vestingContract: string,
+      _threshold: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<BigNumber>;
+
+    withdraw(
+      _tokenAddress: string,
+      _receiver: string,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    feePercent(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    feeReceiver(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    createVestingContract(
+      _tokenAddress: string,
+      _feePercent: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -263,6 +365,7 @@ export interface FeeControl extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     setFee(
+      _vestingContract: string,
       _feePercent: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
@@ -273,7 +376,20 @@ export interface FeeControl extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     updateFeeReceiver(
+      _vestingContract: string,
       _newReceiver: string,
+      overrides?: Overrides & { from?: string }
+    ): Promise<PopulatedTransaction>;
+
+    updateconversionThreshold(
+      _vestingContract: string,
+      _threshold: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<PopulatedTransaction>;
+
+    withdraw(
+      _tokenAddress: string,
+      _receiver: string,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
   };

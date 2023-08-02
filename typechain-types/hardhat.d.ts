@@ -81,6 +81,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IVestingFee__factory>;
     getContractFactory(
+      name: "Verifier",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Verifier__factory>;
+    getContractFactory(
+      name: "VTVLMerkleVesting",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.VTVLMerkleVesting__factory>;
+    getContractFactory(
       name: "BaseMilestone",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.BaseMilestone__factory>;
@@ -112,6 +120,10 @@ declare module "hardhat/types/runtime" {
       name: "UniswapOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.UniswapOracle__factory>;
+    getContractFactory(
+      name: "VTVLMerkleVestingFactory",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.VTVLMerkleVestingFactory__factory>;
     getContractFactory(
       name: "VTVLMilestoneFactory",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -211,6 +223,16 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IVestingFee>;
     getContractAt(
+      name: "Verifier",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Verifier>;
+    getContractAt(
+      name: "VTVLMerkleVesting",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.VTVLMerkleVesting>;
+    getContractAt(
       name: "BaseMilestone",
       address: string,
       signer?: ethers.Signer
@@ -250,6 +272,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.UniswapOracle>;
+    getContractAt(
+      name: "VTVLMerkleVestingFactory",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.VTVLMerkleVestingFactory>;
     getContractAt(
       name: "VTVLMilestoneFactory",
       address: string,

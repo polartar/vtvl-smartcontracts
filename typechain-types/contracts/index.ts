@@ -3,6 +3,8 @@
 /* eslint-disable */
 import type * as uniswapOracleSol from "./UniswapOracle.sol";
 export type { uniswapOracleSol };
+import type * as merkleVesting from "./merkleVesting";
+export type { merkleVesting };
 import type * as milestone from "./milestone";
 export type { milestone };
 import type * as token from "./token";
@@ -10,6 +12,7 @@ export type { token };
 export type { AccessProtected } from "./AccessProtected";
 export type { IVestingFee } from "./IVestingFee";
 export type { TestERC20Token } from "./TestERC20Token";
+export type { VTVLMerkleVestingFactory } from "./VTVLMerkleVestingFactory";
 export type { VTVLMilestoneFactory } from "./VTVLMilestoneFactory";
 export type { VTVLVesting } from "./VTVLVesting";
 export type { VTVLVestingFactory } from "./VTVLVestingFactory";

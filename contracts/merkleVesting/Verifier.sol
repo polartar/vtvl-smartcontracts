@@ -3,15 +3,16 @@
 pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Verifier {
+contract Verifier is Ownable {
     bytes32 private root;
 
     // constructor(bytes32 _root) {
     //     root = _root;
     // }
 
-    function setMerleRoot(bytes32 _root) public {
+    function setMerleRoot(bytes32 _root) public onlyOwner {
         root = _root;
     }
 
