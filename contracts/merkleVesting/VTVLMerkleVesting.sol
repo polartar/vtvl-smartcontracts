@@ -32,16 +32,6 @@ contract VTVLMerkleVesting is
     using SafeERC20 for IERC20Extented;
 
     /**
-    @notice How many tokens are already allocated to vesting schedules.
-    @dev Our balance of the token must always be greater than this amount.
-    * Otherwise we risk some users not getting their shares.
-    * This gets reduced as the users are paid out or when their schedules are revoked (as it is not reserved any more).
-    * In other words, this represents the amount the contract is scheduled to pay out at some point if the 
-    * owner were to never interact with the contract.
-    */
-    // uint256 public numTokensReservedForVesting = 0;
-
-    /**
     @notice A structure representing a single claim - supporting linear and cliff vesting.
      */
     struct Claim {
@@ -54,24 +44,11 @@ contract VTVLMerkleVesting is
     // Only one Claim possible per address
     mapping(address => Claim[]) internal claims;
 
-    // Track the recipients of the vesting
-    // address[] internal vestingRecipients;
-
     address private immutable factoryAddress;
     uint256 public feePercent; // Fee percent.  500 means 5%, 1 means 0.01 %
     address public feeReceiver; // The receier address that will get the fee.
 
     uint256 public conversionThreshold;
-
-    // Events:
-    /**
-    // @notice Emitted when a founder adds a vesting schedule.
-    //  */
-    // event ClaimCreated(
-    //     address indexed _recipient,
-    //     Claim _claim,
-    //     uint256 _scheduleIndex
-    // );
 
     /**
     @notice Emitted when someone withdraws a vested amount
@@ -133,47 +110,6 @@ contract VTVLMerkleVesting is
         uint256 _scheduleIndex
     ) external view returns (bool) {
         return claims[_recipient][_scheduleIndex].deactivationTimestamp != 0;
-    }
-
-    // /**
-    // @notice Basic getter for a claim.
-    // @dev Could be using public claims var, but this is cleaner in terms of naming. (getClaim(address) as opposed to claims(address)).
-    // @param _recipient - the address for which we fetch the claim.
-    // @param _scheduleIndex - the index of the schedules.
-    //  */
-    // function getClaim(
-    //     address _recipient,
-    //     uint256 _scheduleIndex
-    // ) external view returns (Claim memory) {
-    //     if (claims[_recipient].length <= _scheduleIndex) {
-    //         revert("NO_SCHEDULE_EXIST");
-    //     }
-    //     return claims[_recipient][_scheduleIndex];
-    // }
-
-    /**
-    @notice This modifier requires that an user has a claim attached.
-    @dev  To determine this, we check that a claim:
-    * - is active
-    * - start timestamp is nonzero.
-    * These are sufficient conditions because we only ever set startTimestamp in 
-    * createClaim, and we never change it. Therefore, startTimestamp will be set
-    * IFF a claim has been created. In addition to that, we need to check
-    * a claim is active (since this is has_*Active*_Claim)
-    */
-    modifier hasActiveClaim(address _recipient, uint256 _scheduleIndex) {
-        // We however still need the active check, since (due to the name of the function)
-        // we want to only allow active claims
-        require(
-            claims[_recipient].length != 0 &&
-                claims[_recipient][_scheduleIndex].deactivationTimestamp == 0,
-            "NO_ACTIVE_CLAIM"
-        );
-
-        // Save gas, omit further checks
-        // require(_claim.linearVestAmount + _claim.cliffAmount > 0, "INVALID_VESTED_AMOUNT");
-        // require(_claim.endTimestamp > 0, "NO_END_TIMESTAMP");
-        _;
     }
 
     /**
@@ -316,124 +252,6 @@ contract VTVLMerkleVesting is
         return
             _baseVestedAmount(_claimInput, vestEndTimestamp) - amountWithdrawn;
     }
-
-    // /**
-    // @notice Return all the addresses that have vesting schedules attached.
-    // */
-    // function allVestingRecipients() external view returns (address[] memory) {
-    //     return vestingRecipients;
-    // }
-
-    // /**
-    // @notice Get the total number of vesting recipients.
-    // */
-    // function numVestingRecipients() external view returns (uint256) {
-    //     return vestingRecipients.length;
-    // }
-
-    // /**
-    // @notice Permission-unchecked version of claim creation (no onlyOwner). Actual logic for create claim, to be run within either createClaim or createClaimBatch.
-    // @dev This'll simply check the input parameters, and create the structure verbatim based on passed in parameters.
-    //  */
-    // function _createClaimUnchecked(ClaimInput memory claimInput) private {
-    //     require(claimInput.recipient != address(0), "INVALID_ADDRESS");
-    //     require(
-    //         claimInput.linearVestAmount + claimInput.cliffAmount > 0,
-    //         "INVALID_VESTED_AMOUNT"
-    //     ); // Actually only one of linearvested/cliff amount must be 0, not necessarily both
-    //     require(claimInput.startTimestamp > 0, "INVALID_START_TIMESTAMP");
-    //     // Do we need to check whether _startTimestamp is greater than the current block.timestamp?
-    //     // Or do we allow schedules that started in the past?
-    //     // -> Conclusion: we want to allow this, for founders that might have forgotten to add some users, or to avoid issues with transactions not going through because of discoordination between block.timestamp and sender's local time
-    //     // require(_endTimestamp > 0, "_endTimestamp must be valid"); // not necessary because of the next condition (transitively)
-    //     require(
-    //         claimInput.startTimestamp < claimInput.endTimestamp,
-    //         "INVALID_END_TIMESTAMP"
-    //     ); // _endTimestamp must be after _startTimestamp
-    //     require(claimInput.releaseIntervalSecs > 0, "INVALID_RELEASE_INTERVAL");
-    //     require(
-    //         (claimInput.endTimestamp - claimInput.startTimestamp) %
-    //             claimInput.releaseIntervalSecs ==
-    //             0,
-    //         "INVALID_INTERVAL_LENGTH"
-    //     );
-
-    //     // Potential TODO: sanity check, if _linearVestAmount == 0, should we perhaps force that start and end ts are the same?
-
-    //     // No point in allowing cliff TS without the cliff amount or vice versa.
-    //     // Both or neither of _cliffReleaseTimestamp and _cliffAmount must be set. If cliff is set, _cliffReleaseTimestamp must be before or at the _startTimestamp
-    //     require(
-    //         (claimInput.cliffReleaseTimestamp > 0 &&
-    //             claimInput.cliffAmount > 0 &&
-    //             claimInput.cliffReleaseTimestamp <=
-    //             claimInput.startTimestamp) ||
-    //             (claimInput.cliffReleaseTimestamp == 0 &&
-    //                 claimInput.cliffAmount == 0),
-    //         "INVALID_CLIFF"
-    //     );
-
-    //     Claim memory _claim;
-    //     _claim.startTimestamp = claimInput.startTimestamp;
-    //     _claim.endTimestamp = claimInput.endTimestamp;
-    //     _claim.deactivationTimestamp = 0;
-    //     _claim.cliffReleaseTimestamp = claimInput.cliffReleaseTimestamp;
-    //     _claim.releaseIntervalSecs = claimInput.releaseIntervalSecs;
-    //     _claim.linearVestAmount = claimInput.linearVestAmount;
-    //     _claim.cliffAmount = uint112(claimInput.cliffAmount);
-    //     _claim.amountWithdrawn = 0;
-    //     _claim.isActive = true;
-
-    //     claims[claimInput.recipient].push(_claim);
-
-    //     // Our total allocation is simply the full sum of the two amounts, _cliffAmount + _linearVestAmount
-    //     // Not necessary to use the more complex logic from _baseVestedAmount
-    //     uint256 allocatedAmount = claimInput.cliffAmount +
-    //         claimInput.linearVestAmount;
-    //     require(
-    //         // Still no effects up to this point (and tokenAddress is selected by contract deployer and is immutable), so no reentrancy risk
-    //         tokenAddress.balanceOf(address(this)) >=
-    //             numTokensReservedForVesting + allocatedAmount,
-    //         "INSUFFICIENT_BALANCE"
-    //     );
-
-    //     // Done with checks
-
-    //     // Effects limited to lines below
-    //     numTokensReservedForVesting += allocatedAmount; // track the allocated amount
-    //     vestingRecipients.push(claimInput.recipient); // add the vesting recipient to the list
-    //     emit ClaimCreated(
-    //         claimInput.recipient,
-    //         _claim,
-    //         claims[claimInput.recipient].length
-    //     ); // let everyone know
-    // }
-
-    // /**
-    // @notice Create a claim based on the input parameters.
-    // @dev This'll simply check the input parameters, and create the structure verbatim based on passed in parameters.
-    //  */
-    // function createClaim(
-    //     ClaimInput memory claimInput
-    // ) external onlyOwnerOrFactory {
-    //     _createClaimUnchecked(claimInput);
-    // }
-
-    // /**
-    // @notice The batch version of the createClaim function. Each argument is an array, and this function simply repeatedly calls the createClaim.
-
-    //  */
-    // function createClaimsBatch(
-    //     ClaimInput[] calldata claimInputs
-    // ) external onlyOwnerOrFactory {
-    //     uint256 length = claimInputs.length;
-
-    //     for (uint256 i = 0; i < length; ) {
-    //         _createClaimUnchecked(claimInputs[i]);
-    //         unchecked {
-    //             ++i;
-    //         }
-    //     }
-    // }
 
     function getLeaf(
         ClaimInput memory _claimInput
