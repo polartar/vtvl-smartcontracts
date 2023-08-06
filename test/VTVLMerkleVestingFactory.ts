@@ -37,10 +37,6 @@ function generateMerkleTree() {
     "address",
   ]);
 
-  // (3)
-  console.log("Merkle Root:", tree.root);
-
-  // (4)
   fs.writeFileSync("tree.json", JSON.stringify(tree.dump()));
 }
 generateMerkleTree();
@@ -638,6 +634,27 @@ describe("Claimable amount", async () => {
   const linearVestAmount = BigNumber.from(10000);
   const cliffAmount = BigNumber.from(0);
   const releaseIntervalSecs = BigNumber.from(1);
+  it(`calculates the claimable amount`, async () => {
+    const startTimestamp = parseInt(claimInputs[0].startTimestamp.toString());
+    const endTimestamp = parseInt(claimInputs[0].endTimestamp.toString());
+    const { vestingContract } = await createPrefundedVestingContract({
+      tokenName,
+      tokenSymbol,
+      initialSupplyTokens,
+    });
+
+    await vestingContract.setMerleRoot(getMkerkleRoot());
+    const claim = claimInputs[0];
+
+    //after padding the half of vesting period
+    const ts = BigNumber.from(claim.startTimestamp).add(5000);
+    await ethers.provider.send("evm_mine", [ts]); // Make sure we're at the relevant ts
+    const vestedAmount = BigNumber.from(claim.cliffAmount).add(
+      BigNumber.from(claim.linearVestAmount).div(2)
+    );
+    const claimableAmount = await vestingContract.claimableAmount(claim);
+    expect(claimableAmount).to.be.equal(vestedAmount);
+  });
   it(`calculates the claimable amount to be equal to the vested amount if we have no withdrawals`, async () => {
     const startTimestamp = parseInt(claimInputs[0].startTimestamp.toString());
     const endTimestamp = parseInt(claimInputs[0].endTimestamp.toString());
