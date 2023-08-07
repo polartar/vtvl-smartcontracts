@@ -313,7 +313,7 @@ contract VTVLMerkleVesting is
 
         // "Double-entry bookkeeping"
         // Carry out the withdrawal by noting the withdrawn amount, and by transferring the tokens.
-        usrClaim.amountWithdrawn += amountRemaining;
+        usrClaim.amountWithdrawn = allowance;
         // Reduce the allocated amount since the following transaction pays out so the "debt" gets reduced
         // numTokensReservedForVesting -= amountRemaining;
 
