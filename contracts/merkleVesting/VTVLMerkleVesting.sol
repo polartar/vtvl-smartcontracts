@@ -144,7 +144,7 @@ contract VTVLMerkleVesting is
 
         // Check if this time is over vesting end time
         if (_referenceTs > _claimInput.endTimestamp) {
-            _referenceTs = _claimInput.endTimestamp;
+            return _claimInput.cliffAmount + _claimInput.linearVestAmount;
         }
 
         // If we're past the cliffReleaseTimestamp, we release the cliffAmount
