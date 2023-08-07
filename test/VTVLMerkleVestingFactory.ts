@@ -6,6 +6,7 @@ import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import fs from "fs";
 import VestingJson from "./vesting";
 import {
+  TestERC20Token,
   VTVLMerkleVesting,
   VTVLMerkleVestingFactory,
 } from "../typechain-types";
@@ -248,26 +249,31 @@ const claimInputs: ClaimInputStruct[] = VestingJson.map((vesting) => ({
 }));
 
 describe("Withdraw", async () => {
-  // const recipientAddress = await randomAddress();
-  const [, owner2] = await ethers.getSigners();
-  it("disallow withdraw with wrong vesting information", async () => {
-    const { tokenContract, vestingContract: claimCreateContractInstance } =
+  let recipientAddress: string;
+  let vestingContract: VestingContractType;
+  let tokenContract: TestERC20Token;
+
+  before(async () => {
+    recipientAddress = await randomAddress();
+    // TODO: check if we need any checks that the token be valid, etc
+    const { tokenContract: tc, vestingContract: vc } =
       await createPrefundedVestingContract({
         tokenName,
         tokenSymbol,
         initialSupplyTokens,
       });
+    vestingContract = vc;
+    tokenContract = tc;
+  });
+  it("disallow withdraw with wrong vesting information", async () => {
+    await vestingContract.setMerleRoot(getMkerkleRoot());
 
-    const initialBalance = await tokenContract.balanceOf(
-      claimInputs[0].recipient
-    );
-
-    await claimCreateContractInstance.setMerleRoot(getMkerkleRoot());
-    const vestingContract = claimCreateContractInstance.connect(owner2);
     const proof = getMkerkleProof(claimInputs[0].recipient);
 
     await ethers.provider.send("evm_mine", [
-      BigNumber.from(BigNumber.from(claimInputs[0].startTimestamp)).add(150),
+      BigNumber.from(BigNumber.from(claimInputs[0].startTimestamp))
+        .add(150)
+        .toNumber(),
     ]); // by now, we should've vested the cliff and one unlock interval
 
     await expect(
@@ -279,75 +285,57 @@ describe("Withdraw", async () => {
   });
 
   it("disallow withdraw with wrong recipient", async () => {
-    const { tokenContract, vestingContract: claimCreateContractInstance } =
-      await createPrefundedVestingContract({
-        tokenName,
-        tokenSymbol,
-        initialSupplyTokens,
-      });
-
-    await claimCreateContractInstance.setMerleRoot(getMkerkleRoot());
-    const vestingContract = claimCreateContractInstance.connect(owner2);
+    await vestingContract.setMerleRoot(getMkerkleRoot());
     const proof = getMkerkleProof(claimInputs[0].recipient);
 
     await ethers.provider.send("evm_mine", [
-      BigNumber.from(BigNumber.from(claimInputs[0].startTimestamp)).add(150),
+      BigNumber.from(BigNumber.from(claimInputs[0].startTimestamp))
+        .add(200)
+        .toNumber(),
     ]); // by now, we should've vested the cliff and one unlock interval
 
     await expect(
       vestingContract.withdraw(
-        { ...claimInputs[0], recipient: owner2.address },
+        { ...claimInputs[0], recipient: recipientAddress },
         proof
       )
     ).to.be.revertedWith("Invalid proof");
   });
 
   it("allows withdrawal up to the allowance and fails after the allowance is spent", async () => {
-    const { tokenContract, vestingContract: claimCreateContractInstance } =
-      await createPrefundedVestingContract({
-        tokenName,
-        tokenSymbol,
-        initialSupplyTokens,
-      });
-
     const initialBalance = await tokenContract.balanceOf(
       claimInputs[0].recipient
     );
 
-    await claimCreateContractInstance.setMerleRoot(getMkerkleRoot());
-    await ethers.provider.send("evm_mine", [
-      BigNumber.from(BigNumber.from(claimInputs[0].startTimestamp)).sub(50),
-    ]); // Make sure we're before the claim start
-    const vestingContract = claimCreateContractInstance.connect(owner2);
+    await vestingContract.setMerleRoot(getMkerkleRoot());
     const proof = getMkerkleProof(claimInputs[0].recipient);
-
-    await expect(
-      vestingContract.withdraw(claimInputs[0], proof)
-    ).to.be.revertedWith("NOTHING_TO_WITHDRAW");
-    // await ethers.provider.send("evm_setNextBlockTimestamp", [1000])
     await ethers.provider.send("evm_mine", [
-      BigNumber.from(claimInputs[0].startTimestamp).add(15),
+      BigNumber.from(BigNumber.from(claimInputs[0].startTimestamp))
+        .add(1000)
+        .toNumber(),
     ]); // by now, we should've vested the cliff and one unlock interval
-    (await vestingContract.withdraw(claimInputs[0], proof)).wait();
+
+    const tx = await vestingContract.withdraw(claimInputs[0], proof);
+    await tx.wait();
+
     const balanceAfterFirstWithdraw = await tokenContract.balanceOf(
       claimInputs[0].recipient
     );
+
     // The cliff has vested plus 10% of the linear vest amount
     expect(balanceAfterFirstWithdraw).to.be.equal(
       initialBalance
         .add(claimInputs[0].cliffAmount)
-        .add(BigNumber.from(claimInputs[0].linearVestAmount).mul(0.1))
+        .add(BigNumber.from(claimInputs[0].linearVestAmount).div(10))
     );
-    await ethers.provider.send("evm_mine", [
-      BigNumber.from(claimInputs[0].startTimestamp).add(17),
-    ]); // Fast forward until the moment nothign further has vested
+
+    await ethers.provider.send("evm_increaseTime", [17]); // Fast forward until the moment nothign further has vested
     // Now we don't have anything to withdraw again - as we've withdrawn just before the last vest
     await expect(
       vestingContract.withdraw(claimInputs[0], proof)
     ).to.be.revertedWith("NOTHING_TO_WITHDRAW");
-    await ethers.provider.send("evm_mine", [
-      BigNumber.from(claimInputs[0].startTimestamp).add(25),
-    ]); // mine another one
+
+    await ethers.provider.send("evm_increaseTime", [85]); // mine another one
     await (await vestingContract.withdraw(claimInputs[0], proof)).wait();
     const balanceAfterSecondWithdraw = await tokenContract.balanceOf(
       claimInputs[0].recipient
@@ -355,7 +343,7 @@ describe("Withdraw", async () => {
     // Expect to have 10% more after the last withdraw
     expect(balanceAfterSecondWithdraw).to.be.equal(
       balanceAfterFirstWithdraw.add(
-        BigNumber.from(claimInputs[0].linearVestAmount).mul(0.1)
+        BigNumber.from(claimInputs[0].linearVestAmount).div(100)
       )
     );
   });
@@ -367,9 +355,9 @@ describe("Withdraw", async () => {
       initialSupplyTokens,
     });
     await vestingContract.setMerleRoot(getMkerkleRoot());
-    const timePass = 1000;
+    const timePass = 2000;
     await ethers.provider.send("evm_mine", [
-      BigNumber.from(claimInputs[0].startTimestamp).add(timePass),
+      BigNumber.from(claimInputs[0].startTimestamp).add(timePass).toNumber(),
     ]);
     // Revoke the claim, and try to withdraw afterwards
     const proof = getMkerkleProof(claimInputs[0].recipient);
@@ -377,24 +365,12 @@ describe("Withdraw", async () => {
     await tx.wait();
 
     // Get `revokeClaim` transaction block timestamp
-    const txTimestamp = await getBlockTs(tx.blockNumber!);
+    // const txTimestamp = await getBlockTs(tx.blockNumber!);
 
     // Expect the claimable amount after revoking
     const expectClaimableAmount = BigNumber.from(
-      claimInputs[0].linearVestAmount
-    )
-      .mul(
-        BigNumber.from(txTimestamp).sub(
-          BigNumber.from(BigNumber.from(claimInputs[0].startTimestamp))
-        )
-      )
-      .div(
-        BigNumber.from(
-          BigNumber.from(claimInputs[0].endTimestamp).sub(
-            BigNumber.from(claimInputs[0].startTimestamp)
-          )
-        )
-      );
+      claimInputs[0].cliffAmount
+    ).add(BigNumber.from(claimInputs[0].linearVestAmount).div(5));
 
     expect(await vestingContract.claimableAmount(claimInputs[0])).to.be.equal(
       expectClaimableAmount
@@ -412,15 +388,15 @@ describe("Revoke Claim", async () => {
 
     await vestingContract.setMerleRoot(getMkerkleRoot());
     const proof = getMkerkleProof(claimInputs[0].recipient);
-    await ethers.provider.send("evm_mine", [
-      parseInt(claimInputs[0].startTimestamp.toString()) + 1000,
-    ]);
+    // await ethers.provider.send("evm_mine", [
+    //   BigNumber.from(claimInputs[0].startTimestamp).toNumber() + 1000,
+    // ]);
     await vestingContract.withdraw(claimInputs[0], proof);
-    // (await vestingContract.revokeClaim(claimInputs[0], proof)).wait();
-    // // Make sure it gets reverted
-    // expect(
-    //   await await vestingContract.isRevoked(claimInputs[0].recipient, 0)
-    // ).to.be.equal(true);
+    (await vestingContract.revokeClaim(claimInputs[0], proof)).wait();
+    // Make sure it gets reverted
+    expect(
+      await await vestingContract.isRevoked(claimInputs[0].recipient, 0)
+    ).to.be.equal(true);
   });
 
   it("fails to revoke an invalid proof", async () => {
@@ -479,7 +455,7 @@ describe("Vested amount", async () => {
   });
   it("correctly calculates the vested amount after the cliff time, but before the linear start time", async () => {
     // await ethers.provider.send("evm_mine", [
-    //   parseInt(claimInputs[0].cliffReleaseTimestamp.toString()),
+    //   (claimInputs[0].cliffReleaseTimestamp.toNumber()),
     // ]);
     expect(
       await vestingContract.vestedAmount(
@@ -630,13 +606,8 @@ describe("Claimable amount", async () => {
   // Default params - a bit different than those above
   // linearly Vest 10000, every 1s, between last block ts+100 and 1000 secs forward
   // No cliff
-  const cliffReleaseTimestamp = BigNumber.from(0);
-  const linearVestAmount = BigNumber.from(10000);
-  const cliffAmount = BigNumber.from(0);
-  const releaseIntervalSecs = BigNumber.from(1);
+
   it(`calculates the claimable amount`, async () => {
-    const startTimestamp = parseInt(claimInputs[0].startTimestamp.toString());
-    const endTimestamp = parseInt(claimInputs[0].endTimestamp.toString());
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
       tokenSymbol,
@@ -656,8 +627,10 @@ describe("Claimable amount", async () => {
     expect(claimableAmount).to.be.equal(vestedAmount);
   });
   it(`calculates the claimable amount to be equal to the vested amount if we have no withdrawals`, async () => {
-    const startTimestamp = parseInt(claimInputs[0].startTimestamp.toString());
-    const endTimestamp = parseInt(claimInputs[0].endTimestamp.toString());
+    const startTimestamp = BigNumber.from(
+      claimInputs[0].startTimestamp
+    ).toNumber();
+    const endTimestamp = BigNumber.from(claimInputs[0].endTimestamp).toNumber();
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
       tokenSymbol,

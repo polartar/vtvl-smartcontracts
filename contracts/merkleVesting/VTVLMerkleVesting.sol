@@ -317,7 +317,7 @@ contract VTVLMerkleVesting is
         // Reduce the allocated amount since the following transaction pays out so the "debt" gets reduced
         // numTokensReservedForVesting -= amountRemaining;
 
-        _transferToken(amountRemaining, _scheduleIndex);
+        _transferToken(_claimInput.recipient, amountRemaining, _scheduleIndex);
         // After the "books" are set, transfer the tokens
         // Reentrancy note - internal vars have been changed by now
         // Also following Checks-effects-interactions pattern
@@ -332,7 +332,11 @@ contract VTVLMerkleVesting is
      * @param _amount The total amount that will be transfered.
      * @param _scheduleIndex The index of the schedule.
      */
-    function _transferToken(uint256 _amount, uint256 _scheduleIndex) private {
+    function _transferToken(
+        address _to,
+        uint256 _amount,
+        uint256 _scheduleIndex
+    ) private {
         if (feePercent > 0) {
             uint256 _feeAmount = calculateFee(_amount);
             uint256 _realFeeAmount = (_feeAmount * conversionThreshold) / 100;
@@ -341,10 +345,7 @@ contract VTVLMerkleVesting is
                 // calcualte the price when 10 secs ago.
                 uint256 price = getTokenPrice(uint128(_amount), 10);
                 if (price >= conversionThreshold) {
-                    tokenAddress.safeTransfer(
-                        _msgSender(),
-                        _amount - _feeAmount
-                    );
+                    tokenAddress.safeTransfer(_to, _amount - _feeAmount);
                     tokenAddress.safeTransfer(feeReceiver, _feeAmount);
                     emit FeeReceived(
                         feeReceiver,
@@ -353,9 +354,9 @@ contract VTVLMerkleVesting is
                         address(tokenAddress)
                     );
                 } else {
-                    tokenAddress.safeTransfer(_msgSender(), _amount);
+                    tokenAddress.safeTransfer(_to, _amount);
                     IERC20Extented(USDC_ADDRESS).safeTransferFrom(
-                        msg.sender,
+                        _to,
                         feeReceiver,
                         _realFeeAmount
                     );
@@ -367,9 +368,9 @@ contract VTVLMerkleVesting is
                     );
                 }
             } else {
-                tokenAddress.safeTransfer(_msgSender(), _amount);
+                tokenAddress.safeTransfer(_to, _amount);
                 IERC20Extented(USDC_ADDRESS).safeTransferFrom(
-                    msg.sender,
+                    _to,
                     feeReceiver,
                     _realFeeAmount
                 );
@@ -382,7 +383,7 @@ contract VTVLMerkleVesting is
                 );
             }
         } else {
-            tokenAddress.safeTransfer(_msgSender(), _amount);
+            tokenAddress.safeTransfer(_to, _amount);
         }
     }
 
