@@ -58,9 +58,6 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
     // Only one Claim possible per address
     mapping(address => Claim[]) internal claims;
 
-    // Track the recipients of the vesting
-    address[] internal vestingRecipients;
-
     address private immutable factoryAddress;
     uint256 public feePercent; // Fee percent.  500 means 5%, 1 means 0.01 %
     address public feeReceiver; // The receier address that will get the fee.
@@ -315,20 +312,6 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
     }
 
     /** 
-    @notice Return all the addresses that have vesting schedules attached.
-    */
-    function allVestingRecipients() external view returns (address[] memory) {
-        return vestingRecipients;
-    }
-
-    /** 
-    @notice Get the total number of vesting recipients.
-    */
-    function numVestingRecipients() external view returns (uint256) {
-        return vestingRecipients.length;
-    }
-
-    /** 
     @notice Permission-unchecked version of claim creation (no onlyOwner). Actual logic for create claim, to be run within either createClaim or createClaimBatch.
     @dev This'll simply check the input parameters, and create the structure verbatim based on passed in parameters.
      */
@@ -397,7 +380,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
 
         // Effects limited to lines below
         numTokensReservedForVesting += allocatedAmount; // track the allocated amount
-        vestingRecipients.push(claimInput.recipient); // add the vesting recipient to the list
+
         emit ClaimCreated(
             claimInput.recipient,
             _claim,
