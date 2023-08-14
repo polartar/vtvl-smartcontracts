@@ -41,7 +41,7 @@ function generateMerkleTree() {
   fs.writeFileSync("tree.json", JSON.stringify(tree.dump()));
 }
 generateMerkleTree();
-function getMkerkleProof(recipient: string) {
+function getMerkleProof(recipient: string) {
   const tree = StandardMerkleTree.load(
     JSON.parse(fs.readFileSync("tree.json", "utf8"))
   );
@@ -55,7 +55,7 @@ function getMkerkleProof(recipient: string) {
   return [];
 }
 
-function getMkerkleRoot() {
+function getMerkleRoot() {
   const tree = StandardMerkleTree.load(
     JSON.parse(fs.readFileSync("tree.json", "utf8"))
   );
@@ -266,9 +266,9 @@ describe("Withdraw", async () => {
     tokenContract = tc;
   });
   it("disallow withdraw with wrong vesting information", async () => {
-    await vestingContract.setMerleRoot(getMkerkleRoot());
+    await vestingContract.setMerleRoot(getMerkleRoot());
 
-    const proof = getMkerkleProof(claimInputs[0].recipient);
+    const proof = getMerkleProof(claimInputs[0].recipient);
 
     await ethers.provider.send("evm_mine", [
       BigNumber.from(BigNumber.from(claimInputs[0].startTimestamp))
@@ -285,8 +285,8 @@ describe("Withdraw", async () => {
   });
 
   it("disallow withdraw with wrong recipient", async () => {
-    await vestingContract.setMerleRoot(getMkerkleRoot());
-    const proof = getMkerkleProof(claimInputs[0].recipient);
+    await vestingContract.setMerleRoot(getMerkleRoot());
+    const proof = getMerkleProof(claimInputs[0].recipient);
 
     await ethers.provider.send("evm_mine", [
       BigNumber.from(BigNumber.from(claimInputs[0].startTimestamp))
@@ -307,8 +307,8 @@ describe("Withdraw", async () => {
       claimInputs[0].recipient
     );
 
-    await vestingContract.setMerleRoot(getMkerkleRoot());
-    const proof = getMkerkleProof(claimInputs[0].recipient);
+    await vestingContract.setMerleRoot(getMerkleRoot());
+    const proof = getMerkleProof(claimInputs[0].recipient);
     await ethers.provider.send("evm_mine", [
       BigNumber.from(BigNumber.from(claimInputs[0].startTimestamp))
         .add(1000)
@@ -354,13 +354,13 @@ describe("Withdraw", async () => {
       tokenSymbol,
       initialSupplyTokens,
     });
-    await vestingContract.setMerleRoot(getMkerkleRoot());
+    await vestingContract.setMerleRoot(getMerkleRoot());
     const timePass = 2000;
     await ethers.provider.send("evm_mine", [
       BigNumber.from(claimInputs[0].startTimestamp).add(timePass).toNumber(),
     ]);
     // Revoke the claim, and try to withdraw afterwards
-    const proof = getMkerkleProof(claimInputs[0].recipient);
+    const proof = getMerkleProof(claimInputs[0].recipient);
     const tx = await vestingContract.revokeClaim(claimInputs[0], proof);
     await tx.wait();
 
@@ -386,8 +386,8 @@ describe("Revoke Claim", async () => {
       initialSupplyTokens,
     });
 
-    await vestingContract.setMerleRoot(getMkerkleRoot());
-    const proof = getMkerkleProof(claimInputs[0].recipient);
+    await vestingContract.setMerleRoot(getMerkleRoot());
+    const proof = getMerkleProof(claimInputs[0].recipient);
     // await ethers.provider.send("evm_mine", [
     //   BigNumber.from(claimInputs[0].startTimestamp).toNumber() + 1000,
     // ]);
@@ -406,8 +406,8 @@ describe("Revoke Claim", async () => {
       initialSupplyTokens,
     });
     const recipientAddress = await randomAddress();
-    await vestingContract.setMerleRoot(getMkerkleRoot());
-    const proof = getMkerkleProof(claimInputs[0].recipient);
+    await vestingContract.setMerleRoot(getMerkleRoot());
+    const proof = getMerkleProof(claimInputs[0].recipient);
 
     await expect(
       vestingContract.revokeClaim(
@@ -434,7 +434,7 @@ describe("Vested amount", async () => {
       initialSupplyTokens,
     });
     vestingContract = _vc as VestingContractType;
-    await vestingContract.setMerleRoot(getMkerkleRoot());
+    await vestingContract.setMerleRoot(getMerkleRoot());
   });
   it("calculates the vested amount before the cliff time to be 0", async () => {
     expect(
@@ -614,7 +614,7 @@ describe("Claimable amount", async () => {
       initialSupplyTokens,
     });
 
-    await vestingContract.setMerleRoot(getMkerkleRoot());
+    await vestingContract.setMerleRoot(getMerkleRoot());
     const claim = claimInputs[0];
 
     //after padding the half of vesting period
@@ -637,7 +637,7 @@ describe("Claimable amount", async () => {
       initialSupplyTokens,
     });
 
-    await vestingContract.setMerleRoot(getMkerkleRoot());
+    await vestingContract.setMerleRoot(getMerkleRoot());
     // Try couple of different points, no matter where we are, it should be the same since we have no withdrawals
     for (let ts = startTimestamp; ts <= endTimestamp; ts += 100) {
       await ethers.provider.send("evm_mine", [ts]); // Make sure we're at the relevant ts
@@ -656,9 +656,9 @@ describe("Claimable amount", async () => {
       tokenSymbol,
       initialSupplyTokens,
     });
-    const proof = getMkerkleProof(claimInputs[0].recipient);
+    const proof = getMerkleProof(claimInputs[0].recipient);
 
-    await vestingContract.setMerleRoot(getMkerkleRoot());
+    await vestingContract.setMerleRoot(getMerkleRoot());
 
     const ts = startTimestamp.add(5000);
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
