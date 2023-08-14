@@ -50,12 +50,12 @@ contract UniswapOracle {
         amountOut = OracleLibrary.getQuoteAtTick(
             tick,
             amount,
-            USDC_ADDRESS,
-            address(tokenAddress)
+            address(tokenAddress),
+            USDC_ADDRESS
         );
 
         // calculate the price with 100 times
         return
-            ((amountOut * 100) / 10 ** (tokenDecimal - USDC_DECIMAL)) / amount;
+            ((amount * 100) * 10 ** (tokenDecimal - USDC_DECIMAL)) / amountOut;
     }
 }
