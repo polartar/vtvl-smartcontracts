@@ -57,7 +57,7 @@ contract BaseMilestone is Ownable {
 
             uint256 recipientLenth = recipients.length;
 
-            for (uint256 j = 0; j < recipientLenth; j++) {
+            for (uint256 j = 0; j < recipientLenth; ) {
                 milestones[recipients[j]][i] = milestone;
                 unchecked {
                     ++j;
@@ -79,7 +79,7 @@ contract BaseMilestone is Ownable {
             uint248 amount = uint248(
                 (_allocationPercents[i] * allocation) / 100
             );
-            for (uint256 j = 0; j < recipientLenth; j++) {
+            for (uint256 j = 0; j < recipientLenth; ) {
                 unchecked {
                     milestones[recipients[j]][i].allocation = amount;
                     ++j;
