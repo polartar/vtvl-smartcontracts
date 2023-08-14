@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.14;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -13,18 +12,16 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
     //
     /**
     @notice Construct the contract, taking the ERC20 token to be vested as the parameter.
-    @dev The owner can set the contract in question when creating the contract.
+
      */
     constructor(
         IERC20 _tokenAddress,
         uint256 _allocation,
         InputMilestone[] memory _milestones,
-        address[] memory _recipients,
-        address _owner
+        address[] memory _recipients
     ) {
         require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
         tokenAddress = _tokenAddress;
-        _transferOwnership(_owner);
         recipients = _recipients;
         allocation = _allocation;
 

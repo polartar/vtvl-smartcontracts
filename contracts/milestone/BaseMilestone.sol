@@ -3,7 +3,7 @@ pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "../AccessProtected.sol";
 
 struct Milestone {
     uint256 startTime;
@@ -21,7 +21,7 @@ struct InputMilestone {
     uint120 releaseIntervalSecs;
 }
 
-contract BaseMilestone is Ownable {
+contract BaseMilestone is AccessProtected {
     using SafeERC20 for IERC20;
 
     /**
@@ -134,7 +134,7 @@ contract BaseMilestone is Ownable {
     function setComplete(
         address _recipient,
         uint256 _milestoneIndex
-    ) public onlyOwner onlyDeposited {
+    ) public onlyAdmin onlyDeposited {
         Milestone storage milestone = milestones[_recipient][_milestoneIndex];
 
         require(milestone.startTime == 0, "ALREADY_COMPLETED");
@@ -146,7 +146,7 @@ contract BaseMilestone is Ownable {
     /**
     @notice Only admin can withdraw the amount before it's completed.
      */
-    function withdrawAdmin() public onlyOwner {
+    function withdrawAdmin() public onlyAdmin {
         uint256 availableAmount = tokenAddress.balanceOf(address(this)) -
             numTokensReservedForVesting;
 

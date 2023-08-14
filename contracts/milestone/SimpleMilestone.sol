@@ -3,7 +3,7 @@ pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "./BaseMilestone.sol";
 
 contract SimpleMilestone is BaseMilestone {
@@ -15,7 +15,6 @@ contract SimpleMilestone is BaseMilestone {
     @param _allocation - the allocation amount for this milestone.
     @param _allcationPercents - the allocation percents
     @param _recipients - the addresses for which we fetch the claim.
-    @param _owner - the owner of this contract.
     @dev Factory contract will deposit the token when creating this contract.
     // This is created by Factory contract and Safe wallet can be used, 
     // so factory contract should pass address which will be the owner of this contract.
@@ -24,12 +23,10 @@ contract SimpleMilestone is BaseMilestone {
         IERC20 _tokenAddress,
         uint256 _allocation,
         uint256[] memory _allcationPercents,
-        address[] memory _recipients,
-        address _owner
+        address[] memory _recipients
     ) {
         recipients = _recipients;
         tokenAddress = _tokenAddress;
-        _transferOwnership(_owner);
         allocation = _allocation;
 
         super.initializeAllocations(_allcationPercents);

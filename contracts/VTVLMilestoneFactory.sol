@@ -100,8 +100,7 @@ contract VTVLMilestoneFactory is Ownable {
             _tokenAddress,
             _allocation,
             _milestones,
-            _recipients,
-            msg.sender
+            _recipients
         );
 
         _deposit(
@@ -134,8 +133,7 @@ contract VTVLMilestoneFactory is Ownable {
             _tokenAddress,
             _allocation,
             _allocationPercents,
-            _recipients,
-            msg.sender
+            _recipients
         );
 
         _deposit(
