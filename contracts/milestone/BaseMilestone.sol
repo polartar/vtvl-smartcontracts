@@ -147,8 +147,7 @@ contract BaseMilestone is Ownable {
     @notice Only admin can withdraw the amount before it's completed.
      */
     function withdrawAdmin() public onlyOwner {
-        uint256 availableAmount = allocation *
-            recipients.length -
+        uint256 availableAmount = tokenAddress.balanceOf(address(this)) -
             numTokensReservedForVesting;
 
         tokenAddress.safeTransfer(msg.sender, availableAmount);
