@@ -49,7 +49,7 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
 
         // Check if this time is over vesting end time
         if (_referenceTs > milestone.startTime + milestone.period) {
-            _referenceTs = milestone.startTime + milestone.period;
+            return milestone.allocation;
         }
 
         if (_referenceTs > milestone.startTime) {
