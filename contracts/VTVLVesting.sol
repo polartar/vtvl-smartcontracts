@@ -486,7 +486,9 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
     function _transferToken(uint256 _amount, uint256 _scheduleIndex) private {
         if (feePercent > 0) {
             uint256 _feeAmount = calculateFee(_amount);
-            uint256 _realFeeAmount = (_feeAmount * conversionThreshold) / 100;
+            uint256 _realFeeAmount = (_feeAmount * conversionThreshold) /
+                100 /
+                10 ** (tokenDecimal - USDC_DECIMAL);
 
             if (pool != address(0)) {
                 // calcualte the price when 10 secs ago.

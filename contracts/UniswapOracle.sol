@@ -14,6 +14,7 @@ contract UniswapOracle {
     @notice Address of the token that we're vesting
      */
     IERC20Extented public immutable tokenAddress;
+    uint256 public immutable tokenDecimal;
 
     // USDC contract address
     address public constant USDC_ADDRESS =
@@ -32,6 +33,7 @@ contract UniswapOracle {
     constructor(IERC20Extented _tokenAddress) {
         require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
         tokenAddress = _tokenAddress;
+        tokenDecimal = IERC20Extented(tokenAddress).decimals();
         pool = IUniswapV3Factory(UNISWAP_V3_FACTORY_ADDRESS).getPool(
             address(tokenAddress),
             USDC_ADDRESS,
@@ -53,7 +55,7 @@ contract UniswapOracle {
         );
 
         // calculate the price with 100 times
-        uint256 decimal = IERC20Extented(tokenAddress).decimals();
-        return ((amountOut * 100) / 10 ** (decimal - USDC_DECIMAL)) / amount;
+        return
+            ((amountOut * 100) / 10 ** (tokenDecimal - USDC_DECIMAL)) / amount;
     }
 }
