@@ -47,7 +47,7 @@ function USDC_ADDRESS() external view returns (address)
 ### USDC_DECIMAL
 
 ```solidity
-function USDC_DECIMAL() external view returns (uint256)
+function USDC_DECIMAL() external view returns (uint128)
 ```
 
 
@@ -59,7 +59,7 @@ function USDC_DECIMAL() external view returns (uint256)
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | uint256 | undefined |
+| _0 | uint128 | undefined |
 
 ### amountAvailableToWithdrawByAdmin
 
@@ -424,7 +424,7 @@ Address of the token that we&#39;re vesting
 ### tokenDecimal
 
 ```solidity
-function tokenDecimal() external view returns (uint256)
+function tokenDecimal() external view returns (uint128)
 ```
 
 
@@ -436,7 +436,7 @@ function tokenDecimal() external view returns (uint256)
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | uint256 | undefined |
+| _0 | uint128 | undefined |
 
 ### updateFeeReceiver
 

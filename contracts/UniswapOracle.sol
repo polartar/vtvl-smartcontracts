@@ -14,12 +14,12 @@ contract UniswapOracle {
     @notice Address of the token that we're vesting
      */
     IERC20Extented public immutable tokenAddress;
-    uint256 public immutable tokenDecimal;
-
     // USDC contract address
     address public constant USDC_ADDRESS =
         0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    uint256 public constant USDC_DECIMAL = 6;
+
+    uint128 public immutable tokenDecimal;
+    uint128 public constant USDC_DECIMAL = 6;
 
     // UniswapV3 Factory address
     address public constant UNISWAP_V3_FACTORY_ADDRESS =
@@ -46,16 +46,19 @@ contract UniswapOracle {
         uint128 amount,
         uint32 secondsAgo
     ) public view returns (uint amountOut) {
+        uint128 oneToken = uint128(1 * 10 ** (tokenDecimal));
+        uint128 amountIn = amount >= oneToken ? amount : oneToken;
         (int24 tick, ) = OracleLibrary.consult(pool, secondsAgo);
         amountOut = OracleLibrary.getQuoteAtTick(
             tick,
-            amount,
+            amountIn,
             address(tokenAddress),
             USDC_ADDRESS
         );
 
         // calculate the price with 100 times
         return
-            ((amount * 100) * 10 ** (tokenDecimal - USDC_DECIMAL)) / amountOut;
+            ((amountIn * 100) * 10 ** (tokenDecimal - USDC_DECIMAL)) /
+            amountOut;
     }
 }
