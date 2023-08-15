@@ -94,7 +94,7 @@ export interface VTVLVestingInterface extends utils.Interface {
   functions: {
     "UNISWAP_V3_FACTORY_ADDRESS()": FunctionFragment;
     "USDC_ADDRESS()": FunctionFragment;
-    "allVestingRecipients()": FunctionFragment;
+    "USDC_DECIMAL()": FunctionFragment;
     "amountAvailableToWithdrawByAdmin()": FunctionFragment;
     "claimableAmount(address,uint256)": FunctionFragment;
     "conversionThreshold()": FunctionFragment;
@@ -107,15 +107,14 @@ export interface VTVLVestingInterface extends utils.Interface {
     "getClaim(address,uint256)": FunctionFragment;
     "getNumberOfVestings(address)": FunctionFragment;
     "getTokenPrice(uint128,uint32)": FunctionFragment;
+    "isAdmin(address)": FunctionFragment;
     "numTokensReservedForVesting()": FunctionFragment;
-    "numVestingRecipients()": FunctionFragment;
-    "owner()": FunctionFragment;
     "pool()": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
     "revokeClaim(address,uint256)": FunctionFragment;
+    "setAdmin(address,bool)": FunctionFragment;
     "setFee(uint256)": FunctionFragment;
     "tokenAddress()": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
+    "tokenDecimal()": FunctionFragment;
     "updateFeeReceiver(address)": FunctionFragment;
     "updateconversionThreshold(uint256)": FunctionFragment;
     "vestedAmount(address,uint256,uint40)": FunctionFragment;
@@ -128,7 +127,7 @@ export interface VTVLVestingInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "UNISWAP_V3_FACTORY_ADDRESS"
       | "USDC_ADDRESS"
-      | "allVestingRecipients"
+      | "USDC_DECIMAL"
       | "amountAvailableToWithdrawByAdmin"
       | "claimableAmount"
       | "conversionThreshold"
@@ -141,15 +140,14 @@ export interface VTVLVestingInterface extends utils.Interface {
       | "getClaim"
       | "getNumberOfVestings"
       | "getTokenPrice"
+      | "isAdmin"
       | "numTokensReservedForVesting"
-      | "numVestingRecipients"
-      | "owner"
       | "pool"
-      | "renounceOwnership"
       | "revokeClaim"
+      | "setAdmin"
       | "setFee"
       | "tokenAddress"
-      | "transferOwnership"
+      | "tokenDecimal"
       | "updateFeeReceiver"
       | "updateconversionThreshold"
       | "vestedAmount"
@@ -167,7 +165,7 @@ export interface VTVLVestingInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "allVestingRecipients",
+    functionFragment: "USDC_DECIMAL",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -218,23 +216,19 @@ export interface VTVLVestingInterface extends utils.Interface {
     functionFragment: "getTokenPrice",
     values: [BigNumberish, BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "isAdmin", values: [string]): string;
   encodeFunctionData(
     functionFragment: "numTokensReservedForVesting",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "numVestingRecipients",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(functionFragment: "pool", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "revokeClaim",
     values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setAdmin",
+    values: [string, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "setFee",
@@ -245,8 +239,8 @@ export interface VTVLVestingInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [string]
+    functionFragment: "tokenDecimal",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "updateFeeReceiver",
@@ -282,7 +276,7 @@ export interface VTVLVestingInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "allVestingRecipients",
+    functionFragment: "USDC_DECIMAL",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -327,31 +321,24 @@ export interface VTVLVestingInterface extends utils.Interface {
     functionFragment: "getTokenPrice",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "isAdmin", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "numTokensReservedForVesting",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "numVestingRecipients",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pool", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "revokeClaim",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "setAdmin", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "setFee", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "tokenAddress",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "transferOwnership",
+    functionFragment: "tokenDecimal",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -377,21 +364,32 @@ export interface VTVLVestingInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "AdminAccessSet(address,bool)": EventFragment;
     "AdminWithdrawn(address,uint256)": EventFragment;
-    "ClaimCreated(address,tuple,uint256)": EventFragment;
-    "ClaimRevoked(address,uint256,uint256,tuple,uint256)": EventFragment;
+    "ClaimCreated(address,(uint40,uint40,uint40,uint40,uint256,uint256,uint112,bool,uint40),uint256)": EventFragment;
+    "ClaimRevoked(address,uint256,uint256,(uint40,uint40,uint40,uint40,uint256,uint256,uint112,bool,uint40),uint256)": EventFragment;
     "Claimed(address,uint256,uint256)": EventFragment;
     "FeeReceived(address,uint256,uint256,address)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "AdminAccessSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AdminWithdrawn"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ClaimCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ClaimRevoked"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Claimed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "FeeReceived"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
+
+export interface AdminAccessSetEventObject {
+  _admin: string;
+  _enabled: boolean;
+}
+export type AdminAccessSetEvent = TypedEvent<
+  [string, boolean],
+  AdminAccessSetEventObject
+>;
+
+export type AdminAccessSetEventFilter = TypedEventFilter<AdminAccessSetEvent>;
 
 export interface AdminWithdrawnEventObject {
   _recipient: string;
@@ -455,18 +453,6 @@ export type FeeReceivedEvent = TypedEvent<
 
 export type FeeReceivedEventFilter = TypedEventFilter<FeeReceivedEvent>;
 
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
-}
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
-
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
-
 export interface VTVLVesting extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
@@ -498,7 +484,7 @@ export interface VTVLVesting extends BaseContract {
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
 
-    allVestingRecipients(overrides?: CallOverrides): Promise<[string[]]>;
+    USDC_DECIMAL(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     amountAvailableToWithdrawByAdmin(
       overrides?: CallOverrides
@@ -555,23 +541,26 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { amountOut: BigNumber }>;
 
+    isAdmin(
+      _addressToCheck: string,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
     numTokensReservedForVesting(
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    numVestingRecipients(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
     pool(overrides?: CallOverrides): Promise<[string]>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
 
     revokeClaim(
       _recipient: string,
       _scheduleIndex: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<ContractTransaction>;
+
+    setAdmin(
+      admin: string,
+      isEnabled: boolean,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -582,10 +571,7 @@ export interface VTVLVesting extends BaseContract {
 
     tokenAddress(overrides?: CallOverrides): Promise<[string]>;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+    tokenDecimal(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     updateFeeReceiver(
       _newReceiver: string,
@@ -624,7 +610,7 @@ export interface VTVLVesting extends BaseContract {
 
   USDC_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
-  allVestingRecipients(overrides?: CallOverrides): Promise<string[]>;
+  USDC_DECIMAL(overrides?: CallOverrides): Promise<BigNumber>;
 
   amountAvailableToWithdrawByAdmin(
     overrides?: CallOverrides
@@ -681,21 +667,21 @@ export interface VTVLVesting extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  isAdmin(_addressToCheck: string, overrides?: CallOverrides): Promise<boolean>;
+
   numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
-  numVestingRecipients(overrides?: CallOverrides): Promise<BigNumber>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
   pool(overrides?: CallOverrides): Promise<string>;
-
-  renounceOwnership(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
 
   revokeClaim(
     _recipient: string,
     _scheduleIndex: BigNumberish,
+    overrides?: Overrides & { from?: string }
+  ): Promise<ContractTransaction>;
+
+  setAdmin(
+    admin: string,
+    isEnabled: boolean,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -706,10 +692,7 @@ export interface VTVLVesting extends BaseContract {
 
   tokenAddress(overrides?: CallOverrides): Promise<string>;
 
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  tokenDecimal(overrides?: CallOverrides): Promise<BigNumber>;
 
   updateFeeReceiver(
     _newReceiver: string,
@@ -748,7 +731,7 @@ export interface VTVLVesting extends BaseContract {
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
-    allVestingRecipients(overrides?: CallOverrides): Promise<string[]>;
+    USDC_DECIMAL(overrides?: CallOverrides): Promise<BigNumber>;
 
     amountAvailableToWithdrawByAdmin(
       overrides?: CallOverrides
@@ -805,15 +788,14 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    isAdmin(
+      _addressToCheck: string,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
     numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
-    numVestingRecipients(overrides?: CallOverrides): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<string>;
-
     pool(overrides?: CallOverrides): Promise<string>;
-
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
     revokeClaim(
       _recipient: string,
@@ -821,14 +803,17 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    setAdmin(
+      admin: string,
+      isEnabled: boolean,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     setFee(_feePercent: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     tokenAddress(overrides?: CallOverrides): Promise<string>;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    tokenDecimal(overrides?: CallOverrides): Promise<BigNumber>;
 
     updateFeeReceiver(
       _newReceiver: string,
@@ -864,6 +849,15 @@ export interface VTVLVesting extends BaseContract {
   };
 
   filters: {
+    "AdminAccessSet(address,bool)"(
+      _admin?: string | null,
+      _enabled?: null
+    ): AdminAccessSetEventFilter;
+    AdminAccessSet(
+      _admin?: string | null,
+      _enabled?: null
+    ): AdminAccessSetEventFilter;
+
     "AdminWithdrawn(address,uint256)"(
       _recipient?: string | null,
       _amountRequested?: null
@@ -873,7 +867,7 @@ export interface VTVLVesting extends BaseContract {
       _amountRequested?: null
     ): AdminWithdrawnEventFilter;
 
-    "ClaimCreated(address,tuple,uint256)"(
+    "ClaimCreated(address,(uint40,uint40,uint40,uint40,uint256,uint256,uint112,bool,uint40),uint256)"(
       _recipient?: string | null,
       _claim?: null,
       _scheduleIndex?: null
@@ -884,7 +878,7 @@ export interface VTVLVesting extends BaseContract {
       _scheduleIndex?: null
     ): ClaimCreatedEventFilter;
 
-    "ClaimRevoked(address,uint256,uint256,tuple,uint256)"(
+    "ClaimRevoked(address,uint256,uint256,(uint40,uint40,uint40,uint40,uint256,uint256,uint112,bool,uint40),uint256)"(
       _recipient?: string | null,
       _numTokensWithheld?: null,
       revocationTimestamp?: null,
@@ -922,15 +916,6 @@ export interface VTVLVesting extends BaseContract {
       _scheduleIndex?: null,
       _tokenAddress?: null
     ): FeeReceivedEventFilter;
-
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
   };
 
   estimateGas: {
@@ -938,7 +923,7 @@ export interface VTVLVesting extends BaseContract {
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
 
-    allVestingRecipients(overrides?: CallOverrides): Promise<BigNumber>;
+    USDC_DECIMAL(overrides?: CallOverrides): Promise<BigNumber>;
 
     amountAvailableToWithdrawByAdmin(
       overrides?: CallOverrides
@@ -995,21 +980,24 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    isAdmin(
+      _addressToCheck: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
-    numVestingRecipients(overrides?: CallOverrides): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
     pool(overrides?: CallOverrides): Promise<BigNumber>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
 
     revokeClaim(
       _recipient: string,
       _scheduleIndex: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<BigNumber>;
+
+    setAdmin(
+      admin: string,
+      isEnabled: boolean,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -1020,10 +1008,7 @@ export interface VTVLVesting extends BaseContract {
 
     tokenAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    tokenDecimal(overrides?: CallOverrides): Promise<BigNumber>;
 
     updateFeeReceiver(
       _newReceiver: string,
@@ -1065,9 +1050,7 @@ export interface VTVLVesting extends BaseContract {
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    allVestingRecipients(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    USDC_DECIMAL(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     amountAvailableToWithdrawByAdmin(
       overrides?: CallOverrides
@@ -1126,25 +1109,26 @@ export interface VTVLVesting extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    isAdmin(
+      _addressToCheck: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     numTokensReservedForVesting(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    numVestingRecipients(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     pool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
 
     revokeClaim(
       _recipient: string,
       _scheduleIndex: BigNumberish,
+      overrides?: Overrides & { from?: string }
+    ): Promise<PopulatedTransaction>;
+
+    setAdmin(
+      admin: string,
+      isEnabled: boolean,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
@@ -1155,10 +1139,7 @@ export interface VTVLVesting extends BaseContract {
 
     tokenAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    tokenDecimal(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     updateFeeReceiver(
       _newReceiver: string,

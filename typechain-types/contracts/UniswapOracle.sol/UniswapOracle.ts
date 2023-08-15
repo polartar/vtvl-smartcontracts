@@ -24,18 +24,22 @@ export interface UniswapOracleInterface extends utils.Interface {
   functions: {
     "UNISWAP_V3_FACTORY_ADDRESS()": FunctionFragment;
     "USDC_ADDRESS()": FunctionFragment;
+    "USDC_DECIMAL()": FunctionFragment;
     "getTokenPrice(uint128,uint32)": FunctionFragment;
     "pool()": FunctionFragment;
     "tokenAddress()": FunctionFragment;
+    "tokenDecimal()": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "UNISWAP_V3_FACTORY_ADDRESS"
       | "USDC_ADDRESS"
+      | "USDC_DECIMAL"
       | "getTokenPrice"
       | "pool"
       | "tokenAddress"
+      | "tokenDecimal"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -47,12 +51,20 @@ export interface UniswapOracleInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "USDC_DECIMAL",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getTokenPrice",
     values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "pool", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "tokenAddress",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "tokenDecimal",
     values?: undefined
   ): string;
 
@@ -65,12 +77,20 @@ export interface UniswapOracleInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "USDC_DECIMAL",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getTokenPrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "pool", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "tokenAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "tokenDecimal",
     data: BytesLike
   ): Result;
 
@@ -108,6 +128,8 @@ export interface UniswapOracle extends BaseContract {
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
 
+    USDC_DECIMAL(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     getTokenPrice(
       amount: BigNumberish,
       secondsAgo: BigNumberish,
@@ -117,11 +139,15 @@ export interface UniswapOracle extends BaseContract {
     pool(overrides?: CallOverrides): Promise<[string]>;
 
     tokenAddress(overrides?: CallOverrides): Promise<[string]>;
+
+    tokenDecimal(overrides?: CallOverrides): Promise<[BigNumber]>;
   };
 
   UNISWAP_V3_FACTORY_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
   USDC_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+  USDC_DECIMAL(overrides?: CallOverrides): Promise<BigNumber>;
 
   getTokenPrice(
     amount: BigNumberish,
@@ -133,10 +159,14 @@ export interface UniswapOracle extends BaseContract {
 
   tokenAddress(overrides?: CallOverrides): Promise<string>;
 
+  tokenDecimal(overrides?: CallOverrides): Promise<BigNumber>;
+
   callStatic: {
     UNISWAP_V3_FACTORY_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+    USDC_DECIMAL(overrides?: CallOverrides): Promise<BigNumber>;
 
     getTokenPrice(
       amount: BigNumberish,
@@ -147,6 +177,8 @@ export interface UniswapOracle extends BaseContract {
     pool(overrides?: CallOverrides): Promise<string>;
 
     tokenAddress(overrides?: CallOverrides): Promise<string>;
+
+    tokenDecimal(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   filters: {};
@@ -155,6 +187,8 @@ export interface UniswapOracle extends BaseContract {
     UNISWAP_V3_FACTORY_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
+
+    USDC_DECIMAL(overrides?: CallOverrides): Promise<BigNumber>;
 
     getTokenPrice(
       amount: BigNumberish,
@@ -165,6 +199,8 @@ export interface UniswapOracle extends BaseContract {
     pool(overrides?: CallOverrides): Promise<BigNumber>;
 
     tokenAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
+    tokenDecimal(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -173,6 +209,8 @@ export interface UniswapOracle extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     USDC_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    USDC_DECIMAL(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getTokenPrice(
       amount: BigNumberish,
@@ -183,5 +221,7 @@ export interface UniswapOracle extends BaseContract {
     pool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     tokenAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    tokenDecimal(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

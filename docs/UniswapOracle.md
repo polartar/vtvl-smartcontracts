@@ -44,6 +44,23 @@ function USDC_ADDRESS() external view returns (address)
 |---|---|---|
 | _0 | address | undefined |
 
+### USDC_DECIMAL
+
+```solidity
+function USDC_DECIMAL() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### getTokenPrice
 
 ```solidity
@@ -100,6 +117,23 @@ Address of the token that we&#39;re vesting
 | Name | Type | Description |
 |---|---|---|
 | _0 | contract IERC20Extented | undefined |
+
+### tokenDecimal
+
+```solidity
+function tokenDecimal() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
 
 
 
