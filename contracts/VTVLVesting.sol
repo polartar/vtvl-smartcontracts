@@ -568,7 +568,7 @@ contract VTVLVesting is
         require(_claim.amountWithdrawn < finalVestAmt, "NO_UNVESTED_AMOUNT");
 
         // Deactivate the claim, and release the appropriate amount of tokens
-        _claim.isActive = false; // This effectively reduces the liability by amountRemaining, so we can reduce the liability numTokensReservedForVesting by that much
+        // _claim.isActive = false; // This effectively reduces the liability by amountRemaining, so we can reduce the liability numTokensReservedForVesting by that much
         _claim.deactivationTimestamp = uint40(block.timestamp);
 
         // The amount that is "reclaimed" is equal to the total allocation less what was already withdrawn
