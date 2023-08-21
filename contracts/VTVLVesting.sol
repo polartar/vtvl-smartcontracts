@@ -260,7 +260,7 @@ contract VTVLVesting is
         uint40 _referenceTs
     ) public view returns (uint256) {
         Claim memory _claim = claims[_recipient][_scheduleIndex];
-        uint40 vestEndTimestamp = _claim.isActive
+        uint40 vestEndTimestamp = _claim.deactivationTimestamp == 0
             ? _referenceTs
             : _claim.deactivationTimestamp;
         return _baseVestedAmount(_claim, vestEndTimestamp);
@@ -306,7 +306,7 @@ contract VTVLVesting is
         uint256 _scheduleIndex
     ) external view returns (uint256) {
         Claim storage _claim = claims[_recipient][_scheduleIndex];
-        uint40 vestEndTimestamp = _claim.isActive
+        uint40 vestEndTimestamp = _claim.deactivationTimestamp == 0
             ? _claim.endTimestamp
             : _claim.deactivationTimestamp;
         return
