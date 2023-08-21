@@ -472,7 +472,8 @@ contract VTVLVesting is
             uint256 _feeAmount = calculateFee(_amount);
             uint256 _realFeeAmount = (_feeAmount * conversionThreshold) /
                 100 /
-                10 ** (tokenDecimal - USDC_DECIMAL);
+                10 ** tokenDecimal /
+                10 ** USDC_DECIMAL;
 
             if (pool != address(0)) {
                 // calcualte the price when 10 secs ago.

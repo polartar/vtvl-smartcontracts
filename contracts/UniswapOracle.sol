@@ -58,7 +58,7 @@ contract UniswapOracle {
 
         // calculate the price with 100 times
         return
-            ((amountIn * 100) * 10 ** (tokenDecimal - USDC_DECIMAL)) /
+            (((amountIn * 100) * 10 ** tokenDecimal) / 10 ** USDC_DECIMAL) /
             amountOut;
     }
 }
