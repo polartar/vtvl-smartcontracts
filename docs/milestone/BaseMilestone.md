@@ -218,6 +218,23 @@ function tokenAddress() external view returns (contract IERC20)
 |---|---|---|
 | _0 | contract IERC20 | undefined |
 
+### totalWithdrawnAmount
+
+```solidity
+function totalWithdrawnAmount() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### withdrawAdmin
 
 ```solidity

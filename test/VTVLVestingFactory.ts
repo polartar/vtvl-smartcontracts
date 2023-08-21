@@ -10,9 +10,9 @@ const iface = new ethers.utils.Interface(VaultFactoryJson.abi);
 
 const chance = new Chance(43153); // Make sure we have a predictable seed for repeatability
 const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-const INCH_ADDRESS = "0x111111111117dc0aa78b770fa6a738034120c302";
+const LINK_ADDRESS = "0x514910771AF9Ca656af840dff83E8264EcF986CA";
 const USDC_IMPERSONATE_ACCOUNT = "0xf3B0073E3a7F747C7A38B36B805247B222C302A3";
-const INCH_IMPERSONATE_ACCOUNT = "0x3744da57184575064838bbc87a0fc791f5e39ea2";
+const LINK_IMPERSONATE_ACCOUNT = "0x0757e27AC1631beEB37eeD3270cc6301dD3D57D4";
 const initialSupplyTokens = 1000;
 
 const tokenName = chance.string({ length: 10 });
@@ -231,7 +231,7 @@ describe("Contract creation", async function () {
   it("the deployer is the owner", async function () {
     const [owner] = await ethers.getSigners();
 
-    const contract = await deployVestingContract(INCH_ADDRESS);
+    const contract = await deployVestingContract(LINK_ADDRESS);
 
     expect(await contract.isAdmin(owner.address)).to.be.equal(true);
   });
@@ -859,8 +859,8 @@ describe("Revoke Claim", async () => {
     expect(
       await (
         await vestingContract.getClaim(recipientAddress, 0)
-      ).isActive
-    ).to.be.equal(false);
+      ).deactivationTimestamp
+    ).to.be.not.equal(0);
   });
   it("prohibits a random user from revoking a valid claim", async () => {
     const { vestingContract } = await createPrefundedVestingContract({
@@ -1522,20 +1522,20 @@ describe("Apply Fee", async () => {
       .div(10000)
       .div(Math.pow(10, 12));
 
-    //transfer USDC to the user so that he can withdraw
+    // transfer USDC to the user so that he can withdraw
     await network.provider.request({
       method: "hardhat_impersonateAccount",
       params: [USDC_IMPERSONATE_ACCOUNT],
     });
     const usdcSigner = await ethers.getSigner(USDC_IMPERSONATE_ACCOUNT);
 
-    //get USDC contract
+    // get USDC contract
     const tokenContractFactory = await ethers.getContractFactory(
       "TestERC20Token"
     );
     const usdcContract = tokenContractFactory.attach(USDC_ADDRESS);
 
-    //transfer USDC from usdcSigner to owner2
+    // transfer USDC from usdcSigner to owner2
 
     await usdcContract
       .connect(usdcSigner)
@@ -1588,18 +1588,18 @@ describe("Apply Fee", async () => {
       "TestERC20Token"
     );
 
-    const tokenContract = tokenContractFactory.attach(INCH_ADDRESS);
-    const vestingContract = await deployVestingContract(INCH_ADDRESS);
+    const tokenContract = tokenContractFactory.attach(LINK_ADDRESS);
+    const vestingContract = await deployVestingContract(LINK_ADDRESS);
 
     await vestingContract.deployed();
 
     await network.provider.request({
       method: "hardhat_impersonateAccount",
-      params: [INCH_IMPERSONATE_ACCOUNT],
+      params: [LINK_IMPERSONATE_ACCOUNT],
     });
-    const inchSigner = await ethers.getSigner(INCH_IMPERSONATE_ACCOUNT);
+    const inchSigner = await ethers.getSigner(LINK_IMPERSONATE_ACCOUNT);
 
-    //deposit unibot to vesting contract
+    // deposit unibot to vesting contract
     await await tokenContract
       .connect(inchSigner)
       .transfer(vestingContract.address, parseEther("10000"));
@@ -1613,6 +1613,9 @@ describe("Apply Fee", async () => {
       linearVestAmount,
       cliffAmount,
     });
+
+    const price = await vestingContract.getTokenPrice(10);
+    console.log({ price });
 
     const ts = startTimestamp + 500;
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
@@ -1639,18 +1642,18 @@ describe("Apply Fee", async () => {
     const tokenContractFactory = await ethers.getContractFactory(
       "TestERC20Token"
     );
-    const tokenContract = tokenContractFactory.attach(INCH_ADDRESS);
+    const tokenContract = tokenContractFactory.attach(LINK_ADDRESS);
 
-    const vestingContract = await deployVestingContract(INCH_ADDRESS);
+    const vestingContract = await deployVestingContract(LINK_ADDRESS);
     await vestingContract.deployed();
 
     await network.provider.request({
       method: "hardhat_impersonateAccount",
-      params: [INCH_IMPERSONATE_ACCOUNT],
+      params: [LINK_IMPERSONATE_ACCOUNT],
     });
-    const inchSigner = await ethers.getSigner(INCH_IMPERSONATE_ACCOUNT);
+    const inchSigner = await ethers.getSigner(LINK_IMPERSONATE_ACCOUNT);
 
-    //deposit unibot to vesting contract
+    // deposit unibot to vesting contract
     await await tokenContract
       .connect(inchSigner)
       .transfer(vestingContract.address, parseEther("10000"));
@@ -1690,7 +1693,7 @@ describe("Apply Fee", async () => {
     const startTimestamp = (await getLastBlockTs()) + 100;
     const endTimestamp = startTimestamp + 1000;
 
-    //get USDC contract
+    // get USDC contract
     const tokenContractFactory = await ethers.getContractFactory(
       "TestERC20Token"
     );
@@ -1719,7 +1722,7 @@ describe("Apply Fee", async () => {
       params: [USDC_IMPERSONATE_ACCOUNT],
     });
     const usdcSigner = await ethers.getSigner(USDC_IMPERSONATE_ACCOUNT);
-    //transfer USDC from usdcSigner to owner2
+    // transfer USDC from usdcSigner to owner2
     await usdcContract
       .connect(usdcSigner)
       .transfer(owner2.address, parseUnits("10000", 6));

@@ -470,14 +470,12 @@ contract VTVLVesting is
     function _transferToken(uint256 _amount, uint256 _scheduleIndex) private {
         if (feePercent > 0) {
             uint256 _feeAmount = calculateFee(_amount);
-            uint256 _realFeeAmount = (_feeAmount * conversionThreshold) /
-                100 /
-                10 ** tokenDecimal /
-                10 ** USDC_DECIMAL;
+            uint256 _realFeeAmount = (((_feeAmount * conversionThreshold) /
+                100) * 10 ** USDC_DECIMAL) / 10 ** tokenDecimal;
 
             if (pool != address(0)) {
                 // calcualte the price when 10 secs ago.
-                uint256 price = getTokenPrice(uint128(_amount), 10);
+                uint256 price = getTokenPrice(10);
                 if (price >= conversionThreshold) {
                     tokenAddress.safeTransfer(
                         _msgSender(),

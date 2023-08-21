@@ -64,7 +64,7 @@ function USDC_DECIMAL() external view returns (uint128)
 ### getTokenPrice
 
 ```solidity
-function getTokenPrice(uint128 amount, uint32 secondsAgo) external view returns (uint256 amountOut)
+function getTokenPrice(uint32 secondsAgo) external view returns (uint256 amountOut)
 ```
 
 
@@ -75,7 +75,6 @@ function getTokenPrice(uint128 amount, uint32 secondsAgo) external view returns 
 
 | Name | Type | Description |
 |---|---|---|
-| amount | uint128 | undefined |
 | secondsAgo | uint32 | undefined |
 
 #### Returns

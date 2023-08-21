@@ -43,11 +43,9 @@ contract UniswapOracle {
 
     // get the price of the token that will be calculated by 100 times.
     function getTokenPrice(
-        uint128 amount,
         uint32 secondsAgo
     ) public view returns (uint amountOut) {
-        uint128 oneToken = uint128(1 * 10 ** (tokenDecimal));
-        uint128 amountIn = amount >= oneToken ? amount : oneToken;
+        uint128 amountIn = uint128(1 * 10 ** (tokenDecimal));
         (int24 tick, ) = OracleLibrary.consult(pool, secondsAgo);
         amountOut = OracleLibrary.getQuoteAtTick(
             tick,
@@ -57,8 +55,6 @@ contract UniswapOracle {
         );
 
         // calculate the price with 100 times
-        return
-            (((amountIn * 100) * 10 ** tokenDecimal) / 10 ** USDC_DECIMAL) /
-            amountOut;
+        return (amountOut * 100) / 10 ** USDC_DECIMAL;
     }
 }
