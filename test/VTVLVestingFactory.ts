@@ -1614,8 +1614,8 @@ describe("Apply Fee", async () => {
       cliffAmount,
     });
 
-    const price = await vestingContract.getTokenPrice(10);
-    console.log({ price });
+    // const price = await vestingContract.getTokenPrice(10);
+    // console.log({ price });
 
     const ts = startTimestamp + 500;
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
