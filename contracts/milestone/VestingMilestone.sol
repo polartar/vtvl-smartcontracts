@@ -116,6 +116,7 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
         uint256 amountRemaining = allowance - milestone.withdrawnAmount;
 
         milestone.withdrawnAmount = allowance;
+        totalWithdrawnAmount += amountRemaining;
 
         tokenAddress.safeTransfer(_msgSender(), amountRemaining);
 

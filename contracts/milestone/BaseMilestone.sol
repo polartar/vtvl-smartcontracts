@@ -33,6 +33,7 @@ contract BaseMilestone is AccessProtected {
     IERC20 public tokenAddress;
     uint256 public allocation;
     uint256 public numTokensReservedForVesting;
+    uint256 public totalWithdrawnAmount;
 
     mapping(address => mapping(uint256 => Milestone)) milestones;
 
@@ -112,7 +113,10 @@ contract BaseMilestone is AccessProtected {
 
     modifier onlyDeposited() {
         uint256 balance = tokenAddress.balanceOf(address(this));
-        require(balance >= allocation * recipients.length, "NOT_DEPOSITED");
+        require(
+            balance + totalWithdrawnAmount >= allocation * recipients.length,
+            "NOT_DEPOSITED"
+        );
 
         _;
     }
@@ -148,7 +152,8 @@ contract BaseMilestone is AccessProtected {
      */
     function withdrawAdmin() public onlyAdmin {
         uint256 availableAmount = tokenAddress.balanceOf(address(this)) -
-            numTokensReservedForVesting;
+            numTokensReservedForVesting -
+            totalWithdrawnAmount;
 
         tokenAddress.safeTransfer(msg.sender, availableAmount);
 

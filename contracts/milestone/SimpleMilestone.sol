@@ -62,6 +62,7 @@ contract SimpleMilestone is BaseMilestone {
         require(!milestone.isWithdrawn, "ALREADY_WITHDRAWED");
 
         milestone.isWithdrawn = true;
+        totalWithdrawnAmount += milestone.allocation;
         tokenAddress.safeTransfer(_msgSender(), milestone.allocation);
 
         // Let withdrawal known to everyone.
