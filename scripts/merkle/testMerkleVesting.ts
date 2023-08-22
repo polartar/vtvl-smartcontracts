@@ -57,23 +57,25 @@ const claimInputs: ClaimInputStruct[] = VestingJson.map((vesting) => ({
 async function main() {
   // We get the contract to deploy
   // generateMerkleTree();
-  console.log("root", getMerkleRoot());
+  // console.log("root", getMerkleRoot());
   const VTVLVesting = await ethers.getContractFactory("VTVLMerkleVesting");
   const vestingContract = await VTVLVesting.attach(
     "0xa19B41735522f69cc7Af0819f2911d8b2cc99A30"
   );
-  console.log("Vesting address: ", vestingContract.address);
-  console.log(claimInputs[0]);
+
   try {
     const claimableAmount = await vestingContract.claimableAmount(
       claimInputs[0]
     );
     console.log({ claimableAmount });
 
-    const proof = getMerkleProof(claimInputs[0].recipient);
+    const proof = getMerkleProof(
+      claimInputs[0].recipient,
+      claimInputs[0].scheduleIndex as number
+    );
     console.log({ proof });
 
-    await vestingContract.withdraw(claimInputs[0], proof);
+    await vestingContract.withdraw(claimInputs[2], proof);
   } catch (err) {
     console.log(err);
   }
