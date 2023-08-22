@@ -41,15 +41,17 @@ function generateMerkleTree() {
   fs.writeFileSync("tree.json", JSON.stringify(tree.dump()));
 }
 generateMerkleTree();
-function getMerkleProof(recipient: string) {
+function getMerkleProof(recipient: string, scheduleIndex = 0) {
   const tree = StandardMerkleTree.load(
     JSON.parse(fs.readFileSync("tree.json", "utf8"))
   );
 
+  let index = 0;
   for (const [i, v] of tree.entries()) {
     if (v[7].toLowerCase() === recipient.toLowerCase()) {
       const proof = tree.getProof(i);
-      return proof;
+      if (index === scheduleIndex) return proof;
+      index++;
     }
   }
   return [];
