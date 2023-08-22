@@ -93,10 +93,9 @@ contract VTVLMerkleVesting is
      */
     constructor(
         IERC20Extented _tokenAddress,
-        uint256 _feePercent,
-        address _owner
+        uint256 _feePercent
     ) UniswapOracle(_tokenAddress) {
-        _transferOwnership(_owner);
+        _transferOwnership(tx.origin);
         factoryAddress = msg.sender;
         feeReceiver = msg.sender;
         feePercent = _feePercent;
@@ -117,17 +116,6 @@ contract VTVLMerkleVesting is
     */
     modifier onlyFactory() {
         require(msg.sender == factoryAddress, "Not Factory");
-        _;
-    }
-
-    /**
-    @notice This modifier requires that owner or factory contract.
-    */
-    modifier onlyOwnerOrFactory() {
-        require(
-            msg.sender == owner() || msg.sender == factoryAddress,
-            "Not Owner or Factory"
-        );
         _;
     }
 
