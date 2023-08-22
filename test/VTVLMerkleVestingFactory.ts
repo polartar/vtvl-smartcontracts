@@ -199,8 +199,7 @@ describe("Contract creation", async function () {
         // @ts-ignore - Need to ignore invalid type because initializing with an invalid type is the whole point of this test
         const contractDeploymentPromise = factory.deploy(
           invalidParam as string,
-          0,
-          owner.address
+          0
         );
 
         if (invalidParam === zeroAddressStr) {
@@ -617,7 +616,7 @@ describe("Claimable amount", async () => {
     await vestingContract.setMerleRoot(getMerkleRoot());
     const claim = claimInputs[0];
 
-    //after padding the half of vesting period
+    // after padding the half of vesting period
     const ts = BigNumber.from(claim.startTimestamp).add(5000);
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at the relevant ts
     const vestedAmount = BigNumber.from(claim.cliffAmount).add(
