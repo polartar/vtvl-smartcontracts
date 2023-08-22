@@ -3,14 +3,14 @@ pragma solidity 0.8.14;
 
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./milestone/SimpleMilestone.sol";
 import "./milestone/VestingMilestone.sol";
 
 /// @title Milestone Vesting Factory contract
 /// @notice Create Milestone contracts
 
-contract VTVLMilestoneFactory is Ownable {
+contract VTVLMilestoneFactory is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     event CreateMilestoneContract(
@@ -92,7 +92,7 @@ contract VTVLMilestoneFactory is Ownable {
         uint256 _allocation,
         InputMilestone[] calldata _milestones,
         address[] calldata _recipients
-    ) public {
+    ) public nonReentrant {
         require(_recipients.length > 0, "Invalid Recipients");
         milestoneValidate(_milestones);
 
@@ -124,7 +124,7 @@ contract VTVLMilestoneFactory is Ownable {
         uint256 _allocation,
         uint256[] calldata _allocationPercents,
         address[] calldata _recipients
-    ) public {
+    ) public nonReentrant {
         require(_recipients.length > 0, "Invalid Recipients");
 
         allocationValidate(_allocationPercents);

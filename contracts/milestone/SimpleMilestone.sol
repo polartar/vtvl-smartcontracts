@@ -57,6 +57,7 @@ contract SimpleMilestone is BaseMilestone {
         public
         hasMilestone(_msgSender(), _milestoneIndex)
         onlyCompleted(_msgSender(), _milestoneIndex)
+        nonReentrant
     {
         Milestone storage milestone = milestones[_msgSender()][_milestoneIndex];
         require(!milestone.isWithdrawn, "ALREADY_WITHDRAWED");

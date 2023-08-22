@@ -395,7 +395,9 @@ contract VTVLVesting is
     @notice Create a claim based on the input parameters.
     @dev This'll simply check the input parameters, and create the structure verbatim based on passed in parameters.
      */
-    function createClaim(ClaimInput memory claimInput) external onlyAdmin {
+    function createClaim(
+        ClaimInput memory claimInput
+    ) external onlyAdmin nonReentrant {
         _createClaimUnchecked(claimInput);
     }
 
@@ -405,7 +407,7 @@ contract VTVLVesting is
      */
     function createClaimsBatch(
         ClaimInput[] calldata claimInputs
-    ) external onlyAdmin {
+    ) external onlyAdmin nonReentrant {
         uint256 length = claimInputs.length;
 
         for (uint256 i = 0; i < length; ) {

@@ -3,6 +3,7 @@ pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../AccessProtected.sol";
 
 struct Milestone {
@@ -21,7 +22,7 @@ struct InputMilestone {
     uint120 releaseIntervalSecs;
 }
 
-contract BaseMilestone is AccessProtected {
+contract BaseMilestone is AccessProtected, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /**
@@ -150,7 +151,7 @@ contract BaseMilestone is AccessProtected {
     /**
     @notice Only admin can withdraw the amount before it's completed.
      */
-    function withdrawAdmin() public onlyAdmin {
+    function withdrawAdmin() public onlyAdmin nonReentrant {
         uint256 availableAmount = tokenAddress.balanceOf(address(this)) -
             numTokensReservedForVesting -
             totalWithdrawnAmount;
@@ -160,7 +161,7 @@ contract BaseMilestone is AccessProtected {
         emit AdminWithdrawn(_msgSender(), availableAmount);
     }
 
-    function deposit(uint256 amount) public {
+    function deposit(uint256 amount) public nonReentrant {
         tokenAddress.safeTransferFrom(msg.sender, address(this), amount);
     }
 

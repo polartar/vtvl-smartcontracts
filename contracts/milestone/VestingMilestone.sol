@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./BaseMilestone.sol";
 
-contract VestingMilestone is BaseMilestone, ReentrancyGuard {
+contract VestingMilestone is BaseMilestone {
     using SafeERC20 for IERC20;
 
     //
@@ -100,6 +100,7 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
         external
         hasMilestone(_msgSender(), _milestoneIndex)
         onlyCompleted(_msgSender(), _milestoneIndex)
+        nonReentrant
     {
         Milestone storage milestone = milestones[_msgSender()][_milestoneIndex];
         // we can use block.timestamp directly here as reference TS, as the function itself will make sure to cap it to endTimestamp

@@ -191,9 +191,7 @@ describe("Simple Milestone Contract creation with fund", async function () {
     await expect(() => contract.withdrawAdmin()).to.changeTokenBalance(
       tokenContract,
       owner,
-      totalAllocation.sub(
-        totalAllocation.mul(allocationPercents[0]).div(100).mul(2)
-      )
+      totalAllocation.sub(totalAllocation.mul(allocationPercents[0]).div(100))
     );
   });
 });
