@@ -153,8 +153,7 @@ contract BaseMilestone is AccessProtected, ReentrancyGuard {
      */
     function withdrawAdmin() public onlyAdmin nonReentrant {
         uint256 availableAmount = tokenAddress.balanceOf(address(this)) -
-            numTokensReservedForVesting -
-            totalWithdrawnAmount;
+            (numTokensReservedForVesting - totalWithdrawnAmount);
 
         tokenAddress.safeTransfer(msg.sender, availableAmount);
 
