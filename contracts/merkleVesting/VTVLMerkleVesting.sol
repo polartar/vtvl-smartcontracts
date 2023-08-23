@@ -49,6 +49,7 @@ contract VTVLMerkleVesting is
     address public feeReceiver; // The receier address that will get the fee.
 
     uint256 public conversionThreshold;
+    uint256 totalWithdrawnAmount;
 
     /**
     @notice Emitted when someone withdraws a vested amount
@@ -306,6 +307,8 @@ contract VTVLMerkleVesting is
         // numTokensReservedForVesting -= amountRemaining;
 
         _transferToken(_claimInput.recipient, amountRemaining, _scheduleIndex);
+
+        totalWithdrawnAmount += amountRemaining;
         // After the "books" are set, transfer the tokens
         // Reentrancy note - internal vars have been changed by now
         // Also following Checks-effects-interactions pattern
