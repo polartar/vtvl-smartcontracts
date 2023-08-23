@@ -166,7 +166,10 @@ contract VTVLVesting is
 
         // We however still need the active check, since (due to the name of the function)
         // we want to only allow active claims
-        require(_claim.isActive, "NO_ACTIVE_CLAIM");
+        require(
+            _claim.isActive && _claim.deactivationTimestamp == 0,
+            "NO_ACTIVE_CLAIM"
+        );
 
         // Save gas, omit further checks
         // require(_claim.linearVestAmount + _claim.cliffAmount > 0, "INVALID_VESTED_AMOUNT");
