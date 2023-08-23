@@ -49,7 +49,7 @@ contract VTVLMerkleVesting is
     address public feeReceiver; // The receier address that will get the fee.
 
     uint256 public conversionThreshold;
-    uint256 totalWithdrawnAmount;
+    uint256 public totalWithdrawnAmount;
 
     /**
     @notice Emitted when someone withdraws a vested amount
