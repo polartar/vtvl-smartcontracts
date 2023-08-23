@@ -357,6 +357,23 @@ Address of the token that we&#39;re vesting
 |---|---|---|
 | _0 | contract IERC20Extented | undefined |
 
+### totalWithdrawnAmount
+
+```solidity
+function totalWithdrawnAmount() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### transferOwnership
 
 ```solidity

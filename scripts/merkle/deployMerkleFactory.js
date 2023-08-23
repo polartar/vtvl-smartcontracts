@@ -1,12 +1,20 @@
-import { ethers } from "hardhat";
+const { ethers } = require("hardhat");
 const hre = require("hardhat");
 
 async function main() {
   // We get the contract to deploy
+  const [deployer] = await ethers.getSigners();
   const VTVLVestingFactory = await ethers.getContractFactory(
     "VTVLMerkleVestingFactory"
   );
-  const vestingFactoryContract = await VTVLVestingFactory.deploy();
+  const feeData = await deployer.provider.getFeeData();
+  const nonce = await deployer.getTransactionCount();
+  console.log("nonce pending", nonce);
+
+  const vestingFactoryContract = await VTVLVestingFactory.deploy({
+    maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
+    maxFeePerGas: feeData.maxFeePerGas * 2,
+  });
   console.log(
     `vestingMerkleFactoryContract initialized on ${vestingFactoryContract.address}, waiting to be deployed...`
   );
