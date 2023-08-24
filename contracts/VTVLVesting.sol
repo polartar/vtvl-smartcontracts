@@ -166,10 +166,7 @@ contract VTVLVesting is
 
         // We however still need the active check, since (due to the name of the function)
         // we want to only allow active claims
-        require(
-            _claim.isActive && _claim.deactivationTimestamp == 0,
-            "NO_ACTIVE_CLAIM"
-        );
+        require(_claim.isActive, "NO_ACTIVE_CLAIM");
 
         // Save gas, omit further checks
         // require(_claim.linearVestAmount + _claim.cliffAmount > 0, "INVALID_VESTED_AMOUNT");
@@ -563,6 +560,7 @@ contract VTVLVesting is
     ) external onlyAdmin hasActiveClaim(_recipient, _scheduleIndex) {
         // Fetch the claim
         Claim storage _claim = claims[_recipient][_scheduleIndex];
+        require(_claim.deactivationTimestamp == 0, "NO_ACTIVE_CLAIM");
 
         // Calculate what the claim should finally vest to
         uint256 finalVestAmt = finalVestedAmount(_recipient, _scheduleIndex);
