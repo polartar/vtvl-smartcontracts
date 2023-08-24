@@ -192,6 +192,22 @@ contract VTVLMerkleVesting is
     }
 
     /**
+    @notice Basic getter for a claim. 
+    @dev Could be using public claims var, but this is cleaner in terms of naming. (getClaim(address) as opposed to claims(address)). 
+    @param _recipient - the address for which we fetch the claim.
+    @param _scheduleIndex - the index of the schedules.
+     */
+    function getClaim(
+        address _recipient,
+        uint256 _scheduleIndex
+    ) external view returns (Claim memory) {
+        if (claims[_recipient].length <= _scheduleIndex) {
+            revert("NO_SCHEDULE_EXIST");
+        }
+        return claims[_recipient][_scheduleIndex];
+    }
+
+    /**
     @notice Calculate the total vested at the end of the schedule, by simply feeding in the end timestamp to the function above.
     @dev This fn is somewhat superfluous, should probably be removed.
     @param _claimInput - The claim information
