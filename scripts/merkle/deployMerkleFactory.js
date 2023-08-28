@@ -13,7 +13,7 @@ async function main() {
   console.log("fee data", feeData);
 
   const vestingFactoryContract = await VTVLVestingFactory.deploy({
-    nonce: 0,
+    nonce: nonce,
     maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
     maxFeePerGas: feeData.maxFeePerGas * 2,
   });
