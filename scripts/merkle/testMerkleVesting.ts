@@ -3,9 +3,13 @@ import { ethers } from "hardhat";
 import fs from "fs";
 import VestingJson from "./vesting";
 import { ClaimInputStruct } from "../../typechain-types/contracts/merkleVesting/VTVLMerkelVesting";
-const hre = require("hardhat");
+import csvToJson from "csvtojson";
 
-function generateMerkleTree() {
+async function generateMerkleTree() {
+  let whitelist = await csvToJson({
+    trim: true,
+  }).fromFile("./scripts/merkle/vesting.csv");
+
   const tree = StandardMerkleTree.of(VestingJson, [
     "uint40",
     "uint40",
@@ -60,9 +64,10 @@ async function main() {
   // console.log("root", getMerkleRoot());
   const VTVLVesting = await ethers.getContractFactory("VTVLMerkleVesting");
   const vestingContract = await VTVLVesting.attach(
-    "0xa19B41735522f69cc7Af0819f2911d8b2cc99A30"
+    "0xc271F1FE7779F982FE582B979B274c9945c5D41c"
   );
 
+  console.log(getMerkleRoot());
   try {
     const claimableAmount = await vestingContract.claimableAmount(
       claimInputs[0]

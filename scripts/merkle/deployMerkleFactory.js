@@ -17,9 +17,11 @@ async function main() {
     maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
     maxFeePerGas: feeData.maxFeePerGas * 2,
   });
-  console.log(
-    `vestingMerkleFactoryContract initialized on ${vestingFactoryContract.address}, waiting to be deployed...`
-  );
+
+  // const vestingFactoryContract = await VTVLVestingFactory.deploy();
+  // console.log(
+  //   `vestingMerkleFactoryContract initialized on ${vestingFactoryContract.address}, waiting to be deployed...`
+  // );
   const tx = await vestingFactoryContract.deployed();
   console.log(
     "Deployed a vesting contract to:",

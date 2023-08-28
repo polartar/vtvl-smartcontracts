@@ -178,6 +178,29 @@ function finalVestedAmount(ClaimInput _claimInput) external view returns (uint25
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### getClaim
+
+```solidity
+function getClaim(address _recipient, uint256 _scheduleIndex) external view returns (struct VTVLMerkleVesting.Claim)
+```
+
+Basic getter for a claim. 
+
+*Could be using public claims var, but this is cleaner in terms of naming. (getClaim(address) as opposed to claims(address)). *
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _recipient | address | - the address for which we fetch the claim. |
+| _scheduleIndex | uint256 | - the index of the schedules. |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | VTVLMerkleVesting.Claim | undefined |
+
 ### getLeaf
 
 ```solidity
