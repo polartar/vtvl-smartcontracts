@@ -5,7 +5,7 @@ const fs = require("fs");
 const csvToJson = require("csvtojson");
 const { parseEther } = require("ethers/lib/utils");
 
-const startTime = Math.floor(new Date().getTime() / 1000);
+const startTime = 1693223643;
 const endTime = startTime + 1000;
 const releaseFrequency = 10;
 
@@ -14,16 +14,26 @@ async function generateMerkleTree() {
     trim: true,
   }).fromFile("./scripts/merkle/vesting.csv");
 
-  const vestings = whitelist.map((list) => [
-    startTime,
-    endTime,
-    startTime,
-    releaseFrequency,
-    0,
-    parseEther(list.allocation),
-    0,
-    list.address,
-  ]);
+  let counts = {};
+  const vestings = whitelist.map((list) => {
+    if (counts[list.address] !== undefined) {
+      counts[list.address]++;
+    } else {
+      counts[list.address] = 0;
+    }
+    return [
+      startTime,
+      endTime,
+      startTime,
+      releaseFrequency,
+      counts[list.address],
+      parseEther(list.allocation),
+      0,
+      list.address,
+    ];
+  });
+  console.log({ vestings });
+
   const tree = StandardMerkleTree.of(vestings, [
     "uint40",
     "uint40",
@@ -85,16 +95,24 @@ async function main() {
     trim: true,
   }).fromFile("./scripts/merkle/vesting.csv");
 
-  const vestings = whitelist.map((list) => [
-    startTime,
-    endTime,
-    startTime,
-    releaseFrequency,
-    0,
-    parseEther(list.allocation),
-    0,
-    list.address,
-  ]);
+  let counts = {};
+  const vestings = whitelist.map((list) => {
+    if (counts[list.address] !== undefined) {
+      counts[list.address]++;
+    } else {
+      counts[list.address] = 0;
+    }
+    return [
+      startTime,
+      endTime,
+      startTime,
+      releaseFrequency,
+      counts[list.address],
+      parseEther(list.allocation),
+      0,
+      list.address,
+    ];
+  });
 
   const claimInputs = vestings.map((vesting) => ({
     recipient: vesting[7],
