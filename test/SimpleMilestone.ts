@@ -1,14 +1,15 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import Chance from "chance";
+
+import { parseEther } from "ethers/lib/utils";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { BigNumber } from "ethers";
 import {
   SimpleMilestone,
   TestERC20Token,
   VTVLMilestoneFactory,
-} from "../typechain";
-import { parseEther } from "ethers/lib/utils";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber } from "ethers";
+} from "../typechain-types";
 const MilestoneFactoryJson = require("../artifacts/contracts/VTVLMilestoneFactory.sol/VTVLMilestoneFactory.json");
 
 const iface = new ethers.utils.Interface(MilestoneFactoryJson.abi);
@@ -131,7 +132,7 @@ describe("Simple Milestone Contract creation with fund", async function () {
   });
 
   it("the deployer is the owner", async function () {
-    expect(await contract.owner()).to.be.equal(owner.address);
+    expect(await contract.isAdmin(owner.address)).to.be.equal(true);
   });
 
   it("should not completed when deployed", async function () {
@@ -141,7 +142,7 @@ describe("Simple Milestone Contract creation with fund", async function () {
   it("should only owner can mark isCompleted", async function () {
     await expect(
       contract.connect(other).setComplete(recipient.address, 0)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
+    ).to.be.revertedWith("ADMIN_ACCESS_REQUIRED");
 
     await contract.setComplete(recipient.address, 0);
     expect(await contract.isCompleted(recipient.address, 0)).to.be.equal(true);
@@ -222,7 +223,7 @@ describe("Simple Milestone Contract creation without fund", async function () {
   });
 
   it("the deployer is the owner", async function () {
-    expect(await contract.owner()).to.be.equal(owner.address);
+    expect(await contract.isAdmin(owner.address)).to.be.equal(true);
   });
 
   it("should not completed when deployed", async function () {

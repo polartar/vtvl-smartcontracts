@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.14;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./IVestingFee.sol";
 import "./UniswapOracle.sol";
+import "./AccessProtected.sol";
 
 struct ClaimInput {
     uint40 startTimestamp; // When does the vesting start (40 bits is enough for TS)
@@ -20,7 +20,12 @@ struct ClaimInput {
     address recipient; // the recipient address
 }
 
-contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
+contract VTVLVesting is
+    AccessProtected,
+    ReentrancyGuard,
+    IVestingFee,
+    UniswapOracle
+{
     using SafeERC20 for IERC20Extented;
 
     /**
@@ -57,9 +62,6 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
     // This could be array because a recipient can have multiple schdules.
     // Only one Claim possible per address
     mapping(address => Claim[]) internal claims;
-
-    // Track the recipients of the vesting
-    address[] internal vestingRecipients;
 
     address private immutable factoryAddress;
     uint256 public feePercent; // Fee percent.  500 means 5%, 1 means 0.01 %
@@ -120,10 +122,8 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
      */
     constructor(
         IERC20Extented _tokenAddress,
-        uint256 _feePercent,
-        address _owner
+        uint256 _feePercent
     ) UniswapOracle(_tokenAddress) {
-        _transferOwnership(_owner);
         factoryAddress = msg.sender;
         feeReceiver = msg.sender;
         feePercent = _feePercent;
@@ -182,16 +182,16 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
         _;
     }
 
-    /**
-    @notice This modifier requires that owner or factory contract.
-    */
-    modifier onlyOwnerOrFactory() {
-        require(
-            msg.sender == owner() || msg.sender == factoryAddress,
-            "Not Owner or Factory"
-        );
-        _;
-    }
+    // /**
+    // @notice This modifier requires that owner or factory contract.
+    // */
+    // modifier onlyOwnerOrFactory() {
+    //     require(
+    //         msg.sender == owner() || msg.sender == factoryAddress,
+    //         "Not Owner or Factory"
+    //     );
+    //     _;
+    // }
 
     /**
     @notice Pure function to calculate the vested amount from a given _claim, at a reference timestamp
@@ -211,13 +211,13 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
 
         // Check if this time is over vesting end time
         if (_referenceTs > _claim.endTimestamp) {
-            _referenceTs = _claim.endTimestamp;
+            return _claim.linearVestAmount + _claim.cliffAmount;
         }
 
         // If we're past the cliffReleaseTimestamp, we release the cliffAmount
         // We don't check here that cliffReleaseTimestamp is after the startTimestamp
         if (_referenceTs >= _claim.cliffReleaseTimestamp) {
-            vestAmt += _claim.cliffAmount;
+            vestAmt = _claim.cliffAmount;
         }
 
         // Calculate the linearly vested amount - this is relevant only if we're past the schedule start
@@ -260,7 +260,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
         uint40 _referenceTs
     ) public view returns (uint256) {
         Claim memory _claim = claims[_recipient][_scheduleIndex];
-        uint40 vestEndTimestamp = _claim.isActive
+        uint40 vestEndTimestamp = _claim.deactivationTimestamp == 0
             ? _referenceTs
             : _claim.deactivationTimestamp;
         return _baseVestedAmount(_claim, vestEndTimestamp);
@@ -306,26 +306,12 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
         uint256 _scheduleIndex
     ) external view returns (uint256) {
         Claim storage _claim = claims[_recipient][_scheduleIndex];
-        uint40 vestEndTimestamp = _claim.isActive
+        uint40 vestEndTimestamp = _claim.deactivationTimestamp == 0
             ? _claim.endTimestamp
             : _claim.deactivationTimestamp;
         return
             _baseVestedAmount(_claim, vestEndTimestamp) -
             _claim.amountWithdrawn;
-    }
-
-    /** 
-    @notice Return all the addresses that have vesting schedules attached.
-    */
-    function allVestingRecipients() external view returns (address[] memory) {
-        return vestingRecipients;
-    }
-
-    /** 
-    @notice Get the total number of vesting recipients.
-    */
-    function numVestingRecipients() external view returns (uint256) {
-        return vestingRecipients.length;
     }
 
     /** 
@@ -397,7 +383,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
 
         // Effects limited to lines below
         numTokensReservedForVesting += allocatedAmount; // track the allocated amount
-        vestingRecipients.push(claimInput.recipient); // add the vesting recipient to the list
+
         emit ClaimCreated(
             claimInput.recipient,
             _claim,
@@ -411,7 +397,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
      */
     function createClaim(
         ClaimInput memory claimInput
-    ) external onlyOwnerOrFactory {
+    ) external onlyAdmin nonReentrant {
         _createClaimUnchecked(claimInput);
     }
 
@@ -421,7 +407,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
      */
     function createClaimsBatch(
         ClaimInput[] calldata claimInputs
-    ) external onlyOwnerOrFactory {
+    ) external onlyAdmin nonReentrant {
         uint256 length = claimInputs.length;
 
         for (uint256 i = 0; i < length; ) {
@@ -486,11 +472,12 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
     function _transferToken(uint256 _amount, uint256 _scheduleIndex) private {
         if (feePercent > 0) {
             uint256 _feeAmount = calculateFee(_amount);
-            uint256 _realFeeAmount = (_feeAmount * conversionThreshold) / 100;
+            uint256 _realFeeAmount = (((_feeAmount * conversionThreshold) /
+                100) * 10 ** USDC_DECIMAL) / 10 ** tokenDecimal;
 
             if (pool != address(0)) {
                 // calcualte the price when 10 secs ago.
-                uint256 price = getTokenPrice(uint128(_amount), 10);
+                uint256 price = getTokenPrice(10);
                 if (price >= conversionThreshold) {
                     tokenAddress.safeTransfer(
                         _msgSender(),
@@ -538,7 +525,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
     }
 
     function calculateFee(uint256 _amount) private view returns (uint256) {
-        return (_amount * feePercent) / 10000;
+        return (_amount * feePercent + 9999) / 10000;
     }
 
     /**
@@ -547,7 +534,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
      */
     function withdrawAdmin(
         uint256 _amountRequested
-    ) public onlyOwner nonReentrant {
+    ) public onlyAdmin nonReentrant {
         // Allow the owner to withdraw any balance not currently tied up in contracts.
         uint256 amountRemaining = amountAvailableToWithdrawByAdmin();
 
@@ -570,9 +557,10 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
     function revokeClaim(
         address _recipient,
         uint256 _scheduleIndex
-    ) external onlyOwner hasActiveClaim(_recipient, _scheduleIndex) {
+    ) external onlyAdmin hasActiveClaim(_recipient, _scheduleIndex) {
         // Fetch the claim
         Claim storage _claim = claims[_recipient][_scheduleIndex];
+        require(_claim.deactivationTimestamp == 0, "NO_ACTIVE_CLAIM");
 
         // Calculate what the claim should finally vest to
         uint256 finalVestAmt = finalVestedAmount(_recipient, _scheduleIndex);
@@ -582,7 +570,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
         require(_claim.amountWithdrawn < finalVestAmt, "NO_UNVESTED_AMOUNT");
 
         // Deactivate the claim, and release the appropriate amount of tokens
-        _claim.isActive = false; // This effectively reduces the liability by amountRemaining, so we can reduce the liability numTokensReservedForVesting by that much
+        // _claim.isActive = false; // This effectively reduces the liability by amountRemaining, so we can reduce the liability numTokensReservedForVesting by that much
         _claim.deactivationTimestamp = uint40(block.timestamp);
 
         // The amount that is "reclaimed" is equal to the total allocation less what was already withdrawn
@@ -613,7 +601,7 @@ contract VTVLVesting is Ownable, ReentrancyGuard, IVestingFee, UniswapOracle {
      */
     function withdrawOtherToken(
         IERC20 _otherTokenAddress
-    ) external onlyOwner nonReentrant {
+    ) external onlyAdmin nonReentrant {
         require(_otherTokenAddress != tokenAddress, "INVALID_TOKEN"); // tokenAddress address is already sure to be nonzero due to constructor
         uint256 bal = _otherTokenAddress.balanceOf(address(this));
         require(bal > 0, "INSUFFICIENT_BALANCE");

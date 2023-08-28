@@ -60,14 +60,13 @@ export interface BaseMilestoneInterface extends utils.Interface {
     "deposit(uint256)": FunctionFragment;
     "getAllRecipients()": FunctionFragment;
     "getMilestone(address,uint256)": FunctionFragment;
+    "isAdmin(address)": FunctionFragment;
     "isCompleted(address,uint256)": FunctionFragment;
     "numTokensReservedForVesting()": FunctionFragment;
-    "owner()": FunctionFragment;
     "recipients(uint256)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
+    "setAdmin(address,bool)": FunctionFragment;
     "setComplete(address,uint256)": FunctionFragment;
     "tokenAddress()": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
     "withdrawAdmin()": FunctionFragment;
   };
 
@@ -77,14 +76,13 @@ export interface BaseMilestoneInterface extends utils.Interface {
       | "deposit"
       | "getAllRecipients"
       | "getMilestone"
+      | "isAdmin"
       | "isCompleted"
       | "numTokensReservedForVesting"
-      | "owner"
       | "recipients"
-      | "renounceOwnership"
+      | "setAdmin"
       | "setComplete"
       | "tokenAddress"
-      | "transferOwnership"
       | "withdrawAdmin"
   ): FunctionFragment;
 
@@ -104,6 +102,7 @@ export interface BaseMilestoneInterface extends utils.Interface {
     functionFragment: "getMilestone",
     values: [string, BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "isAdmin", values: [string]): string;
   encodeFunctionData(
     functionFragment: "isCompleted",
     values: [string, BigNumberish]
@@ -112,14 +111,13 @@ export interface BaseMilestoneInterface extends utils.Interface {
     functionFragment: "numTokensReservedForVesting",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "recipients",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
+    functionFragment: "setAdmin",
+    values: [string, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "setComplete",
@@ -128,10 +126,6 @@ export interface BaseMilestoneInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "tokenAddress",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawAdmin",
@@ -148,6 +142,7 @@ export interface BaseMilestoneInterface extends utils.Interface {
     functionFragment: "getMilestone",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "isAdmin", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isCompleted",
     data: BytesLike
@@ -156,12 +151,8 @@ export interface BaseMilestoneInterface extends utils.Interface {
     functionFragment: "numTokensReservedForVesting",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "recipients", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "setAdmin", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setComplete",
     data: BytesLike
@@ -171,24 +162,31 @@ export interface BaseMilestoneInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "withdrawAdmin",
     data: BytesLike
   ): Result;
 
   events: {
+    "AdminAccessSet(address,bool)": EventFragment;
     "AdminWithdrawn(address,uint256)": EventFragment;
     "Claimed(address,uint256)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "AdminAccessSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AdminWithdrawn"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Claimed"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
+
+export interface AdminAccessSetEventObject {
+  _admin: string;
+  _enabled: boolean;
+}
+export type AdminAccessSetEvent = TypedEvent<
+  [string, boolean],
+  AdminAccessSetEventObject
+>;
+
+export type AdminAccessSetEventFilter = TypedEventFilter<AdminAccessSetEvent>;
 
 export interface AdminWithdrawnEventObject {
   _recipient: string;
@@ -208,18 +206,6 @@ export interface ClaimedEventObject {
 export type ClaimedEvent = TypedEvent<[string, BigNumber], ClaimedEventObject>;
 
 export type ClaimedEventFilter = TypedEventFilter<ClaimedEvent>;
-
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
-}
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
-
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
 
 export interface BaseMilestone extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -263,6 +249,11 @@ export interface BaseMilestone extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[MilestoneStructOutput]>;
 
+    isAdmin(
+      _addressToCheck: string,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
     isCompleted(
       _recipient: string,
       _milestoneIndex: BigNumberish,
@@ -273,14 +264,14 @@ export interface BaseMilestone extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
     recipients(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[string]>;
 
-    renounceOwnership(
+    setAdmin(
+      admin: string,
+      isEnabled: boolean,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -291,11 +282,6 @@ export interface BaseMilestone extends BaseContract {
     ): Promise<ContractTransaction>;
 
     tokenAddress(overrides?: CallOverrides): Promise<[string]>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
 
     withdrawAdmin(
       overrides?: Overrides & { from?: string }
@@ -317,6 +303,8 @@ export interface BaseMilestone extends BaseContract {
     overrides?: CallOverrides
   ): Promise<MilestoneStructOutput>;
 
+  isAdmin(_addressToCheck: string, overrides?: CallOverrides): Promise<boolean>;
+
   isCompleted(
     _recipient: string,
     _milestoneIndex: BigNumberish,
@@ -325,11 +313,11 @@ export interface BaseMilestone extends BaseContract {
 
   numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
-  owner(overrides?: CallOverrides): Promise<string>;
-
   recipients(arg0: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
-  renounceOwnership(
+  setAdmin(
+    admin: string,
+    isEnabled: boolean,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -340,11 +328,6 @@ export interface BaseMilestone extends BaseContract {
   ): Promise<ContractTransaction>;
 
   tokenAddress(overrides?: CallOverrides): Promise<string>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
 
   withdrawAdmin(
     overrides?: Overrides & { from?: string }
@@ -363,6 +346,11 @@ export interface BaseMilestone extends BaseContract {
       overrides?: CallOverrides
     ): Promise<MilestoneStructOutput>;
 
+    isAdmin(
+      _addressToCheck: string,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
     isCompleted(
       _recipient: string,
       _milestoneIndex: BigNumberish,
@@ -371,11 +359,13 @@ export interface BaseMilestone extends BaseContract {
 
     numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<string>;
-
     recipients(arg0: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
+    setAdmin(
+      admin: string,
+      isEnabled: boolean,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     setComplete(
       _recipient: string,
@@ -385,15 +375,19 @@ export interface BaseMilestone extends BaseContract {
 
     tokenAddress(overrides?: CallOverrides): Promise<string>;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     withdrawAdmin(overrides?: CallOverrides): Promise<void>;
   };
 
   filters: {
+    "AdminAccessSet(address,bool)"(
+      _admin?: string | null,
+      _enabled?: null
+    ): AdminAccessSetEventFilter;
+    AdminAccessSet(
+      _admin?: string | null,
+      _enabled?: null
+    ): AdminAccessSetEventFilter;
+
     "AdminWithdrawn(address,uint256)"(
       _recipient?: string | null,
       _amountRequested?: null
@@ -411,15 +405,6 @@ export interface BaseMilestone extends BaseContract {
       _recipient?: string | null,
       _withdrawalAmount?: null
     ): ClaimedEventFilter;
-
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
   };
 
   estimateGas: {
@@ -438,6 +423,11 @@ export interface BaseMilestone extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    isAdmin(
+      _addressToCheck: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     isCompleted(
       _recipient: string,
       _milestoneIndex: BigNumberish,
@@ -446,14 +436,14 @@ export interface BaseMilestone extends BaseContract {
 
     numTokensReservedForVesting(overrides?: CallOverrides): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
     recipients(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    renounceOwnership(
+    setAdmin(
+      admin: string,
+      isEnabled: boolean,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -464,11 +454,6 @@ export interface BaseMilestone extends BaseContract {
     ): Promise<BigNumber>;
 
     tokenAddress(overrides?: CallOverrides): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
 
     withdrawAdmin(
       overrides?: Overrides & { from?: string }
@@ -491,6 +476,11 @@ export interface BaseMilestone extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    isAdmin(
+      _addressToCheck: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     isCompleted(
       _recipient: string,
       _milestoneIndex: BigNumberish,
@@ -501,14 +491,14 @@ export interface BaseMilestone extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     recipients(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    renounceOwnership(
+    setAdmin(
+      admin: string,
+      isEnabled: boolean,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
@@ -519,11 +509,6 @@ export interface BaseMilestone extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     tokenAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
 
     withdrawAdmin(
       overrides?: Overrides & { from?: string }

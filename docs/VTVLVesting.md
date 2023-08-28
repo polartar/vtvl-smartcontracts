@@ -44,13 +44,13 @@ function USDC_ADDRESS() external view returns (address)
 |---|---|---|
 | _0 | address | undefined |
 
-### allVestingRecipients
+### USDC_DECIMAL
 
 ```solidity
-function allVestingRecipients() external view returns (address[])
+function USDC_DECIMAL() external view returns (uint128)
 ```
 
-Return all the addresses that have vesting schedules attached.
+
 
 
 
@@ -59,7 +59,7 @@ Return all the addresses that have vesting schedules attached.
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | address[] | undefined |
+| _0 | uint128 | undefined |
 
 ### amountAvailableToWithdrawByAdmin
 
@@ -278,7 +278,7 @@ function getNumberOfVestings(address _recipient) external view returns (uint256)
 ### getTokenPrice
 
 ```solidity
-function getTokenPrice(uint128 amount, uint32 secondsAgo) external view returns (uint256 amountOut)
+function getTokenPrice(uint32 secondsAgo) external view returns (uint256 amountOut)
 ```
 
 
@@ -289,7 +289,6 @@ function getTokenPrice(uint128 amount, uint32 secondsAgo) external view returns 
 
 | Name | Type | Description |
 |---|---|---|
-| amount | uint128 | undefined |
 | secondsAgo | uint32 | undefined |
 
 #### Returns
@@ -297,6 +296,28 @@ function getTokenPrice(uint128 amount, uint32 secondsAgo) external view returns 
 | Name | Type | Description |
 |---|---|---|
 | amountOut | uint256 | undefined |
+
+### isAdmin
+
+```solidity
+function isAdmin(address _addressToCheck) external view returns (bool)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _addressToCheck | address | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bool | undefined |
 
 ### numTokensReservedForVesting
 
@@ -315,40 +336,6 @@ How many tokens are already allocated to vesting schedules.
 |---|---|---|
 | _0 | uint256 | undefined |
 
-### numVestingRecipients
-
-```solidity
-function numVestingRecipients() external view returns (uint256)
-```
-
-Get the total number of vesting recipients.
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | uint256 | undefined |
-
-### owner
-
-```solidity
-function owner() external view returns (address)
-```
-
-
-
-*Returns the address of the current owner.*
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | address | undefined |
-
 ### pool
 
 ```solidity
@@ -366,17 +353,6 @@ function pool() external view returns (address)
 |---|---|---|
 | _0 | address | undefined |
 
-### renounceOwnership
-
-```solidity
-function renounceOwnership() external nonpayable
-```
-
-
-
-*Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner.*
-
-
 ### revokeClaim
 
 ```solidity
@@ -393,6 +369,23 @@ Allow an Owner to revoke a claim that is already active.
 |---|---|---|
 | _recipient | address | undefined |
 | _scheduleIndex | uint256 | - The index of the vesting schedules of the recipient. |
+
+### setAdmin
+
+```solidity
+function setAdmin(address admin, bool isEnabled) external nonpayable
+```
+
+Set/unset Admin Access for a given address.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| admin | address | - Address of the new admin (or the one to be removed) |
+| isEnabled | bool | - Enable/Disable Admin Access |
 
 ### setFee
 
@@ -427,21 +420,22 @@ Address of the token that we&#39;re vesting
 |---|---|---|
 | _0 | contract IERC20Extented | undefined |
 
-### transferOwnership
+### tokenDecimal
 
 ```solidity
-function transferOwnership(address newOwner) external nonpayable
+function tokenDecimal() external view returns (uint128)
 ```
 
 
 
-*Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.*
 
-#### Parameters
+
+
+#### Returns
 
 | Name | Type | Description |
 |---|---|---|
-| newOwner | address | undefined |
+| _0 | uint128 | undefined |
 
 ### updateFeeReceiver
 
@@ -551,6 +545,23 @@ Withdraw a token which isn&#39;t controlled by the vesting contract.
 
 ## Events
 
+### AdminAccessSet
+
+```solidity
+event AdminAccessSet(address indexed _admin, bool _enabled)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _admin `indexed` | address | undefined |
+| _enabled  | bool | undefined |
+
 ### AdminWithdrawn
 
 ```solidity
@@ -642,23 +653,6 @@ Emitted when receiving the fee.
 | _feeAmount  | uint256 | undefined |
 | _scheduleIndex  | uint256 | undefined |
 | _tokenAddress  | address | undefined |
-
-### OwnershipTransferred
-
-```solidity
-event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| previousOwner `indexed` | address | undefined |
-| newOwner `indexed` | address | undefined |
 
 
 

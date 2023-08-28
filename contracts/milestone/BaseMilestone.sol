@@ -3,7 +3,8 @@ pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "../AccessProtected.sol";
 
 struct Milestone {
     uint256 startTime;
@@ -21,7 +22,7 @@ struct InputMilestone {
     uint120 releaseIntervalSecs;
 }
 
-contract BaseMilestone is Ownable {
+contract BaseMilestone is AccessProtected, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /**
@@ -33,6 +34,7 @@ contract BaseMilestone is Ownable {
     IERC20 public tokenAddress;
     uint256 public allocation;
     uint256 public numTokensReservedForVesting;
+    uint256 public totalWithdrawnAmount;
 
     mapping(address => mapping(uint256 => Milestone)) milestones;
 
@@ -57,7 +59,7 @@ contract BaseMilestone is Ownable {
 
             uint256 recipientLenth = recipients.length;
 
-            for (uint256 j = 0; j < recipientLenth; j++) {
+            for (uint256 j = 0; j < recipientLenth; ) {
                 milestones[recipients[j]][i] = milestone;
                 unchecked {
                     ++j;
@@ -79,7 +81,7 @@ contract BaseMilestone is Ownable {
             uint248 amount = uint248(
                 (_allocationPercents[i] * allocation) / 100
             );
-            for (uint256 j = 0; j < recipientLenth; j++) {
+            for (uint256 j = 0; j < recipientLenth; ) {
                 unchecked {
                     milestones[recipients[j]][i].allocation = amount;
                     ++j;
@@ -112,7 +114,10 @@ contract BaseMilestone is Ownable {
 
     modifier onlyDeposited() {
         uint256 balance = tokenAddress.balanceOf(address(this));
-        require(balance >= allocation * recipients.length, "NOT_DEPOSITED");
+        require(
+            balance + totalWithdrawnAmount >= allocation * recipients.length,
+            "NOT_DEPOSITED"
+        );
 
         _;
     }
@@ -134,7 +139,7 @@ contract BaseMilestone is Ownable {
     function setComplete(
         address _recipient,
         uint256 _milestoneIndex
-    ) public onlyOwner onlyDeposited {
+    ) public onlyAdmin onlyDeposited {
         Milestone storage milestone = milestones[_recipient][_milestoneIndex];
 
         require(milestone.startTime == 0, "ALREADY_COMPLETED");
@@ -146,17 +151,16 @@ contract BaseMilestone is Ownable {
     /**
     @notice Only admin can withdraw the amount before it's completed.
      */
-    function withdrawAdmin() public onlyOwner {
-        uint256 availableAmount = allocation *
-            recipients.length -
-            numTokensReservedForVesting;
+    function withdrawAdmin() public onlyAdmin nonReentrant {
+        uint256 availableAmount = tokenAddress.balanceOf(address(this)) -
+            (numTokensReservedForVesting - totalWithdrawnAmount);
 
         tokenAddress.safeTransfer(msg.sender, availableAmount);
 
         emit AdminWithdrawn(_msgSender(), availableAmount);
     }
 
-    function deposit(uint256 amount) public {
+    function deposit(uint256 amount) public nonReentrant {
         tokenAddress.safeTransferFrom(msg.sender, address(this), amount);
     }
 

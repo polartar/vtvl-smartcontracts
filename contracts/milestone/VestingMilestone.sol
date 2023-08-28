@@ -1,30 +1,27 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.14;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./BaseMilestone.sol";
 
-contract VestingMilestone is BaseMilestone, ReentrancyGuard {
+contract VestingMilestone is BaseMilestone {
     using SafeERC20 for IERC20;
 
     //
     /**
     @notice Construct the contract, taking the ERC20 token to be vested as the parameter.
-    @dev The owner can set the contract in question when creating the contract.
+
      */
     constructor(
         IERC20 _tokenAddress,
         uint256 _allocation,
         InputMilestone[] memory _milestones,
-        address[] memory _recipients,
-        address _owner
+        address[] memory _recipients
     ) {
         require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
         tokenAddress = _tokenAddress;
-        _transferOwnership(_owner);
         recipients = _recipients;
         allocation = _allocation;
 
@@ -49,7 +46,7 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
 
         // Check if this time is over vesting end time
         if (_referenceTs > milestone.startTime + milestone.period) {
-            _referenceTs = milestone.startTime + milestone.period;
+            return milestone.allocation;
         }
 
         if (_referenceTs > milestone.startTime) {
@@ -103,6 +100,7 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
         external
         hasMilestone(_msgSender(), _milestoneIndex)
         onlyCompleted(_msgSender(), _milestoneIndex)
+        nonReentrant
     {
         Milestone storage milestone = milestones[_msgSender()][_milestoneIndex];
         // we can use block.timestamp directly here as reference TS, as the function itself will make sure to cap it to endTimestamp
@@ -119,6 +117,7 @@ contract VestingMilestone is BaseMilestone, ReentrancyGuard {
         uint256 amountRemaining = allowance - milestone.withdrawnAmount;
 
         milestone.withdrawnAmount = allowance;
+        totalWithdrawnAmount += amountRemaining;
 
         tokenAddress.safeTransfer(_msgSender(), amountRemaining);
 

@@ -1,18 +1,18 @@
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import Chance from "chance";
-import { VTVLVesting, VTVLVestingFactory } from "../typechain";
 import { BigNumber, BigNumberish } from "ethers";
-import { parseEther } from "ethers/lib/utils";
+import { parseEther, parseUnits } from "ethers/lib/utils";
+import { VTVLVesting, VTVLVestingFactory } from "../typechain-types";
 const VaultFactoryJson = require("../artifacts/contracts/VTVLVestingFactory.sol/VTVLVestingFactory.json");
 
 const iface = new ethers.utils.Interface(VaultFactoryJson.abi);
 
 const chance = new Chance(43153); // Make sure we have a predictable seed for repeatability
 const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-const INCH_ADDRESS = "0x111111111117dc0aa78b770fa6a738034120c302";
+const LINK_ADDRESS = "0x514910771AF9Ca656af840dff83E8264EcF986CA";
 const USDC_IMPERSONATE_ACCOUNT = "0xf3B0073E3a7F747C7A38B36B805247B222C302A3";
-const INCH_IMPERSONATE_ACCOUNT = "0x3744da57184575064838bbc87a0fc791f5e39ea2";
+const LINK_IMPERSONATE_ACCOUNT = "0x0757e27AC1631beEB37eeD3270cc6301dD3D57D4";
 const initialSupplyTokens = 1000;
 
 const tokenName = chance.string({ length: 10 });
@@ -114,7 +114,7 @@ const createPrefundedVestingContract = async (props: {
     "TestERC20Token"
   );
   // const initialSupply = ethers.utils.parseUnits(initialSupplyTokens.toString(), decimals);
-  const initialSupply = BigNumber.from(initialSupplyTokens); // The contract is already multiplying by decimals
+  const initialSupply = parseEther(initialSupplyTokens.toString()); // The contract is already multiplying by decimals
   const tokenContract = await tokenContractFactory.deploy(
     tokenName,
     tokenSymbol,
@@ -149,22 +149,27 @@ const releaseIntervalSecs = BigNumber.from(60 * 60); // 1 hour
 const vestingPeriod = releaseIntervalSecs.mul(100);
 const endTimestamp = startTimestamp.add(vestingPeriod); // 100 releases of releaseIntervalSecs, because endTimestamp must startimestamp + X * releaseIntervalSecs
 
-const linearVestAmount = ethers.utils.parseUnits("100", 18);
-const cliffAmount = ethers.utils.parseUnits("10", 18);
+const linearVestAmount = ethers.utils.parseUnits("100000", 18);
+const cliffAmount = ethers.utils.parseUnits("10000", 18);
 
 describe("Contract creation", async function () {
-  let tokenAddress: string;
-
   before(async () => {
     // TODO: check if we need any checks that the token be valid, etc
   });
 
   it("can be created with a ERC20 token address", async function () {
-    tokenAddress = await randomAddress();
-    const contract = await deployVestingContract(tokenAddress);
+    const erc20TokenFactory = await ethers.getContractFactory("TestERC20Token");
+    const tokenContract = await erc20TokenFactory.deploy(
+      tokenName,
+      tokenSymbol,
+      1000
+    );
+    await tokenContract.deployed();
+
+    const contract = await deployVestingContract(tokenContract.address);
     await contract.deployed();
 
-    expect(await contract.tokenAddress()).to.equal(tokenAddress);
+    expect(await contract.tokenAddress()).to.equal(tokenContract.address);
   });
 
   it("fails if initialized without a valid ERC20 token address", async function () {
@@ -187,8 +192,7 @@ describe("Contract creation", async function () {
         // @ts-ignore - Need to ignore invalid type because initializing with an invalid type is the whole point of this test
         const contractDeploymentPromise = factory.deploy(
           invalidParam as string,
-          0,
-          owner.address
+          0
         );
 
         if (invalidParam === zeroAddressStr) {
@@ -226,11 +230,10 @@ describe("Contract creation", async function () {
 
   it("the deployer is the owner", async function () {
     const [owner] = await ethers.getSigners();
-    tokenAddress = await randomAddress();
 
-    const contract = await deployVestingContract(tokenAddress);
+    const contract = await deployVestingContract(LINK_ADDRESS);
 
-    expect(await contract.owner()).to.be.equal(owner.address);
+    expect(await contract.isAdmin(owner.address)).to.be.equal(true);
   });
 });
 
@@ -424,7 +427,7 @@ describe("Claim creation", async function () {
       linearVestAmount: 0,
       cliffAmount: 0,
     });
-    await expect(result).to.be.revertedWith("Not Owner or Factory");
+    await expect(result).to.be.revertedWith("ADMIN_ACCESS_REQUIRED");
   });
 
   it("fails on insufficient balance on initial allocation", async () => {
@@ -610,44 +613,7 @@ describe("Claim creation", async function () {
       );
     });
   });
-  it("sets the vesting recipient", async () => {
-    const { vestingContract } = await createPrefundedVestingContract({
-      tokenName,
-      tokenSymbol,
-      initialSupplyTokens,
-    });
-    expect(await vestingContract.numVestingRecipients()).to.be.equal(
-      0,
-      "numVestingRecipients initially nonzero"
-    );
-    expect((await vestingContract.allVestingRecipients()).length).to.be.equal(
-      0,
-      "vestingRecipients initially nonempty"
-    );
-    await vestingContract.createClaim({
-      recipient: recipientAddress,
-      startTimestamp,
-      endTimestamp,
-      cliffReleaseTimestamp,
-      releaseIntervalSecs,
-      linearVestAmount,
-      cliffAmount,
-    });
-    expect(await vestingContract.numVestingRecipients()).to.be.equal(
-      1,
-      "numVestingRecipients not 1 after addition"
-    );
-    const returnedVestingRecipientsAfterAssignment =
-      await vestingContract.allVestingRecipients();
-    expect(returnedVestingRecipientsAfterAssignment.length).to.be.equal(
-      1,
-      "vestingRecipients length not equal to 1 after addition."
-    );
-    expect(returnedVestingRecipientsAfterAssignment[0]).to.be.equal(
-      recipientAddress,
-      "vestingRecipients not equal to the [recipientAddress] after addition."
-    );
-  });
+
   it("emits ClaimCreated", async () => {
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
@@ -893,8 +859,8 @@ describe("Revoke Claim", async () => {
     expect(
       await (
         await vestingContract.getClaim(recipientAddress, 0)
-      ).isActive
-    ).to.be.equal(false);
+      ).deactivationTimestamp
+    ).to.be.not.equal(0);
   });
   it("prohibits a random user from revoking a valid claim", async () => {
     const { vestingContract } = await createPrefundedVestingContract({
@@ -914,7 +880,7 @@ describe("Revoke Claim", async () => {
     // A random user cant revert it
     await expect(
       vestingContract.connect(owner2).revokeClaim(recipientAddress, 0)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
+    ).to.be.revertedWith("ADMIN_ACCESS_REQUIRED");
     // Make sure it stays active
     expect(
       await (
@@ -938,7 +904,8 @@ describe("Revoke Claim", async () => {
       tokenSymbol,
       initialSupplyTokens,
     });
-    const startTimestamp = (await getLastBlockTs()) + 100;
+    const cliffReleaseTimestamp = await getLastBlockTs();
+    const startTimestamp = cliffReleaseTimestamp + 100;
     const endTimestamp = startTimestamp + 2000;
     const releaseIntervalSecs = 100;
     // Create a claim for owner2, fast forward to the end, and withdraw
@@ -985,7 +952,8 @@ describe("Revoke Claim", async () => {
         initialSupplyTokens,
       });
 
-    const startTimestamp = (await getLastBlockTs()) + 100;
+    const cliffReleaseTimestamp = await getLastBlockTs();
+    const startTimestamp = cliffReleaseTimestamp + 100;
     const endTimestamp = startTimestamp + 2000;
     const terminationTimestamp = startTimestamp + 1000 + 50; // half-way vesting, plus half release interval which shall be discarded
     const releaseIntervalSecs = 100;
@@ -1032,8 +1000,8 @@ describe("Vested amount", async () => {
   const startTimestamp = BigNumber.from(1000);
   const endTimestamp = BigNumber.from(2000);
   const cliffReleaseTimestamp = BigNumber.from(900);
-  const linearVestAmount = BigNumber.from(10000);
-  const cliffAmount = BigNumber.from(5000);
+  const linearVestAmount = BigNumber.from("10000");
+  const cliffAmount = BigNumber.from("5000");
   const releaseIntervalSecs = BigNumber.from(1);
   before(async () => {
     const { vestingContract: _vc } = await createPrefundedVestingContract({
@@ -1348,7 +1316,7 @@ describe("Admin withdrawal", async () => {
     });
     await expect(
       vestingContract.connect(otherUser).withdrawAdmin(1)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
+    ).to.be.revertedWith("ADMIN_ACCESS_REQUIRED");
   });
 });
 describe("Other token admin withdrawal", async () => {
@@ -1424,7 +1392,7 @@ describe("Other token admin withdrawal", async () => {
       vestingContract
         .connect(thirdOwner)
         .withdrawOtherToken(otherTokenContract.address)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
+    ).to.be.revertedWith("ADMIN_ACCESS_REQUIRED");
   });
 });
 describe("Long vest fail", async () => {
@@ -1479,7 +1447,7 @@ describe("Apply Fee", async () => {
   // linearly Vest 10000, every 1s, between last block ts+100 and 1000 secs forward
   // No cliff
   const cliffReleaseTimestamp = BigNumber.from(0);
-  const linearVestAmount = BigNumber.from(10000);
+  const linearVestAmount = parseEther("10000");
   const cliffAmount = BigNumber.from(0);
   const releaseIntervalSecs = BigNumber.from(10);
 
@@ -1548,29 +1516,34 @@ describe("Apply Fee", async () => {
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
 
     await factoryContract.setFee(vestingContract.address, 100); // set the fee 1%
-    const feeAmount = linearVestAmount.div(2).mul(100).div(10000);
+    const feeAmount = linearVestAmount
+      .div(2)
+      .mul(100)
+      .div(10000)
+      .div(Math.pow(10, 12));
 
-    //transfer USDC to the user so that he can withdraw
+    // transfer USDC to the user so that he can withdraw
     await network.provider.request({
       method: "hardhat_impersonateAccount",
       params: [USDC_IMPERSONATE_ACCOUNT],
     });
     const usdcSigner = await ethers.getSigner(USDC_IMPERSONATE_ACCOUNT);
 
-    //get USDC contract
+    // get USDC contract
     const tokenContractFactory = await ethers.getContractFactory(
       "TestERC20Token"
     );
     const usdcContract = tokenContractFactory.attach(USDC_ADDRESS);
 
-    //transfer USDC from usdcSigner to owner2
+    // transfer USDC from usdcSigner to owner2
+
     await usdcContract
       .connect(usdcSigner)
-      .transfer(owner2.address, BigNumber.from(20000));
+      .transfer(owner2.address, parseUnits("10000", 6));
 
     await usdcContract
       .connect(owner2)
-      .approve(vestingContract.address, BigNumber.from(10000));
+      .approve(vestingContract.address, parseUnits("10000", 6));
 
     await expect(() =>
       vestingContract.connect(owner2).withdraw(0)
@@ -1615,20 +1588,21 @@ describe("Apply Fee", async () => {
       "TestERC20Token"
     );
 
-    const tokenContract = tokenContractFactory.attach(INCH_ADDRESS);
-    const vestingContract = await deployVestingContract(INCH_ADDRESS);
+    const tokenContract = tokenContractFactory.attach(LINK_ADDRESS);
+    const vestingContract = await deployVestingContract(LINK_ADDRESS);
+
     await vestingContract.deployed();
 
     await network.provider.request({
       method: "hardhat_impersonateAccount",
-      params: [INCH_IMPERSONATE_ACCOUNT],
+      params: [LINK_IMPERSONATE_ACCOUNT],
     });
-    const inchSigner = await ethers.getSigner(INCH_IMPERSONATE_ACCOUNT);
+    const inchSigner = await ethers.getSigner(LINK_IMPERSONATE_ACCOUNT);
 
-    //deposit unibot to vesting contract
+    // deposit unibot to vesting contract
     await await tokenContract
       .connect(inchSigner)
-      .transfer(vestingContract.address, BigNumber.from(20000));
+      .transfer(vestingContract.address, parseEther("10000"));
 
     await vestingContract.createClaim({
       recipient: owner2.address,
@@ -1639,6 +1613,9 @@ describe("Apply Fee", async () => {
       linearVestAmount,
       cliffAmount,
     });
+
+    // const price = await vestingContract.getTokenPrice(10);
+    // console.log({ price });
 
     const ts = startTimestamp + 500;
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
@@ -1665,21 +1642,21 @@ describe("Apply Fee", async () => {
     const tokenContractFactory = await ethers.getContractFactory(
       "TestERC20Token"
     );
-    const tokenContract = tokenContractFactory.attach(INCH_ADDRESS);
+    const tokenContract = tokenContractFactory.attach(LINK_ADDRESS);
 
-    const vestingContract = await deployVestingContract(INCH_ADDRESS);
+    const vestingContract = await deployVestingContract(LINK_ADDRESS);
     await vestingContract.deployed();
 
     await network.provider.request({
       method: "hardhat_impersonateAccount",
-      params: [INCH_IMPERSONATE_ACCOUNT],
+      params: [LINK_IMPERSONATE_ACCOUNT],
     });
-    const inchSigner = await ethers.getSigner(INCH_IMPERSONATE_ACCOUNT);
+    const inchSigner = await ethers.getSigner(LINK_IMPERSONATE_ACCOUNT);
 
-    //deposit unibot to vesting contract
+    // deposit unibot to vesting contract
     await await tokenContract
       .connect(inchSigner)
-      .transfer(vestingContract.address, BigNumber.from(20000));
+      .transfer(vestingContract.address, parseEther("10000"));
 
     await vestingContract.createClaim({
       recipient: owner2.address,
@@ -1716,7 +1693,7 @@ describe("Apply Fee", async () => {
     const startTimestamp = (await getLastBlockTs()) + 100;
     const endTimestamp = startTimestamp + 1000;
 
-    //get USDC contract
+    // get USDC contract
     const tokenContractFactory = await ethers.getContractFactory(
       "TestERC20Token"
     );
@@ -1745,21 +1722,25 @@ describe("Apply Fee", async () => {
       params: [USDC_IMPERSONATE_ACCOUNT],
     });
     const usdcSigner = await ethers.getSigner(USDC_IMPERSONATE_ACCOUNT);
-    //transfer USDC from usdcSigner to owner2
+    // transfer USDC from usdcSigner to owner2
     await usdcContract
       .connect(usdcSigner)
-      .transfer(owner2.address, BigNumber.from(20000));
+      .transfer(owner2.address, parseUnits("10000", 6));
 
     await usdcContract
       .connect(owner2)
-      .approve(vestingContract.address, BigNumber.from(10000));
+      .approve(vestingContract.address, parseUnits("10000", 6));
 
     await factoryContract.setFee(vestingContract.address, 100); // set the fee 1%
     await factoryContract.updateFeeReceiver(
       vestingContract.address,
       recipient.address
     ); // set the fee 1%
-    const feeAmount = linearVestAmount.div(2).mul(100).div(10000);
+    const feeAmount = linearVestAmount
+      .div(2)
+      .mul(100)
+      .div(10000)
+      .div(Math.pow(10, 12));
 
     await expect(() =>
       vestingContract.connect(owner2).withdraw(0)

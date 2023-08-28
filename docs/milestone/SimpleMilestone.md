@@ -106,6 +106,28 @@ function getMilestone(address _recipient, uint256 _milestoneIndex) external view
 |---|---|---|
 | _0 | Milestone | undefined |
 
+### isAdmin
+
+```solidity
+function isAdmin(address _addressToCheck) external view returns (bool)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _addressToCheck | address | undefined |
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bool | undefined |
+
 ### isCompleted
 
 ```solidity
@@ -146,23 +168,6 @@ function numTokensReservedForVesting() external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
-### owner
-
-```solidity
-function owner() external view returns (address)
-```
-
-
-
-*Returns the address of the current owner.*
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | address | undefined |
-
 ### recipients
 
 ```solidity
@@ -185,16 +190,22 @@ function recipients(uint256) external view returns (address)
 |---|---|---|
 | _0 | address | undefined |
 
-### renounceOwnership
+### setAdmin
 
 ```solidity
-function renounceOwnership() external nonpayable
+function setAdmin(address admin, bool isEnabled) external nonpayable
 ```
 
+Set/unset Admin Access for a given address.
 
 
-*Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner.*
 
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| admin | address | - Address of the new admin (or the one to be removed) |
+| isEnabled | bool | - Enable/Disable Admin Access |
 
 ### setComplete
 
@@ -230,21 +241,22 @@ function tokenAddress() external view returns (contract IERC20)
 |---|---|---|
 | _0 | contract IERC20 | undefined |
 
-### transferOwnership
+### totalWithdrawnAmount
 
 ```solidity
-function transferOwnership(address newOwner) external nonpayable
+function totalWithdrawnAmount() external view returns (uint256)
 ```
 
 
 
-*Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.*
 
-#### Parameters
+
+
+#### Returns
 
 | Name | Type | Description |
 |---|---|---|
-| newOwner | address | undefined |
+| _0 | uint256 | undefined |
 
 ### withdraw
 
@@ -276,6 +288,23 @@ Only admin can withdraw the amount before it&#39;s completed.
 
 
 ## Events
+
+### AdminAccessSet
+
+```solidity
+event AdminAccessSet(address indexed _admin, bool _enabled)
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _admin `indexed` | address | undefined |
+| _enabled  | bool | undefined |
 
 ### AdminWithdrawn
 
@@ -310,23 +339,6 @@ Emitted when someone withdraws a vested amount
 |---|---|---|
 | _recipient `indexed` | address | undefined |
 | _withdrawalAmount  | uint256 | undefined |
-
-### OwnershipTransferred
-
-```solidity
-event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| previousOwner `indexed` | address | undefined |
-| newOwner `indexed` | address | undefined |
 
 
 

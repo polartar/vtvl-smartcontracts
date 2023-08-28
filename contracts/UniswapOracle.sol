@@ -14,10 +14,12 @@ contract UniswapOracle {
     @notice Address of the token that we're vesting
      */
     IERC20Extented public immutable tokenAddress;
-
     // USDC contract address
     address public constant USDC_ADDRESS =
         0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+
+    uint128 public immutable tokenDecimal;
+    uint128 public constant USDC_DECIMAL = 6;
 
     // UniswapV3 Factory address
     address public constant UNISWAP_V3_FACTORY_ADDRESS =
@@ -31,6 +33,7 @@ contract UniswapOracle {
     constructor(IERC20Extented _tokenAddress) {
         require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
         tokenAddress = _tokenAddress;
+        tokenDecimal = IERC20Extented(tokenAddress).decimals();
         pool = IUniswapV3Factory(UNISWAP_V3_FACTORY_ADDRESS).getPool(
             address(tokenAddress),
             USDC_ADDRESS,
@@ -40,63 +43,18 @@ contract UniswapOracle {
 
     // get the price of the token that will be calculated by 100 times.
     function getTokenPrice(
-        uint128 amount,
         uint32 secondsAgo
     ) public view returns (uint amountOut) {
-        (int24 tick, ) = consult(secondsAgo);
+        uint128 amountIn = uint128(1 * 10 ** (tokenDecimal));
+        (int24 tick, ) = OracleLibrary.consult(pool, secondsAgo);
         amountOut = OracleLibrary.getQuoteAtTick(
             tick,
-            amount,
-            USDC_ADDRESS,
-            address(tokenAddress)
+            amountIn,
+            address(tokenAddress),
+            USDC_ADDRESS
         );
 
         // calculate the price with 100 times
-        uint256 decimal = IERC20Extented(tokenAddress).decimals();
-        return ((amountOut * 100) / 10 ** (decimal - 6)) / amount;
-    }
-
-    /// @notice Calculates time-weighted means of tick and liquidity for a given Uniswap V3 pool
-    /// @param secondsAgo Number of seconds in the past from which to calculate the time-weighted means
-    /// @return arithmeticMeanTick The arithmetic mean tick from (block.timestamp - secondsAgo) to block.timestamp
-    /// @return harmonicMeanLiquidity The harmonic mean liquidity from (block.timestamp - secondsAgo) to block.timestamp
-    function consult(
-        uint32 secondsAgo
-    )
-        private
-        view
-        returns (int24 arithmeticMeanTick, uint128 harmonicMeanLiquidity)
-    {
-        require(secondsAgo != 0, "BP");
-
-        uint32[] memory secondsAgos = new uint32[](2);
-        secondsAgos[0] = secondsAgo;
-        secondsAgos[1] = 0;
-
-        (
-            int56[] memory tickCumulatives,
-            uint160[] memory secondsPerLiquidityCumulativeX128s
-        ) = IUniswapV3Pool(pool).observe(secondsAgos);
-
-        int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
-        uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[
-                1
-            ] - secondsPerLiquidityCumulativeX128s[0];
-
-        arithmeticMeanTick = int24(
-            tickCumulativesDelta / int56(uint56(secondsAgo))
-        );
-        // Always round to negative infinity
-        if (
-            tickCumulativesDelta < 0 &&
-            (tickCumulativesDelta % int56(uint56(secondsAgo)) != 0)
-        ) arithmeticMeanTick--;
-
-        // We are multiplying here instead of shifting to ensure that harmonicMeanLiquidity doesn't overflow uint128
-        uint192 secondsAgoX160 = uint192(secondsAgo) * type(uint160).max;
-        harmonicMeanLiquidity = uint128(
-            secondsAgoX160 /
-                (uint192(secondsPerLiquidityCumulativesDelta) << 32)
-        );
+        return (amountOut * 100) / 10 ** USDC_DECIMAL;
     }
 }
