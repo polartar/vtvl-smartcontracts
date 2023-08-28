@@ -10,40 +10,6 @@
 
 ## Methods
 
-### UNISWAP_V3_FACTORY_ADDRESS
-
-```solidity
-function UNISWAP_V3_FACTORY_ADDRESS() external view returns (address)
-```
-
-
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | address | undefined |
-
-### USDC_ADDRESS
-
-```solidity
-function USDC_ADDRESS() external view returns (address)
-```
-
-
-
-
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | address | undefined |
-
 ### amountAvailableToWithdrawByAdmin
 
 ```solidity
@@ -76,23 +42,6 @@ function claimableAmount(ClaimInput _claimInput) external view returns (uint256)
 | Name | Type | Description |
 |---|---|---|
 | _claimInput | ClaimInput | undefined |
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | uint256 | undefined |
-
-### conversionThreshold
-
-```solidity
-function conversionThreshold() external view returns (uint256)
-```
-
-
-
-
-
 
 #### Returns
 
@@ -223,29 +172,6 @@ function getLeaf(ClaimInput _claimInput) external pure returns (bytes32)
 |---|---|---|
 | _0 | bytes32 | undefined |
 
-### getTokenPrice
-
-```solidity
-function getTokenPrice(uint128 amount, uint32 secondsAgo) external view returns (uint256 amountOut)
-```
-
-
-
-
-
-#### Parameters
-
-| Name | Type | Description |
-|---|---|---|
-| amount | uint128 | undefined |
-| secondsAgo | uint32 | undefined |
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| amountOut | uint256 | undefined |
-
 ### isRevoked
 
 ```solidity
@@ -278,23 +204,6 @@ function owner() external view returns (address)
 
 
 *Returns the address of the current owner.*
-
-
-#### Returns
-
-| Name | Type | Description |
-|---|---|---|
-| _0 | address | undefined |
-
-### pool
-
-```solidity
-function pool() external view returns (address)
-```
-
-
-
-
 
 
 #### Returns
@@ -369,7 +278,7 @@ function setMerleRoot(bytes32 _root) external nonpayable
 function tokenAddress() external view returns (contract IERC20Extented)
 ```
 
-Address of the token that we&#39;re vesting
+
 
 
 
@@ -628,20 +537,6 @@ event OwnershipTransferred(address indexed previousOwner, address indexed newOwn
 |---|---|---|
 | previousOwner `indexed` | address | undefined |
 | newOwner `indexed` | address | undefined |
-
-
-
-## Errors
-
-### T
-
-```solidity
-error T()
-```
-
-
-
-
 
 
 

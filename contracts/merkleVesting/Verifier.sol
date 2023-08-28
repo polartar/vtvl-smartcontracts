@@ -8,10 +8,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract Verifier is Ownable {
     bytes32 private root;
 
-    // constructor(bytes32 _root) {
-    //     root = _root;
-    // }
-
     function setMerleRoot(bytes32 _root) public onlyOwner {
         root = _root;
     }
