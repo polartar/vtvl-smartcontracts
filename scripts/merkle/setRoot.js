@@ -5,9 +5,9 @@ const fs = require("fs");
 const csvToJson = require("csvtojson");
 const { parseEther } = require("ethers/lib/utils");
 
-const startTime = 1693223643;
-const endTime = startTime + 1000;
-const releaseFrequency = 10;
+const startTime = 1693438495;
+const endTime = startTime + 604800;
+const releaseFrequency = 30;
 
 async function generateMerkleTree() {
   let whitelist = await csvToJson({
@@ -73,14 +73,13 @@ function getMerkleProof(recipient, scheduleIndex = 0) {
 
 async function main() {
   // We get the contract to deploy
+  const contractAddress = "0xaA753c29E42cb37C165a2116B02501d0C50bf521";
   generateMerkleTree();
   const [deployer] = await ethers.getSigners();
   const root = getMerkleRoot();
 
   const VTVLVesting = await ethers.getContractFactory("VTVLMerkleVesting");
-  const vestingContract = await VTVLVesting.attach(
-    "0xaA753c29E42cb37C165a2116B02501d0C50bf521"
-  );
+  const vestingContract = await VTVLVesting.attach(contractAddress);
   const feeData = await deployer.provider.getFeeData();
   const nonce = await deployer.getTransactionCount();
   await vestingContract.setMerleRoot(root, {
@@ -131,11 +130,11 @@ async function main() {
     );
     console.log({ claimableAmount });
 
-    const proof = getMerkleProof(
-      claimInputs[0].recipient,
-      claimInputs[0].scheduleIndex
-    );
-    console.log({ proof });
+    // const proof = getMerkleProof(
+    //   claimInputs[0].recipient,
+    //   claimInputs[0].scheduleIndex
+    // );
+    // console.log({ proof });
 
     // await vestingContract.withdraw(claimInputs[2], proof);
   } catch (err) {
