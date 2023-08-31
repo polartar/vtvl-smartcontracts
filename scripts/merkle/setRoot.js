@@ -73,16 +73,20 @@ function getMerkleProof(recipient, scheduleIndex = 0) {
 
 async function main() {
   // We get the contract to deploy
-  const contractAddress = "0x8E2b008A7B3e9E445326139c103C0cbCfb385622";
-  generateMerkleTree();
+  const contractAddress = "0x43da1eE1F19CD90bEC9ADb51cC5959Aa97E4aB25";
+  // generateMerkleTree();
   const [deployer] = await ethers.getSigners();
   const root = getMerkleRoot();
 
-  const VTVLVesting = await ethers.getContractFactory("VTVLMerkleVesting");
-  const vestingContract = await VTVLVesting.attach(contractAddress);
+  const VTVLVestingFactory = await ethers.getContractFactory(
+    "VTVLMerkleVestingFactory"
+  );
+  const vestingFactoryContract = await VTVLVestingFactory.attach(
+    "0xa5aa5661412cf011b212a923661360321BbafBa2"
+  );
   const feeData = await deployer.provider.getFeeData();
   const nonce = await deployer.getTransactionCount();
-  await vestingContract.setMerleRoot(root, {
+  await vestingFactoryContract.setMerkleRoot(contractAddress, root, {
     nonce: nonce,
     maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
     maxFeePerGas: feeData.maxFeePerGas * 2,
@@ -125,6 +129,8 @@ async function main() {
   }));
 
   try {
+    const VTVLVesting = await ethers.getContractFactory("VTVLMerkleVesting");
+    const vestingContract = await VTVLVesting.attach(contractAddress);
     const claimableAmount = await vestingContract.claimableAmount(
       claimInputs[0]
     );

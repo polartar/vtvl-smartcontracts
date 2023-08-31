@@ -9,7 +9,9 @@ async function main() {
   );
   const feeData = await deployer.provider.getFeeData();
   const nonce = await deployer.getTransactionCount();
-  console.log("nonce pending", nonce);
+  const pendingNonce = await deployer.getTransactionCount("pending");
+  console.log("nonce", nonce);
+  console.log("pendingNonce", pendingNonce);
   console.log("fee data", feeData);
 
   const vestingFactoryContract = await VTVLVestingFactory.deploy({
