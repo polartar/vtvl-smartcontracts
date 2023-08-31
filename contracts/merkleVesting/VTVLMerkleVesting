@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../IVestingFee.sol";
 import "../UniswapOracle.sol";
-import "./Verifier.sol";
 
 struct ClaimInput {
     uint40 startTimestamp; // When does the vesting start (40 bits is enough for TS)
@@ -26,8 +25,7 @@ contract VTVLMerkleVesting is
     Ownable,
     ReentrancyGuard,
     IVestingFee,
-    UniswapOracle,
-    Verifier
+    UniswapOracle
 {
     using SafeERC20 for IERC20Extented;
 
@@ -507,5 +505,13 @@ contract VTVLMerkleVesting is
         uint256 _threshold
     ) external onlyFactory {
         conversionThreshold = _threshold;
+    }
+
+    function setMerleRoot(bytes32 _root) public onlyFactory {
+        root = _root;
+    }
+
+    function verify(bytes32[] memory proof, bytes32 leaf) public view {
+        require(MerkleProof.verify(proof, root, leaf), "Invalid proof");
     }
 }

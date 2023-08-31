@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../IVestingFee.sol";
-import "./Verifier.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 struct ClaimInput {
     uint40 startTimestamp; // When does the vesting start (40 bits is enough for TS)
@@ -25,7 +25,7 @@ interface IERC20Extented is IERC20 {
     function decimals() external view returns (uint8);
 }
 
-contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee, Verifier {
+contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
     using SafeERC20 for IERC20Extented;
 
     IERC20Extented public immutable tokenAddress;
@@ -48,6 +48,7 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee, Verifier {
     address public feeReceiver; // The receier address that will get the fee.
 
     uint256 public totalWithdrawnAmount;
+    bytes32 private root;
 
     /**
     @notice Emitted when someone withdraws a vested amount
@@ -468,4 +469,12 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee, Verifier {
     function updateconversionThreshold(
         uint256 _threshold
     ) external onlyFactory {}
+
+    function setMerleRoot(bytes32 _root) public onlyFactory {
+        root = _root;
+    }
+
+    function verify(bytes32[] memory proof, bytes32 leaf) public view {
+        require(MerkleProof.verify(proof, root, leaf), "Invalid proof");
+    }
 }

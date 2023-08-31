@@ -11,6 +11,10 @@ import "./IVestingFee.sol";
 /// @title Vesting Factory contract
 /// @notice Create Vesting contract
 
+interface IMerkleVestingContract {
+    function setMerleRoot(bytes32 _root) external;
+}
+
 contract VTVLMerkleVestingFactory is Ownable {
     using SafeERC20 for IERC20;
 
@@ -68,7 +72,7 @@ contract VTVLMerkleVestingFactory is Ownable {
     }
 
     /**
-     * @notice Set the fee recipient of Vesting contract.
+     * @notice Set the fee recipient of the Vesting contract.
      */
     function updateFeeReceiver(
         address _vestingContract,
@@ -97,5 +101,15 @@ contract VTVLMerkleVestingFactory is Ownable {
     ) external onlyOwner {
         uint256 balance = IERC20(_tokenAddress).balanceOf(address(this));
         IERC20(_tokenAddress).transfer(_receiver, balance);
+    }
+
+    /**
+     * @notice Set the merkle root of the Vesting contract.
+     */
+    function setMerkleRoot(
+        address _vestingContract,
+        bytes32 _root
+    ) external onlyOwner onlyVestingContract(_vestingContract) {
+        IMerkleVestingContract(_vestingContract).setMerleRoot(_root);
     }
 }
