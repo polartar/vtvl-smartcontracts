@@ -256,10 +256,10 @@ function setFee(uint256 _feePercent) external nonpayable
 |---|---|---|
 | _feePercent | uint256 | undefined |
 
-### setMerleRoot
+### setMerkleRoot
 
 ```solidity
-function setMerleRoot(bytes32 _root) external nonpayable
+function setMerkleRoot(bytes32 _root) external nonpayable
 ```
 
 

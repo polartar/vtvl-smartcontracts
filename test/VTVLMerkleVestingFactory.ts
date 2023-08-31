@@ -267,7 +267,10 @@ describe("Withdraw", async () => {
     tokenContract = tc;
   });
   it("disallow withdraw with wrong vesting information", async () => {
-    await vestingContract.setMerleRoot(getMerkleRoot());
+    await factoryContract.setMerkleRoot(
+      vestingContract.address,
+      getMerkleRoot()
+    );
 
     const proof = getMerkleProof(claimInputs[0].recipient);
 
@@ -286,7 +289,10 @@ describe("Withdraw", async () => {
   });
 
   it("disallow withdraw with wrong recipient", async () => {
-    await vestingContract.setMerleRoot(getMerkleRoot());
+    await factoryContract.setMerkleRoot(
+      vestingContract.address,
+      getMerkleRoot()
+    );
     const proof = getMerkleProof(claimInputs[0].recipient);
 
     await ethers.provider.send("evm_mine", [
@@ -308,7 +314,10 @@ describe("Withdraw", async () => {
       claimInputs[0].recipient
     );
 
-    await vestingContract.setMerleRoot(getMerkleRoot());
+    await factoryContract.setMerkleRoot(
+      vestingContract.address,
+      getMerkleRoot()
+    );
     const proof = getMerkleProof(claimInputs[0].recipient);
     await ethers.provider.send("evm_mine", [
       BigNumber.from(BigNumber.from(claimInputs[0].startTimestamp))
@@ -355,7 +364,10 @@ describe("Withdraw", async () => {
       tokenSymbol,
       initialSupplyTokens,
     });
-    await vestingContract.setMerleRoot(getMerkleRoot());
+    await factoryContract.setMerkleRoot(
+      vestingContract.address,
+      getMerkleRoot()
+    );
     const timePass = 2000;
     await ethers.provider.send("evm_mine", [
       BigNumber.from(claimInputs[0].startTimestamp).add(timePass).toNumber(),
@@ -387,7 +399,10 @@ describe("Revoke Claim", async () => {
       initialSupplyTokens,
     });
 
-    await vestingContract.setMerleRoot(getMerkleRoot());
+    await factoryContract.setMerkleRoot(
+      vestingContract.address,
+      getMerkleRoot()
+    );
     const proof = getMerkleProof(claimInputs[0].recipient);
     // await ethers.provider.send("evm_mine", [
     //   BigNumber.from(claimInputs[0].startTimestamp).toNumber() + 1000,
@@ -407,7 +422,10 @@ describe("Revoke Claim", async () => {
       initialSupplyTokens,
     });
     const recipientAddress = await randomAddress();
-    await vestingContract.setMerleRoot(getMerkleRoot());
+    await factoryContract.setMerkleRoot(
+      vestingContract.address,
+      getMerkleRoot()
+    );
     const proof = getMerkleProof(claimInputs[0].recipient);
 
     await expect(
@@ -435,7 +453,10 @@ describe("Vested amount", async () => {
       initialSupplyTokens,
     });
     vestingContract = _vc as VestingContractType;
-    await vestingContract.setMerleRoot(getMerkleRoot());
+    await factoryContract.setMerkleRoot(
+      vestingContract.address,
+      getMerkleRoot()
+    );
   });
   it("calculates the vested amount before the cliff time to be 0", async () => {
     expect(
@@ -615,7 +636,10 @@ describe("Claimable amount", async () => {
       initialSupplyTokens,
     });
 
-    await vestingContract.setMerleRoot(getMerkleRoot());
+    await factoryContract.setMerkleRoot(
+      vestingContract.address,
+      getMerkleRoot()
+    );
     const claim = claimInputs[0];
 
     // after padding the half of vesting period
@@ -638,7 +662,10 @@ describe("Claimable amount", async () => {
       initialSupplyTokens,
     });
 
-    await vestingContract.setMerleRoot(getMerkleRoot());
+    await factoryContract.setMerkleRoot(
+      vestingContract.address,
+      getMerkleRoot()
+    );
     // Try couple of different points, no matter where we are, it should be the same since we have no withdrawals
     for (let ts = startTimestamp; ts <= endTimestamp; ts += 100) {
       await ethers.provider.send("evm_mine", [ts]); // Make sure we're at the relevant ts
@@ -659,7 +686,10 @@ describe("Claimable amount", async () => {
     });
     const proof = getMerkleProof(claimInputs[0].recipient);
 
-    await vestingContract.setMerleRoot(getMerkleRoot());
+    await factoryContract.setMerkleRoot(
+      vestingContract.address,
+      getMerkleRoot()
+    );
 
     const ts = startTimestamp.add(5000);
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval

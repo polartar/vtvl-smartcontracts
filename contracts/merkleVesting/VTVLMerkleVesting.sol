@@ -352,7 +352,7 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
     }
 
     function calculateFee(uint256 _amount) private view returns (uint256) {
-        return (_amount * feePercent) / 10000;
+        return (_amount * feePercent + 9999) / 10000;
     }
 
     /**
@@ -470,7 +470,7 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
         uint256 _threshold
     ) external onlyFactory {}
 
-    function setMerleRoot(bytes32 _root) public onlyFactory {
+    function setMerkleRoot(bytes32 _root) public onlyFactory {
         root = _root;
     }
 

@@ -84,7 +84,7 @@ export interface VTVLMerkleVestingInterface extends utils.Interface {
     "renounceOwnership()": FunctionFragment;
     "revokeClaim((uint40,uint40,uint40,uint40,uint40,uint256,uint256,address),bytes32[])": FunctionFragment;
     "setFee(uint256)": FunctionFragment;
-    "setMerleRoot(bytes32)": FunctionFragment;
+    "setMerkleRoot(bytes32)": FunctionFragment;
     "tokenAddress()": FunctionFragment;
     "totalWithdrawnAmount()": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
@@ -112,7 +112,7 @@ export interface VTVLMerkleVestingInterface extends utils.Interface {
       | "renounceOwnership"
       | "revokeClaim"
       | "setFee"
-      | "setMerleRoot"
+      | "setMerkleRoot"
       | "tokenAddress"
       | "totalWithdrawnAmount"
       | "transferOwnership"
@@ -175,7 +175,7 @@ export interface VTVLMerkleVestingInterface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "setMerleRoot",
+    functionFragment: "setMerkleRoot",
     values: [BytesLike]
   ): string;
   encodeFunctionData(
@@ -254,7 +254,7 @@ export interface VTVLMerkleVestingInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "setFee", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "setMerleRoot",
+    functionFragment: "setMerkleRoot",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -453,7 +453,7 @@ export interface VTVLMerkleVesting extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    setMerleRoot(
+    setMerkleRoot(
       _root: BytesLike,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
@@ -563,7 +563,7 @@ export interface VTVLMerkleVesting extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  setMerleRoot(
+  setMerkleRoot(
     _root: BytesLike,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
@@ -668,7 +668,7 @@ export interface VTVLMerkleVesting extends BaseContract {
 
     setFee(_feePercent: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
-    setMerleRoot(_root: BytesLike, overrides?: CallOverrides): Promise<void>;
+    setMerkleRoot(_root: BytesLike, overrides?: CallOverrides): Promise<void>;
 
     tokenAddress(overrides?: CallOverrides): Promise<string>;
 
@@ -835,7 +835,7 @@ export interface VTVLMerkleVesting extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    setMerleRoot(
+    setMerkleRoot(
       _root: BytesLike,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
@@ -946,7 +946,7 @@ export interface VTVLMerkleVesting extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    setMerleRoot(
+    setMerkleRoot(
       _root: BytesLike,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;

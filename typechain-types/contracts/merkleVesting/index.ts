@@ -3,4 +3,3 @@
 /* eslint-disable */
 import type * as vtvlMerkleVestingSol from "./VTVLMerkleVesting.sol";
 export type { vtvlMerkleVestingSol };
-export type { Verifier } from "./Verifier";

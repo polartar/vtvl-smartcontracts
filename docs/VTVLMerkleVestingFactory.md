@@ -2,9 +2,9 @@
 
 
 
-> Vesting Factory contract
 
-Create Vesting contract
+
+
 
 
 
@@ -72,6 +72,23 @@ Set the fee percent of Vesting contract.
 | _vestingContract | address | undefined |
 | _feePercent | uint256 | undefined |
 
+### setMerkleRoot
+
+```solidity
+function setMerkleRoot(address _vestingContract, bytes32 _root) external nonpayable
+```
+
+Set the merkle root of the Vesting contract.
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| _vestingContract | address | undefined |
+| _root | bytes32 | undefined |
+
 ### transferOwnership
 
 ```solidity
@@ -94,7 +111,7 @@ function transferOwnership(address newOwner) external nonpayable
 function updateFeeReceiver(address _vestingContract, address _newReceiver) external nonpayable
 ```
 
-Set the fee recipient of Vesting contract.
+Set the fee recipient of the Vesting contract.
 
 
 

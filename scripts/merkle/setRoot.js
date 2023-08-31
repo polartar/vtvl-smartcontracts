@@ -5,7 +5,7 @@ const fs = require("fs");
 const csvToJson = require("csvtojson");
 const { parseEther } = require("ethers/lib/utils");
 
-const startTime = 1693438495;
+const startTime = 1693491435;
 const endTime = startTime + 604800;
 const releaseFrequency = 30;
 

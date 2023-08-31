@@ -12,7 +12,7 @@ import "./IVestingFee.sol";
 /// @notice Create Vesting contract
 
 interface IMerkleVestingContract {
-    function setMerleRoot(bytes32 _root) external;
+    function setMerkleRoot(bytes32 _root) external;
 }
 
 contract VTVLMerkleVestingFactory is Ownable {
@@ -110,6 +110,6 @@ contract VTVLMerkleVestingFactory is Ownable {
         address _vestingContract,
         bytes32 _root
     ) external onlyOwner onlyVestingContract(_vestingContract) {
-        IMerkleVestingContract(_vestingContract).setMerleRoot(_root);
+        IMerkleVestingContract(_vestingContract).setMerkleRoot(_root);
     }
 }
