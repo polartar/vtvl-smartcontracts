@@ -21,14 +21,10 @@ struct ClaimInput {
     address recipient; // the recipient address
 }
 
-interface IERC20Extented is IERC20 {
-    function decimals() external view returns (uint8);
-}
-
 contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
-    using SafeERC20 for IERC20Extented;
+    using SafeERC20 for IERC20;
 
-    IERC20Extented public immutable tokenAddress;
+    IERC20 public immutable tokenAddress;
 
     /**
     @notice A structure representing a single claim - supporting linear and cliff vesting.
@@ -38,10 +34,7 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
         uint256 deactivationTimestamp;
     }
 
-    // Mapping every user address to his/her Claim
-    // This could be array because a recipient can have multiple schdules.
-    // Only one Claim possible per address
-    mapping(address => Claim[]) internal claims;
+    mapping(address => mapping(uint256 => Claim)) internal claims;
 
     address private immutable factoryAddress;
     uint256 public feePercent; // Fee percent.  500 means 5%, 1 means 0.01 %
@@ -91,7 +84,7 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
     @notice Construct the contract, taking the ERC20 token to be vested as the parameter.
     @dev The owner can set the contract in question when creating the contract.
      */
-    constructor(IERC20Extented _tokenAddress, uint256 _feePercent) {
+    constructor(IERC20 _tokenAddress, uint256 _feePercent) {
         require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
         tokenAddress = _tokenAddress;
         _transferOwnership(tx.origin);
@@ -197,9 +190,6 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
         address _recipient,
         uint256 _scheduleIndex
     ) public view returns (Claim memory) {
-        if (claims[_recipient].length <= _scheduleIndex) {
-            return Claim(0, 0);
-        }
         return claims[_recipient][_scheduleIndex];
     }
 
@@ -288,14 +278,7 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
         // Get the message sender claim - if any
         uint40 _scheduleIndex = _claimInput.scheduleIndex;
 
-        Claim storage usrClaim;
-        if (claims[_claimInput.recipient].length != 0) {
-            usrClaim = claims[_claimInput.recipient][_scheduleIndex];
-        } else {
-            Claim memory claim = Claim(0, 0);
-            claims[_claimInput.recipient].push(claim);
-            usrClaim = claims[_claimInput.recipient][0];
-        }
+        Claim storage usrClaim = claims[_claimInput.recipient][_scheduleIndex];
 
         // we can use block.timestamp directly here as reference TS, as the function itself will make sure to cap it to endTimestamp
         // Conversion of timestamp to uint40 should be safe since 48 bit allows for a lot of years.
@@ -391,15 +374,16 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
         bytes32 leaf = getLeaf(_claimInput);
         verify(proof, leaf);
 
-        Claim storage _claim;
-        if (claims[_claimInput.recipient].length != 0) {
-            _claim = claims[_claimInput.recipient][_scheduleIndex];
-            _claim.deactivationTimestamp = uint40(block.timestamp);
-        } else {
-            Claim memory claim = Claim(0, block.timestamp);
-            claims[_claimInput.recipient].push(claim);
-            _claim = claims[_claimInput.recipient][0];
-        }
+        Claim storage _claim = claims[_claimInput.recipient][_scheduleIndex];
+        // if (claims[_claimInput.recipient][_scheduleIndex])
+        // if (claims[_claimInput.recipient].length != 0) {
+        _claim = claims[_claimInput.recipient][_scheduleIndex];
+        _claim.deactivationTimestamp = uint40(block.timestamp);
+        // } else {
+        //     Claim memory claim = Claim(0, block.timestamp);
+        //     claims[_claimInput.recipient].push(claim);
+        //     _claim = claims[_claimInput.recipient][0];
+        // }
 
         // // Calculate what the claim should finally vest to
         uint256 finalVestAmt = finalVestedAmount(_claimInput);

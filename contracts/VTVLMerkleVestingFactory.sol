@@ -43,7 +43,7 @@ contract VTVLMerkleVestingFactory is Ownable {
      * @param _feePercent The percent of fee.
      */
     function createVestingContract(
-        IERC20Extented _tokenAddress,
+        IERC20 _tokenAddress,
         uint256 _feePercent
     ) public {
         VTVLMerkleVesting vestingContract = new VTVLMerkleVesting(

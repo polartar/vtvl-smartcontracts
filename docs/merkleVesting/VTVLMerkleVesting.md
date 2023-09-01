@@ -275,7 +275,7 @@ function setMerkleRoot(bytes32 _root) external nonpayable
 ### tokenAddress
 
 ```solidity
-function tokenAddress() external view returns (contract IERC20Extented)
+function tokenAddress() external view returns (contract IERC20)
 ```
 
 
@@ -287,7 +287,7 @@ function tokenAddress() external view returns (contract IERC20Extented)
 
 | Name | Type | Description |
 |---|---|---|
-| _0 | contract IERC20Extented | undefined |
+| _0 | contract IERC20 | undefined |
 
 ### totalWithdrawnAmount
 

@@ -73,7 +73,7 @@ function getMerkleProof(recipient, scheduleIndex = 0) {
 
 async function main() {
   // We get the contract to deploy
-  const contractAddress = "0x35B99d731C140EAf99506a6D9946E78481B7350D";
+  const contractAddress = "0xa0ceF81426942002A2d2892060AE9d0b001eFF1A";
   generateMerkleTree();
   const [deployer] = await ethers.getSigners();
   const root = getMerkleRoot();
@@ -82,7 +82,7 @@ async function main() {
     "VTVLMerkleVestingFactory"
   );
   const vestingFactoryContract = await VTVLVestingFactory.attach(
-    "0xa5aa5661412cf011b212a923661360321BbafBa2"
+    "0xb37FEAb80606a43F1C9C7E9679e43733ca35e974"
   );
   const feeData = await deployer.provider.getFeeData();
   const nonce = await deployer.getTransactionCount();

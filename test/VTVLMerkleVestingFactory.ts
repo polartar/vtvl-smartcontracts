@@ -739,6 +739,7 @@ describe("Claimable amount", async () => {
       tokenSymbol,
       initialSupplyTokens,
     });
+
     const proof = getMerkleProof(claimInputs[0].recipient);
 
     await factoryContract.setMerkleRoot(
