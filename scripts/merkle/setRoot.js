@@ -73,8 +73,8 @@ function getMerkleProof(recipient, scheduleIndex = 0) {
 
 async function main() {
   // We get the contract to deploy
-  const contractAddress = "0x43da1eE1F19CD90bEC9ADb51cC5959Aa97E4aB25";
-  // generateMerkleTree();
+  const contractAddress = "0x35B99d731C140EAf99506a6D9946E78481B7350D";
+  generateMerkleTree();
   const [deployer] = await ethers.getSigners();
   const root = getMerkleRoot();
 

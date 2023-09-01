@@ -516,6 +516,7 @@ describe("Vested amount", async () => {
       )
     );
   });
+
   it("correctly calculates the vested amount at the linear start time", async () => {
     // We've just released the cliff at the first second
 
@@ -624,12 +625,10 @@ describe("Vested amount", async () => {
   });
 });
 describe("Claimable amount", async () => {
-  const [, owner2] = await ethers.getSigners();
-  // Default params - a bit different than those above
-  // linearly Vest 10000, every 1s, between last block ts+100 and 1000 secs forward
-  // No cliff
-
+  before(async () => {});
   it(`calculates the claimable amount`, async () => {
+    const snapshotId = await ethers.provider.send("evm_snapshot", []);
+
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
       tokenSymbol,
@@ -643,18 +642,22 @@ describe("Claimable amount", async () => {
     const claim = claimInputs[0];
 
     // after padding the half of vesting period
-    const ts = BigNumber.from(claim.startTimestamp).add(5000);
+    const ts = BigNumber.from(claim.startTimestamp).add(5000).toNumber();
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at the relevant ts
     const vestedAmount = BigNumber.from(claim.cliffAmount).add(
       BigNumber.from(claim.linearVestAmount).div(2)
     );
     const claimableAmount = await vestingContract.claimableAmount(claim);
     expect(claimableAmount).to.be.equal(vestedAmount);
+
+    await ethers.provider.send("evm_revert", [snapshotId]);
   });
   it(`calculates the claimable amount to be equal to the vested amount if we have no withdrawals`, async () => {
-    const startTimestamp = BigNumber.from(
-      claimInputs[0].startTimestamp
-    ).toNumber();
+    const snapshotId = await ethers.provider.send("evm_snapshot", []);
+
+    const startTimestamp =
+      (await ethers.provider.getBlock(await ethers.provider.getBlockNumber()))
+        .timestamp + 100;
     const endTimestamp = BigNumber.from(claimInputs[0].endTimestamp).toNumber();
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
@@ -675,10 +678,15 @@ describe("Claimable amount", async () => {
       );
       expect(claimableAmount).to.be.equal(vestAmt);
     }
+
+    await ethers.provider.send("evm_revert", [snapshotId]);
   });
   it("takes withdrawals into account when calculating the claimable amount", async () => {
+    const [, owner2] = await ethers.getSigners();
+    const snapshotId = await ethers.provider.send("evm_snapshot", []);
+
     const startTimestamp = BigNumber.from(claimInputs[0].startTimestamp);
-    const endTimestamp = claimInputs[0].endTimestamp;
+    const endTimestamp = BigNumber.from(claimInputs[0].endTimestamp).toNumber();
     const { vestingContract } = await createPrefundedVestingContract({
       tokenName,
       tokenSymbol,
@@ -691,17 +699,20 @@ describe("Claimable amount", async () => {
       getMerkleRoot()
     );
 
-    const ts = startTimestamp.add(5000);
+    const ts = startTimestamp.add(5000).toNumber();
+
     await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
     // const amtFirstWithdraw = vestingContract.vestedAmount(owner2.address, ts);
     // second owner withdraws
     const tx = await vestingContract
       .connect(owner2)
       .withdraw(claimInputs[0], proof);
+
     // TODO: fetch the withdraw amount in a better way
-    const amtFirstWithdraw = (await tx.wait()).events?.[1]?.args
+    const amtFirstWithdraw = (await tx.wait()).events?.[3]?.args
       ?._withdrawalAmount;
     // Nothing should be claimable
+
     expect(await vestingContract.claimableAmount(claimInputs[0])).to.be.equal(
       0
     );
@@ -710,8 +721,45 @@ describe("Claimable amount", async () => {
     // we expect the claimble be less than vested for the amt withdrawn
     const vestAmtEnd = await vestingContract.finalVestedAmount(claimInputs[0]);
     const expectedClaimable = vestAmtEnd.sub(amtFirstWithdraw);
+
     expect(await vestingContract.claimableAmount(claimInputs[0])).to.be.equal(
       expectedClaimable
+    );
+
+    await ethers.provider.send("evm_revert", [snapshotId]);
+  });
+
+  it("should calculate claimable amount for the second schedule after the first schedule withdraw", async () => {
+    const [, owner2] = await ethers.getSigners();
+
+    const startTimestamp = BigNumber.from(claimInputs[0].startTimestamp);
+    const endTimestamp = BigNumber.from(claimInputs[0].endTimestamp).toNumber();
+    const { vestingContract } = await createPrefundedVestingContract({
+      tokenName,
+      tokenSymbol,
+      initialSupplyTokens,
+    });
+    const proof = getMerkleProof(claimInputs[0].recipient);
+
+    await factoryContract.setMerkleRoot(
+      vestingContract.address,
+      getMerkleRoot()
+    );
+
+    const ts = startTimestamp.add(5000).toNumber();
+    await ethers.provider.send("evm_mine", [ts]); // Make sure we're at half of the interval
+    // const amtFirstWithdraw = vestingContract.vestedAmount(owner2.address, ts);
+    // second owner withdraws
+    const tx = await vestingContract
+      .connect(owner2)
+      .withdraw(claimInputs[0], proof);
+
+    // we expect the claimble be less than vested for the amt withdrawn
+    await ethers.provider.send("evm_mine", [endTimestamp]);
+    const vestAmtEnd = await vestingContract.finalVestedAmount(claimInputs[1]);
+
+    expect(await vestingContract.claimableAmount(claimInputs[1])).to.be.equal(
+      vestAmtEnd
     );
   });
 });

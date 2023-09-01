@@ -175,10 +175,11 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
         ClaimInput memory _claimInput,
         uint40 _referenceTs
     ) public view returns (uint256) {
-        uint256 deactivationTimestamp = claims[_claimInput.recipient].length > 0
-            ? claims[_claimInput.recipient][_claimInput.scheduleIndex]
-                .deactivationTimestamp
-            : 0;
+        Claim memory claim = getClaim(
+            _claimInput.recipient,
+            _claimInput.scheduleIndex
+        );
+        uint256 deactivationTimestamp = claim.deactivationTimestamp;
         uint40 vestEndTimestamp = deactivationTimestamp != 0
             ? uint40(deactivationTimestamp)
             : _referenceTs;
@@ -195,9 +196,9 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
     function getClaim(
         address _recipient,
         uint256 _scheduleIndex
-    ) external view returns (Claim memory) {
+    ) public view returns (Claim memory) {
         if (claims[_recipient].length <= _scheduleIndex) {
-            revert("NO_SCHEDULE_EXIST");
+            return Claim(0, 0);
         }
         return claims[_recipient][_scheduleIndex];
     }
@@ -220,13 +221,14 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
     function claimableAmount(
         ClaimInput memory _claimInput
     ) public view returns (uint256) {
-        uint256 amountWithdrawn = claims[_claimInput.recipient].length > 0
-            ? claims[_claimInput.recipient][_claimInput.scheduleIndex]
-                .amountWithdrawn
-            : 0;
+        Claim memory claim = getClaim(
+            _claimInput.recipient,
+            _claimInput.scheduleIndex
+        );
+
         return
             vestedAmount(_claimInput, uint40(block.timestamp)) -
-            amountWithdrawn;
+            claim.amountWithdrawn;
     }
 
     /**
@@ -238,19 +240,17 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
     function finalClaimableAmount(
         ClaimInput memory _claimInput
     ) external view returns (uint256) {
-        uint256 deactivationTimestamp = claims[_claimInput.recipient].length > 0
-            ? claims[_claimInput.recipient][_claimInput.scheduleIndex]
-                .deactivationTimestamp
-            : 0;
-        uint256 amountWithdrawn = claims[_claimInput.recipient].length > 0
-            ? claims[_claimInput.recipient][_claimInput.scheduleIndex]
-                .amountWithdrawn
-            : 0;
-        uint40 vestEndTimestamp = deactivationTimestamp != 0
-            ? uint40(deactivationTimestamp)
+        Claim memory claim = getClaim(
+            _claimInput.recipient,
+            _claimInput.scheduleIndex
+        );
+
+        uint40 vestEndTimestamp = claim.deactivationTimestamp != 0
+            ? uint40(claim.deactivationTimestamp)
             : _claimInput.endTimestamp;
         return
-            _baseVestedAmount(_claimInput, vestEndTimestamp) - amountWithdrawn;
+            _baseVestedAmount(_claimInput, vestEndTimestamp) -
+            claim.amountWithdrawn;
     }
 
     function getLeaf(

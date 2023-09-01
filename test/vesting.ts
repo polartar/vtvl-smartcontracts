@@ -25,7 +25,7 @@ const vestingJson = [
     currentTime + 10000,
     currentTime - 1000,
     5000,
-    1,
+    2,
     10000,
     10,
     "0xe456f9A32E5f11035ffBEa0e97D1aAFDA6e60F03",
