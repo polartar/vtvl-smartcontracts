@@ -200,7 +200,7 @@ contract VTVLMerkleVesting is Ownable, ReentrancyGuard, IVestingFee {
      */
     function finalVestedAmount(
         ClaimInput memory _claimInput
-    ) public view returns (uint256) {
+    ) public pure returns (uint256) {
         return _baseVestedAmount(_claimInput, _claimInput.endTimestamp);
     }
 

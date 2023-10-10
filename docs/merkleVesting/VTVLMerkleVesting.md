@@ -108,7 +108,7 @@ function finalClaimableAmount(ClaimInput _claimInput) external view returns (uin
 ### finalVestedAmount
 
 ```solidity
-function finalVestedAmount(ClaimInput _claimInput) external view returns (uint256)
+function finalVestedAmount(ClaimInput _claimInput) external pure returns (uint256)
 ```
 
 

@@ -3,16 +3,16 @@ const { ethers } = require("hardhat");
 const fs = require("fs");
 
 const csvToJson = require("csvtojson");
-const { parseEther } = require("ethers/lib/utils");
+const { parseEther, getAddress } = require("ethers/lib/utils");
 
-const startTime = 1693491435;
-const endTime = startTime + 604800;
-const releaseFrequency = 30;
+const startTime = 1689811200;
+const endTime = startTime + 3600 * 24 * 30 * 20;
+const releaseFrequency = 3600 * 24 * 30;
 
 async function generateMerkleTree() {
   let whitelist = await csvToJson({
     trim: true,
-  }).fromFile("./scripts/merkle/vesting.csv");
+  }).fromFile("./scripts/merkle/satoshi_vesting.csv");
 
   let counts = {};
   const vestings = whitelist.map((list) => {
@@ -29,10 +29,9 @@ async function generateMerkleTree() {
       counts[list.address],
       parseEther(list.allocation),
       0,
-      list.address,
+      getAddress(list.address),
     ];
   });
-  console.log({ vestings });
 
   const tree = StandardMerkleTree.of(vestings, [
     "uint40",
@@ -73,7 +72,7 @@ function getMerkleProof(recipient, scheduleIndex = 0) {
 
 async function main() {
   // We get the contract to deploy
-  const contractAddress = "0xa0ceF81426942002A2d2892060AE9d0b001eFF1A";
+  const contractAddress = "0xB34cD1E5A695322d2552CB6314Bb223a2943384b";
   generateMerkleTree();
   const [deployer] = await ethers.getSigners();
   const root = getMerkleRoot();
@@ -82,7 +81,7 @@ async function main() {
     "VTVLMerkleVestingFactory"
   );
   const vestingFactoryContract = await VTVLVestingFactory.attach(
-    "0xb37FEAb80606a43F1C9C7E9679e43733ca35e974"
+    "0x849757130081398C719728750549A888047DcdDB"
   );
   const feeData = await deployer.provider.getFeeData();
   const nonce = await deployer.getTransactionCount();
@@ -96,7 +95,7 @@ async function main() {
 
   let whitelist = await csvToJson({
     trim: true,
-  }).fromFile("./scripts/merkle/vesting.csv");
+  }).fromFile("./scripts/merkle/satoshi_vesting.csv");
 
   let counts = {};
   const vestings = whitelist.map((list) => {
