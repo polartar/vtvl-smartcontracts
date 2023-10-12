@@ -10,6 +10,8 @@ export const SUPPORTED_CHAIN_NAMES = [
   "goerli",
   "base-goerli",
   "satoshi",
+  "polygon",
+  "mumbai",
 ];
 
 export const SUPPORTED_RPC_ENDPOINTS = {
@@ -17,6 +19,8 @@ export const SUPPORTED_RPC_ENDPOINTS = {
   goerli: `https://goerli.infura.io/v3/${INFURA_PROJECT_ID}`,
   "base-goerli": "https://goerli.base.org",
   satoshi: "https://rpc.satoshichain.io",
+  polygon: "https://polygon-rpc.com",
+  mumbai: "https://rpc-mumbai.maticvigil.com",
 } as const;
 
 export const SUPPORTED_CHAIN_IDS = {
@@ -24,4 +28,6 @@ export const SUPPORTED_CHAIN_IDS = {
   goerli: 5,
   "base-goerli": 84531,
   satoshi: 5758,
+  mumbai: 80001,
+  polygon: 137,
 } as const;

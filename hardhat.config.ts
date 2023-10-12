@@ -86,11 +86,11 @@ const config: HardhatUserConfig = {
     apiKey: ETHERSCAN_API_KEY,
     // customChains: [
     //   {
-    //     network: "base-goerli",
-    //     chainId: 84531,
+    //     network: "polygonMumbai",
+    //     chainId: 80001,
     //     urls: {
-    //       apiURL: "https://api-goerli.basescan.org/api",
-    //       browserURL: "https://goerli.basescan.org",
+    //       apiURL: "https://api-testnet.polygonscan.com",
+    //       browserURL: "https://mumbai.polygonscan.com",
     //     },
     //   },
     // ],
