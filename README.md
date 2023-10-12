@@ -110,12 +110,12 @@ npx hardhat run --network localhost scripts/deploy.js
 
 Runs an arbitrary script. This example assumes script _deploy.js_ from the _scripts_ dir, but an arbirary script can be chosen. _--network_ option gives us the possibility to select the network on which the script is executed. Options include all networks defined within _hardhat.config.js_ file, so it can be configured to use Ethereum testnets or even mainnet.
 
-## MilestoneVesting Factory
+## Milestone Vesting Factory
 
 goerli: 0x27D55Bb85B10326971212B773Bd55CbeAC916a59
 mumbai: 0xeB743FB4dD1EA47e57fd1135882143AdBb8595F8
 
-## Vesting Factory
+## TimeBased Vesting Factory
 
 goerli: 0x4e0C356DBbb3946E7f7d9B43A237182029F85433
 mumbai: 0xF409eDc80a93E96F224d615Df92F5ab3Aa8aFCfE
