@@ -43,6 +43,8 @@ contract BaseMilestone is AccessProtected, ReentrancyGuard {
     */
     event AdminWithdrawn(address indexed _recipient, uint256 _amountRequested);
 
+    constructor(address _owner) AccessProtected(_owner) {}
+
     function initializeMilestones(
         InputMilestone[] memory _milestones
     ) internal {

@@ -100,7 +100,8 @@ contract VTVLMilestoneFactory is Ownable, ReentrancyGuard {
             _tokenAddress,
             _allocation,
             _milestones,
-            _recipients
+            _recipients,
+            msg.sender
         );
 
         _deposit(
@@ -133,7 +134,8 @@ contract VTVLMilestoneFactory is Ownable, ReentrancyGuard {
             _tokenAddress,
             _allocation,
             _allocationPercents,
-            _recipients
+            _recipients,
+            msg.sender
         );
 
         _deposit(

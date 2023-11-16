@@ -122,8 +122,9 @@ contract VTVLVesting is
      */
     constructor(
         IERC20Extented _tokenAddress,
-        uint256 _feePercent
-    ) UniswapOracle(_tokenAddress) {
+        uint256 _feePercent,
+        address _owner
+    ) UniswapOracle(_tokenAddress) AccessProtected(_owner) {
         factoryAddress = msg.sender;
         feeReceiver = msg.sender;
         feePercent = _feePercent;

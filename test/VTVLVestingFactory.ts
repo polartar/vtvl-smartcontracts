@@ -192,7 +192,8 @@ describe("Contract creation", async function () {
         // @ts-ignore - Need to ignore invalid type because initializing with an invalid type is the whole point of this test
         const contractDeploymentPromise = factory.deploy(
           invalidParam as string,
-          0
+          0,
+          owner.address
         );
 
         if (invalidParam === zeroAddressStr) {
