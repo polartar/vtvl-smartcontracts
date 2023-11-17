@@ -44,7 +44,8 @@ contract VTVLVestingFactory is Ownable {
     ) public {
         VTVLVesting vestingContract = new VTVLVesting(
             _tokenAddress,
-            _feePercent
+            _feePercent,
+            msg.sender
         );
 
         isVestingContracts[address(vestingContract)] = true;

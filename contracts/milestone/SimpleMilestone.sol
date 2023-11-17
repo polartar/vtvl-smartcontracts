@@ -23,8 +23,9 @@ contract SimpleMilestone is BaseMilestone {
         IERC20 _tokenAddress,
         uint256 _allocation,
         uint256[] memory _allcationPercents,
-        address[] memory _recipients
-    ) {
+        address[] memory _recipients,
+        address _owner
+    ) BaseMilestone(_owner) {
         recipients = _recipients;
         tokenAddress = _tokenAddress;
         allocation = _allocation;

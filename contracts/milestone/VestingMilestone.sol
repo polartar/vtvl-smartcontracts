@@ -18,8 +18,9 @@ contract VestingMilestone is BaseMilestone {
         IERC20 _tokenAddress,
         uint256 _allocation,
         InputMilestone[] memory _milestones,
-        address[] memory _recipients
-    ) {
+        address[] memory _recipients,
+        address _owner
+    ) BaseMilestone(_owner) {
         require(address(_tokenAddress) != address(0), "INVALID_ADDRESS");
         tokenAddress = _tokenAddress;
         recipients = _recipients;

@@ -23,7 +23,7 @@ contract VariableSupplyERC20Token is ERC20, AccessProtected {
         string memory symbol_,
         uint256 initialSupply_,
         uint256 maxSupply_
-    ) ERC20(name_, symbol_) {
+    ) ERC20(name_, symbol_) AccessProtected(msg.sender) {
         // max supply == 0 means mint at will.
         // initialSupply_ == 0 means nothing preminted
         // Therefore, we have valid scenarios if either of them is 0
