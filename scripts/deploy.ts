@@ -20,19 +20,19 @@ async function main() {
   );
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const TestTokenFactory = await ethers.getContractFactory("TestERC20Token");
-  const tokenContract = await TestTokenFactory.deploy();
+  // const TestTokenFactory = await ethers.getContractFactory("TestERC20Token");
+  // const tokenContract = await TestTokenFactory.deploy();
 
-  console.log("Deployed an ERC Token for testing.");
-  console.log("Address:", tokenContract.address);
-  console.log(
-    `Name: ${await tokenContract.name()}, Symbol: ${await tokenContract.symbol()}. Supply: ${await tokenContract.totalSupply()}`
-  );
+  // console.log("Deployed an ERC Token for testing.");
+  // console.log("Address:", tokenContract.address);
+  // console.log(
+  //   `Name: ${await tokenContract.name()}, Symbol: ${await tokenContract.symbol()}. Supply: ${await tokenContract.totalSupply()}`
+  // );
 
   // We get the contract to deploy
   const VTVLVestingFactory = await ethers.getContractFactory("VTVLVesting");
   const vestingContract = await VTVLVestingFactory.deploy(
-    tokenContract.address
+    "0x8a8355f2e123f7363d31e7dedb464eba451f80b5"
   );
   console.log(
     `vestingContract initialized on ${vestingContract.address}, waiting to be deployed...`
@@ -40,17 +40,17 @@ async function main() {
   await vestingContract.deployed();
   console.log("Deployed a vesting contract to:", vestingContract.address);
 
-  const numTokensToInitializeContract = await tokenContract.balanceOf(
-    await deployer.getAddress()
-  );
+  // const numTokensToInitializeContract = await tokenContract.balanceOf(
+  //   await deployer.getAddress()
+  // );
 
-  await tokenContract.transfer(
-    vestingContract.address,
-    numTokensToInitializeContract
-  );
-  console.log(
-    `Transferring ${await tokenContract.symbol()} tokens to newly initialized contract (${numTokensToInitializeContract}).`
-  );
+  // await tokenContract.transfer(
+  //   vestingContract.address,
+  //   numTokensToInitializeContract
+  // );
+  // console.log(
+  //   `Transferring ${await tokenContract.symbol()} tokens to newly initialized contract (${numTokensToInitializeContract}).`
+  // );
 }
 
 // We recommend this pattern to be able to use async/await everywhere
