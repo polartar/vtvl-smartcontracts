@@ -9,3 +9,6 @@ artifacts
 docs/console.md
 
 .vscode
+typechain
+typechain-types
+verification
