@@ -12,6 +12,7 @@ export const SUPPORTED_CHAIN_NAMES = [
   "satoshi",
   "polygon",
   "mumbai",
+  "avax",
 ];
 
 export const SUPPORTED_RPC_ENDPOINTS = {
@@ -21,6 +22,7 @@ export const SUPPORTED_RPC_ENDPOINTS = {
   satoshi: "https://rpc.satoshichain.io",
   polygon: "https://polygon-rpc.com",
   mumbai: "https://rpc-mumbai.maticvigil.com",
+  avax: "https://api.avax.network/ext/bc/C/rpc",
 } as const;
 
 export const SUPPORTED_CHAIN_IDS = {
@@ -30,4 +32,5 @@ export const SUPPORTED_CHAIN_IDS = {
   satoshi: 5758,
   mumbai: 80001,
   polygon: 137,
+  avax: 43114,
 } as const;
