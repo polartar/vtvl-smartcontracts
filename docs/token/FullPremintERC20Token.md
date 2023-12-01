@@ -78,6 +78,56 @@ function balanceOf(address account) external view returns (uint256)
 |---|---|---|
 | _0 | uint256 | undefined |
 
+### burn
+
+```solidity
+function burn(uint256 amount) external nonpayable
+```
+
+
+
+
+
+#### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| amount | uint256 | undefined |
+
+### burnable
+
+```solidity
+function burnable() external view returns (bool)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | bool | undefined |
+
+### burntSupply
+
+```solidity
+function burntSupply() external view returns (uint256)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | uint256 | undefined |
+
 ### decimals
 
 ```solidity
@@ -117,6 +167,23 @@ function decreaseAllowance(address spender, uint256 subtractedValue) external no
 | Name | Type | Description |
 |---|---|---|
 | _0 | bool | undefined |
+
+### deployer
+
+```solidity
+function deployer() external view returns (address)
+```
+
+
+
+
+
+
+#### Returns
+
+| Name | Type | Description |
+|---|---|---|
+| _0 | address | undefined |
 
 ### increaseAllowance
 
