@@ -13,6 +13,7 @@ export const SUPPORTED_CHAIN_NAMES = [
   "polygon",
   "mumbai",
   "avax",
+  "fuji",
 ];
 
 export const SUPPORTED_RPC_ENDPOINTS = {
@@ -23,6 +24,7 @@ export const SUPPORTED_RPC_ENDPOINTS = {
   polygon: "https://polygon-rpc.com",
   mumbai: "https://rpc-mumbai.maticvigil.com",
   avax: "https://api.avax.network/ext/bc/C/rpc",
+  fuji: "https://avalanche-fuji-c-chain.publicnode.com",
 } as const;
 
 export const SUPPORTED_CHAIN_IDS = {
@@ -33,4 +35,5 @@ export const SUPPORTED_CHAIN_IDS = {
   mumbai: 80001,
   polygon: 137,
   avax: 43114,
+  fuji: 43113,
 } as const;
